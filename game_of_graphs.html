@@ -189,7 +189,8 @@ details {
   padding: 8px 14px;
 }
 summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
-details p { max-width: 78ch; }
+details p, details ol { max-width: 78ch; }
+details ol li { margin: 4px 0; }
 .table-scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
 th, td { text-align: left; vertical-align: top; padding: 4px 14px 4px 0; border-bottom: 1px solid var(--border); }
@@ -376,6 +377,73 @@ td code { overflow-wrap: anywhere; }
     the list of rules below and the start hypergraph; the rewriting is done by the engine of the
     experiment <i>wolfram-physics</i>, unchanged. Where a node is drawn (at its cell) is only a
     help for the eye and no part of the model.</p>
+  </details>
+
+  <details id="choosing">
+    <summary>How a rule is chosen, and why the result is the Game of Life</summary>
+    <p><b>Nobody chooses.</b> There is no program beside the rules that says "now this cell, now
+    that rule". One step of the engine is always the same:</p>
+    <ol>
+      <li>It searches the whole hypergraph for every place where the left side of any of the 17
+      rules <b>fits</b>: where relations of the right sizes exist and share their nodes the way the
+      rule says.</li>
+      <li>It applies all of these at once. The relations of the left side are taken away, those of
+      the right side are put in.</li>
+      <li>If two fits want the same relation, only one of them is applied, picked by a fixed order
+      (the "standard order" of the Wolfram model).</li>
+    </ol>
+    <p>The third point never comes up in this model. It was built so that two changes never want
+    the same relation: a rule used for cell <code>c</code> takes only relations of <code>c</code>
+    itself and the one message that waits for <code>c</code>.</p>
+    <p><b>Which rule fits is decided by what the cell holds.</b> At every moment a cell is in one of
+    three situations, and in each of them exactly one of the 17 rules fits, in exactly one way:</p>
+    <div class="table-scroll">
+      <table id="choosing-table">
+        <thead><tr><th>the cell has</th><th>the rule that fits</th><th>what picks it among its family</th></tr></thead>
+        <tbody>
+          <tr><td>a "ready" mark, and its eight lines are empty</td>
+            <td>one of the 2 <b>send</b> rules</td>
+            <td>its state mark: <code>{c}</code> (alive) or <code>{c,c,c,c,c}</code> (dead)</td></tr>
+          <tr><td>a reader that is not back home yet</td>
+            <td>one of the 6 <b>read</b> rules</td>
+            <td>the message that waits on the line from the next neighbour of the round (dead or
+            alive), and for an alive one the count the cell holds (0, 1, 2, 3 or "4 or more")</td></tr>
+          <tr><td>a reader that is back home</td>
+            <td>one of the 9 <b>decide</b> rules</td>
+            <td>the count, and for every count but 2 the state mark</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A rule can tell these things apart because every kind of relation has a size or a shape of
+    its own (the table under "What the right picture shows" lists them), and a left side only fits relations
+    of exactly its sizes and shapes. So in every step every cell makes exactly one change: in a
+    world of 12 × 12 cells a step is 144 changes and a generation 1,440. The line under the right
+    picture counts them.</p>
+    <p><b>Why ten such steps are one generation of Life.</b></p>
+    <ol>
+      <li><b>Step 1, send.</b> Every cell puts a copy of its state on each of its eight lines. All
+      these copies are of the same generation, because no cell has changed its state yet.</li>
+      <li><b>Steps 2 to 9, read.</b> The reader goes once round and takes one message per step. An
+      "alive" message raises the count, a "dead" one leaves it. After eight steps the count is the
+      number of alive neighbours. Everything above 3 is kept as "4 or more", because Life does not
+      ask further.</li>
+      <li><b>Step 10, decide.</b> The nine decide rules are the rule of Life, written out case by
+      case: count 3 makes the cell alive, count 2 leaves it as it is, every other count makes it
+      dead.</li>
+    </ol>
+    <p>The Game of Life asks that all cells change <i>at once</i>, each looking at the <i>old</i>
+    states of its neighbours. Here that holds because states change only in step 10, and by then
+    every cell has counted from messages that were written in step 1. Counting neighbours and
+    applying "3 alive, 2 stays, else dead" is all that the ordinary program on the left does, so
+    both sides must agree after every tenth step. The page does not rely on this argument: it
+    compares the two worlds cell by cell after every generation and says so under the pictures.</p>
+    <p><b>What if the changes came in another order?</b> The engine can also apply one fitting
+    change at a time, picked at random. Then the cells get out of step with each other, but every
+    cell still goes through the states of Life. The reason: a cell sends only when its eight lines
+    are empty, and its reader takes exactly one message from every neighbour per round, so
+    messages of two generations cannot be mixed up. This was tested for the experiment (in random
+    order, and with a second, independent engine), not proved. This page always uses the standard
+    order, in which all cells stay in step.</p>
   </details>
 
   <details id="why">
