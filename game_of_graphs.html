@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game of Life on a Wolfram model</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --surface: #fcfcfb;
+  --border: #dcdad3;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #6f6e69;
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+  --reader: #eb6834;
+  --link: #cfcdc5;
+  --ball-dead: #a9a79f;
+  --grid: #e7e5df;
+  --ok: #1d7a46;
+  --ok-bg: #e9f5ee;
+  --fail: #d03b3b;
+  --fail-bg: #fdeeee;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #383835;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #9c9b93;
+    --accent: #3987e5;
+    --accent-ink: #ffffff;
+    --reader: #e8743f;
+    --link: #3d3d3a;
+    --ball-dead: #6a6a63;
+    --grid: #2b2b29;
+    --ok: #5cc98b;
+    --ok-bg: #16281e;
+    --fail: #e66767;
+    --fail-bg: #3a1f1f;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #383835;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #9c9b93;
+  --accent: #3987e5;
+  --accent-ink: #ffffff;
+  --reader: #e8743f;
+  --link: #3d3d3a;
+  --ball-dead: #6a6a63;
+  --grid: #2b2b29;
+  --ok: #5cc98b;
+  --ok-bg: #16281e;
+  --fail: #e66767;
+  --fail-bg: #3a1f1f;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header, .controls, .status, .panes, .check-line, .below { max-width: 1280px; margin-left: auto; margin-right: auto; }
+h1 { font-size: 1.5rem; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 1.05rem; margin: 0 0 2px; }
+.lede { margin: 0 0 8px; max-width: 78ch; color: var(--text-2); }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+h2 .small { font-weight: 400; margin-left: 6px; }
+p { margin: 0 0 8px; }
+code { font: 0.85rem ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+#error {
+  background: var(--fail-bg);
+  border: 1px solid var(--fail);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+#error[hidden] { display: none; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.group { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+label { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; color: var(--text-2); }
+label.inline { flex-direction: row; align-items: center; gap: 8px; }
+label.check { gap: 6px; }
+select, button, input[type="range"] { font: inherit; }
+select, button {
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled, select:disabled { opacity: 0.5; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 84px; font-weight: 600; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#speed { width: 130px; }
+#speed-text { min-width: 24ch; }
+
+.status { margin-top: 12px; margin-bottom: 8px; font-weight: 600; font-variant-numeric: tabular-nums; min-height: 1.5em; }
+
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-width: 0;
+}
+.pane > p.small:first-of-type { min-height: 2.6em; }
+.frame { width: 100%; max-width: 600px; margin: 0 auto; }
+canvas { display: block; width: 100%; touch-action: none; border-radius: 6px; }
+#life { cursor: crosshair; }
+#graph { cursor: pointer; }
+#space { cursor: grab; }
+#space.turning { cursor: grabbing; }
+.speed { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.speed button { min-height: 32px; }
+.tabs { display: flex; gap: 6px; margin: 6px 0 8px; }
+.tabs button { min-height: 32px; }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+#life-info, #graph-info { margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+
+.legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0; margin: 8px 0 0; color: var(--text-2); }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.swatch.node-alive { background: var(--text); }
+.swatch.node-dead { background: var(--surface); border: 1.5px solid var(--muted); }
+.swatch.message-alive { width: 9px; height: 9px; background: var(--accent); }
+.swatch.message-dead { width: 6px; height: 6px; background: var(--muted); }
+.swatch.reader { width: 16px; height: 4px; border-radius: 2px; background: var(--reader); }
+.swatch.count { width: auto; height: auto; border-radius: 0; font-weight: 700; color: var(--text); }
+.swatch.link { width: 16px; height: 2px; border-radius: 1px; background: var(--muted); }
+.swatch.reader-ring { background: transparent; border: 2px solid var(--reader); }
+.swatch.picked { background: transparent; border: 2px solid var(--accent); }
+#reading-table .swatch { margin-right: 6px; vertical-align: middle; }
+#reading-table td:first-child { white-space: nowrap; }
+#reading-table td:nth-child(2) { min-width: 24ch; }
+
+.check-line {
+  margin-top: 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+.check-line.ok { border-color: var(--ok); background: var(--ok-bg); }
+.check-line.fail { border-color: var(--fail); background: var(--fail-bg); font-weight: 600; }
+
+.below { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+details p { max-width: 78ch; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { text-align: left; vertical-align: top; padding: 4px 14px 4px 0; border-bottom: 1px solid var(--border); }
+th { color: var(--text-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+#rules-table td:first-child { white-space: nowrap; }
+#rules-table td:nth-child(2) { min-width: 26ch; }
+
+@media (max-width: 820px) {
+  body { padding: 16px; }
+  .panes { grid-template-columns: 1fr; }
+  .pane > p.small:first-of-type { min-height: 0; }
+  #rules-table td:first-child, #reading-table td:first-child { white-space: normal; }
+  #reading-table td:nth-child(2) { min-width: 16ch; }
+}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Game of Life on a Wolfram model</h1>
+  <p class="lede">Left: Conway's Game of Life, computed the ordinary way. Right: the same world as a
+  <b>hypergraph</b>, nothing but nodes and relations between them, changed only by 17 rewriting rules
+  ("wherever you find this pattern of relations, replace it by that one"). Every cell is a node.
+  Ten steps of the rules are one generation of Life, and after every generation the page checks
+  that both sides agree in every cell.</p>
+  <p id="load-status" class="muted" role="status">Starting…</p>
+  <div id="error" role="alert" hidden><span id="error-text"></span><button id="error-close" type="button">Dismiss</button></div>
+</header>
+
+<section class="controls" aria-label="World and play controls">
+  <div class="group">
+    <label>World
+      <select id="size"></select>
+    </label>
+    <label>Pattern
+      <select id="pattern"></select>
+    </label>
+    <button id="random" type="button">Random</button>
+    <button id="clear" type="button">Clear</button>
+  </div>
+  <div class="group">
+    <button id="play" type="button" class="primary">Start</button>
+    <button id="generation" type="button" title="Ten steps of the rules">1 generation</button>
+    <button id="one-step" type="button" title="One step of the rules: every cell makes one change">1 step</button>
+    <button id="restart" type="button" title="Back to the world as it was set up">Restart</button>
+  </div>
+  <div class="group">
+    <span class="speed">
+      <button id="slower" type="button" title="Play more slowly">Slower</button>
+      <label class="inline">Speed
+        <input id="speed" type="range" min="0" max="7" step="1" value="3">
+      </label>
+      <button id="faster" type="button" title="Play faster">Faster</button>
+      <span id="speed-text" class="muted small"></span>
+    </span>
+    <label class="inline check"><input id="show-steps" type="checkbox"> play step by step
+      <span class="muted small">(watch the messages)</span></label>
+  </div>
+</section>
+
+<p id="status" class="status" role="status"></p>
+
+<main class="panes">
+  <section class="pane" aria-label="The ordinary Game of Life">
+    <h2>Game of Life <span class="muted small">an ordinary program</span></h2>
+    <p class="muted small">Click or drag to set cells. An edit makes this world the new start.</p>
+    <div class="frame"><canvas id="life" aria-label="The Life world; click cells to change them"></canvas></div>
+    <p id="life-info" class="muted small"></p>
+  </section>
+  <section class="pane" aria-label="The Wolfram model">
+    <h2>The same world as a Wolfram model <span class="muted small">hypergraph, every node a cell</span></h2>
+    <div class="tabs" role="group" aria-label="How the hypergraph is drawn">
+      <button id="view-grid" type="button" aria-pressed="true">On the grid</button>
+      <button id="view-3d" type="button" aria-pressed="false">3D hypergraph</button>
+    </div>
+    <div id="grid-view">
+      <p class="muted small">Every node is drawn at the place of its cell. Click a node to list its relations.
+      The world wraps round: the short lines at the border go on at the opposite side.</p>
+      <div class="frame"><canvas id="graph" aria-label="The hypergraph, drawn with every node at its cell"></canvas></div>
+    </div>
+    <div id="space-view" hidden>
+      <p class="muted small">The same nodes and relations without the grid: every place is computed only from
+      which nodes are related, so that related nodes lie near each other. Drag to turn it, use the mouse
+      wheel to zoom, click a node to list its relations.</p>
+      <div class="frame"><canvas id="space" aria-label="The hypergraph in 3D, arranged by its relations alone"></canvas></div>
+    </div>
+    <p id="graph-info" class="muted small"></p>
+    <ul id="legend-grid" class="legend small" aria-label="What the drawing shows">
+      <li><span class="swatch node-alive"></span>alive cell</li>
+      <li><span class="swatch node-dead"></span>dead cell</li>
+      <li><span class="swatch message-alive"></span>message "alive"</li>
+      <li><span class="swatch message-dead"></span>message "dead"</li>
+      <li><span class="swatch reader"></span>reader (where a cell is reading)</li>
+      <li><span class="swatch count">2</span>alive neighbours counted so far</li>
+    </ul>
+  </section>
+</main>
+
+<p id="check" class="check-line" role="status"></p>
+
+<section class="below">
+  <details id="reading" open>
+    <summary>What the right picture shows</summary>
+    <p>Every circle is one <b>node</b> of the graph and stands for one <b>cell</b> of the Game of Life: the
+    circle in row 3, column 5 on the right is the square in row 3, column 5 on the left. The circles
+    never move. What changes are the marks on them and between them. Each mark is a relation of the
+    hypergraph; <code>c</code> is the cell, <code>n</code> a neighbour, <code>s</code> a sender and
+    <code>r</code> a receiver.</p>
+    <div class="table-scroll">
+      <table id="reading-table">
+        <thead><tr><th>you see</th><th>what it is</th><th>in the hypergraph</th></tr></thead>
+        <tbody>
+          <tr><td><span class="swatch node-alive"></span>a black circle</td>
+            <td>an <b>alive cell</b>. It is black exactly when the square at the same place on the left is black</td>
+            <td>the relation <code>{c}</code> exists</td></tr>
+          <tr><td><span class="swatch node-dead"></span>a hollow circle</td>
+            <td>a <b>dead cell</b></td>
+            <td>the relation <code>{c,c,c,c,c}</code> exists</td></tr>
+          <tr><td><span class="swatch link"></span>grey lines</td>
+            <td>which cells are <b>neighbours</b>. They never change. A short line at the border goes on at
+            the opposite side, because the world wraps round</td>
+            <td><code>{c,n1,..,n8}</code> and nine relations <code>{c,x,y}</code> per cell</td></tr>
+          <tr><td><span class="swatch message-alive"></span>a blue dot</td>
+            <td>a <b>message "alive"</b>, sent by an alive cell, waiting next to the cell it is for</td>
+            <td><code>{s,s,s,r}</code></td></tr>
+          <tr><td><span class="swatch message-dead"></span>a small grey dot</td>
+            <td>a <b>message "dead"</b>, sent by a dead cell, waiting next to the cell it is for</td>
+            <td><code>{s,s,r,r}</code></td></tr>
+          <tr><td><span class="swatch reader-ring"></span><span class="swatch reader"></span>an orange ring or arm</td>
+            <td>the <b>reader</b> of a cell, which collects the eight messages. A ring: it is still at home.
+            An arm: it points at the neighbour whose message it took last</td>
+            <td><code>{c,c}</code> at home, <code>{c,n}</code> at a neighbour</td></tr>
+          <tr><td><span class="swatch count">2</span>a number in a circle</td>
+            <td>how many <b>alive neighbours</b> the cell has <b>counted</b> so far (4+ is four or more)</td>
+            <td>a loop on <code>c</code> of 7, 8, 10, 11 or 12 places</td></tr>
+          <tr><td><span class="swatch picked"></span>a blue ring</td>
+            <td>the circle you clicked; its relations are listed below</td>
+            <td>nothing: only a help of this page</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>The tab "3D hypergraph".</b> On the grid, every node is drawn where its cell is, which is a
+    help for the eye and no part of the model: a hypergraph has no places, only relations. The second
+    tab drops the grid. The place of every node is computed from one thing only, which nodes are
+    related, so that related nodes lie near each other. The result is a ring (a doughnut): the world
+    wraps round from left to right and from top to bottom, so it has no border anywhere, and a
+    surface that closes on itself in two directions is a ring. Everything is drawn with the same
+    marks as on the grid, listed above: black and hollow circles, grey lines between neighbours, blue
+    and grey dots for messages, the orange reader, the count. What lies at the back of the ring is
+    drawn fainter. Drag to turn the ring, use the mouse wheel to zoom.</p>
+    <p><b>Why the black dots seem to move.</b> Nothing travels across the picture. In every generation the
+    rules take the alive mark away from some nodes and put one on others, exactly where the Game of Life
+    on the left lets cells die and be born. A glider "moves" on the right the same way it does on the
+    left: as a pattern of marks, not as a thing.</p>
+    <p><b>Why you may see only black dots.</b> Messages, readers and counts exist only while a generation
+    is being worked out, in the steps in between. Played generation by generation, the picture shows
+    only the results. Press <i>1 step</i> a few times, or tick <i>play step by step</i>: after the first
+    step every line carries a message, then the readers go round and the dots are taken away one by
+    one, and with the tenth step the black marks change.</p>
+  </details>
+
+  <details id="cell-box" open>
+    <summary>The relations of one cell</summary>
+    <p id="cell-note" class="muted small">Click a node in the right picture.</p>
+    <div class="table-scroll">
+      <table id="cell-table" hidden>
+        <thead><tr><th>relation</th><th>what it says</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>How it works</summary>
+    <p>A rule of this kind can only look at a relation by taking it, so two neighbours cannot both
+    read the mark of the cell between them in one step. A cell therefore <b>sends</b> a copy of its
+    state to each of its eight neighbours. Then its <b>reader</b> goes once round the neighbours,
+    takes one message at each and <b>counts</b> the "alive" ones. Back home, the count
+    <b>decides</b>: 3 means alive, 2 means stay as you are, anything else means dead. That is one
+    step for sending, eight for reading and one for deciding: ten steps, one generation.</p>
+    <p>Dead cells send a message too, because a rule cannot see that nothing came. And a cell only
+    sends when all its eight lines are empty, so no message is ever overtaken. The whole model is
+    the list of rules below and the start hypergraph; the rewriting is done by the engine of the
+    experiment <i>wolfram-physics</i>, unchanged. Where a node is drawn (at its cell) is only a
+    help for the eye and no part of the model.</p>
+  </details>
+
+  <details id="why">
+    <summary>Why the model looks like this, and who did it before</summary>
+    <p><b>A cell is one node.</b> Alive or dead, a cell is the same single node for the whole game: a
+    world of 12 × 12 cells has 144 nodes at every moment. "Alive" is one relation on that node,
+    <code>{c}</code>, and "dead" is another, <code>{c,c,c,c,c}</code>; nothing else differs between
+    the two. Between generations 20 relations start with a cell's node, and 52 name it once those of
+    its eight neighbours are counted too.</p>
+    <p><b>What is forced.</b> A Wolfram model has only bare nodes, relations, and rules that use up
+    the relations they look at. Each thing it cannot do forces one part of the model:</p>
+    <div class="table-scroll">
+      <table id="why-table">
+        <thead><tr><th>a Wolfram model cannot</th><th>so this model has</th></tr></thead>
+        <tbody>
+          <tr><td>write a value on a node</td>
+            <td>"alive" as a relation of its own, <code>{c}</code></td></tr>
+          <tr><td>ask whether something is missing</td>
+            <td>"dead" as a relation too, and messages from dead cells as well. Otherwise "my neighbour
+            is dead" would look the same as "my neighbour has not sent yet"</td></tr>
+          <tr><td>let two changes read the same relation in one step</td>
+            <td>a copy of the state for each of the eight neighbours: the messages</td></tr>
+          <tr><td>rely on a common clock</td>
+            <td>a reader for every cell. Back home means "I have read all eight"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>What was simply chosen.</b> Which size of relation means what (any sizes would do, as long
+    as every kind can be told from every other; telling kinds apart by size follows the Wolfram
+    project's own model of the automaton "rule 30", where a black cell is a loop of size 6). One node
+    per cell. The order in which the reader goes round. That the rule of Life sits in the rewriting
+    rules (with the table of Life in the start graph, 3 rules would do instead of 17). That the
+    world wraps round. Nobody claims this is the smallest model, and Life does not emerge here: the
+    grid is in the start graph and the rules were written for the job.</p>
+    <p><b>Who did it before.</b> In five web searches (not a full survey) the complete Game of Life
+    as a Wolfram model was not found. The nearest is a personal project page,
+    <a href="https://mykkonovalow.notion.site/Game-of-Life-on-Hypergraphs-829ae1010b8f4164ab7eb59fc6069e1f">Game
+    of Life on Hypergraphs</a>, which by its search summary ran only a cut-down version with two
+    neighbours. The Wolfram project itself shows a one-dimensional automaton and a Turing machine.
+    In other kinds of graph rewriting, Life exists several times, for example in
+    <a href="https://arxiv.org/pdf/1701.06790">Parallel Graph Rewriting with Overlapping Rules</a>,
+    <a href="https://arxiv.org/pdf/1808.03161">A Set-Theoretic Framework for Parallel Graph Rewriting</a>
+    and <a href="https://arxiv.org/pdf/1304.1356">the Graph Grammar Library</a> (known here from
+    search summaries, not read). Those systems may write a value on a node and let many changes read
+    the same thing at once, and then Life is one to seven rules and one step per generation. The 17
+    rules, the messages and the 10 steps are the price of doing without that.</p>
+  </details>
+
+  <details>
+    <summary>The 17 rules</summary>
+    <p class="muted small">In the notation of the Wolfram Physics Project: <code>c</code> is a cell,
+    <code>n</code> a neighbour, <code>x</code> where the reader stands. What a relation means is told by its
+    size and by which places hold the same node.</p>
+    <div class="table-scroll">
+      <table id="rules-table">
+        <thead><tr><th>rule</th><th>what one change does</th><th>in notation</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<script id="python-sources" type="application/json">{"wolfram_physics/__init__.py": "\"\"\"Hypergraph rewriting in the style of the Wolfram Physics Project.\n\nThe engine (``rules``, ``matching``, ``evolution``, ``measure``, ``gallery``, ``search``) has no\nGUI or file code and runs the same under pytest and in the browser (Pyodide). ``session`` is\nthe thin layer the browser page talks to; ``page`` writes that page as one HTML file.\n\n``Evolution`` follows one history in the standard order of matches. Other orders, one change\nat a time: ``ordering``. Every history at once: ``multiway`` (whole states, with\n``canonical`` to recognise equal ones) and ``local_multiway`` (every change with what it\nneeded). How a state bends: ``curvature``.\n\"\"\"\n\nfrom wolfram_physics.evolution import Evolution\nfrom wolfram_physics.matching import MatchLimitError\nfrom wolfram_physics.rules import (\n    Rule,\n    RuleError,\n    format_edges,\n    minimal_init,\n    parse_edges,\n    parse_rules,\n)\n\n__all__ = [\n    \"Evolution\",\n    \"MatchLimitError\",\n    \"Rule\",\n    \"RuleError\",\n    \"format_edges\",\n    \"minimal_init\",\n    \"parse_edges\",\n    \"parse_rules\",\n]\n", "wolfram_physics/rules.py": "\"\"\"Rewriting rules in the notation of the Wolfram Physics Project.\n\nA rule such as ``{{x,y},{x,z}} -> {{x,z},{x,w},{y,w},{z,w}}`` reads: wherever two relations\nstart at the same node ``x``, replace them by the four relations on the right; ``w`` does not\noccur on the left, so it stands for a brand-new node. A relation (hyperedge) is an ordered list\nof nodes of any length.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport re\nfrom collections.abc import Hashable, Iterable, Sequence\nfrom dataclasses import dataclass\n\nEdge = tuple[int, ...]\n\n_GROUP = re.compile(r\"\\{([^{}]*)\\}\")\n_ARROW = re.compile(r\"->|\u2192|:>\")\n_TOKEN = re.compile(r\"[A-Za-z_]\\w*|\\d+\")\n_DEFAULT_NAMES = \"xyzwuvstpqrabcdefghijklmno\"\n\n\nclass RuleError(ValueError):\n    \"\"\"A rule, signature or list of relations that cannot be read.\"\"\"\n\n\ndef _split_edges(text: str) -> list[list[str]]:\n    \"\"\"``\"{{a,b},{b,c}}\"`` -> ``[[\"a\",\"b\"],[\"b\",\"c\"]]``; ``\"{}\"`` -> ``[]``.\"\"\"\n    text = \"\".join(text.split())\n    if text == \"{}\":\n        return []\n    if not (text.startswith(\"{{\") and text.endswith(\"}}\")):\n        raise RuleError(\n            f\"expected a list of relations like {{{{1,2}},{{1,3}}}}, got {text!r}\"\n        )\n    inner = text[1:-1]\n    if _GROUP.sub(\"\", inner).strip(\",\"):\n        raise RuleError(f\"unexpected text between the relations of {text!r}\")\n    edges = []\n    for group in _GROUP.findall(inner):\n        tokens = group.split(\",\")\n        if not all(_TOKEN.fullmatch(token) for token in tokens):\n            raise RuleError(\n                f\"relation {{{group}}} must list node names separated by commas\"\n            )\n        edges.append(tokens)\n    return edges\n\n\ndef parse_edges(text: str) -> list[Edge]:\n    \"\"\"A state such as ``{{1,2},{1,3}}``: relations between nodes given as whole numbers.\"\"\"\n    edges = []\n    for tokens in _split_edges(text):\n        if not all(token.isdigit() for token in tokens):\n            raise RuleError(f\"nodes of a state must be whole numbers, got {tokens}\")\n        edges.append(tuple(int(token) for token in tokens))\n    return edges\n\n\ndef format_edges(edges: Iterable[Sequence[int]]) -> str:\n    return (\n        \"{\"\n        + \",\".join(\"{\" + \",\".join(str(n) for n in edge) + \"}\" for edge in edges)\n        + \"}\"\n    )\n\n\n@dataclass(frozen=True)\nclass Rule:\n    \"\"\"``lhs -> rhs`` with variables numbered by first appearance, the left side first.\n\n    Variables ``0 .. n_lhs_vars-1`` occur on the left and are bound by a match; variables\n    ``n_lhs_vars .. n_vars-1`` occur only on the right and become new nodes.\n    \"\"\"\n\n    lhs: tuple[Edge, ...]\n    rhs: tuple[Edge, ...]\n    names: tuple[str, ...] = ()\n\n    def __post_init__(self) -> None:\n        if not self.lhs:\n            raise RuleError(\"the left side of a rule needs at least one relation\")\n        if any(len(edge) == 0 for edge in (*self.lhs, *self.rhs)):\n            raise RuleError(\"a relation needs at least one node\")\n        seen: list[int] = []\n        for edge in (*self.lhs, *self.rhs):\n            for var in edge:\n                if var not in seen:\n                    seen.append(var)\n        if seen != list(range(len(seen))):\n            raise RuleError(\n                \"variables must be numbered by first appearance (use Rule.build)\"\n            )\n        if not self.names:\n            object.__setattr__(self, \"names\", _default_names(len(seen)))\n        elif len(self.names) != len(seen):\n            raise RuleError(\"one name per variable is needed\")\n\n    @classmethod\n    def build(\n        cls, lhs: Iterable[Sequence[Hashable]], rhs: Iterable[Sequence[Hashable]]\n    ) -> Rule:\n        \"\"\"A rule from relations over any hashable variable labels (renumbered here).\"\"\"\n        left = [tuple(edge) for edge in lhs]\n        right = [tuple(edge) for edge in rhs]\n        number: dict[Hashable, int] = {}\n        for edge in (*left, *right):\n            for label in edge:\n                number.setdefault(label, len(number))\n        names = tuple(\n            label for label in number if isinstance(label, str) and not label.isdigit()\n        )\n        return cls(\n            tuple(tuple(number[label] for label in edge) for edge in left),\n            tuple(tuple(number[label] for label in edge) for edge in right),\n            names if len(names) == len(number) else (),\n        )\n\n    @classmethod\n    def parse(cls, text: str) -> Rule:\n        \"\"\"``\"{{x,y},{x,z}} -> {{x,z},{x,w},{y,w},{z,w}}\"`` (names or numbers as variables).\"\"\"\n        parts = _ARROW.split(text)\n        if len(parts) != 2:\n            raise RuleError(f\"a rule needs exactly one '->', got {text.strip()!r}\")\n        left, right = \"\".join(parts[0].split()), \"\".join(parts[1].split())\n        # Wolfram's registry wraps a rule in one more pair of braces: {{{1,2}} -> {{1,2},{2,3}}}\n        if left.startswith(\"{{{\") and right.endswith(\"}}}\"):\n            left, right = left[1:], right[:-1]\n        elif left.startswith(\"{{{\") and right == \"{}}\":\n            left, right = left[1:], \"{}\"\n        return cls.build(_split_edges(left), _split_edges(right))\n\n    @property\n    def n_vars(self) -> int:\n        return len(self.names)\n\n    @property\n    def n_lhs_vars(self) -> int:\n        return 1 + max(var for edge in self.lhs for var in edge)\n\n    @property\n    def signature(self) -> str:\n        \"\"\"Wolfram's shorthand, e.g. ``2_2 -> 4_2``: two pairs become four pairs.\"\"\"\n        return f\"{_side_signature(self.lhs)} -> {_side_signature(self.rhs)}\"\n\n    def __str__(self) -> str:\n        return f\"{self._side(self.lhs)} -> {self._side(self.rhs)}\"\n\n    def _side(self, edges: tuple[Edge, ...]) -> str:\n        return (\n            \"{\"\n            + \",\".join(\n                \"{\" + \",\".join(self.names[v] for v in edge) + \"}\" for edge in edges\n            )\n            + \"}\"\n        )\n\n\ndef _default_names(count: int) -> tuple[str, ...]:\n    if count <= len(_DEFAULT_NAMES):\n        return tuple(_DEFAULT_NAMES[:count])\n    return tuple(f\"v{i + 1}\" for i in range(count))\n\n\ndef _side_signature(edges: Sequence[Edge]) -> str:\n    arities = sorted({len(edge) for edge in edges}, reverse=True)\n    parts = [f\"{sum(len(edge) == k for edge in edges)}_{k}\" for k in arities]\n    return \" \".join(parts) if parts else \"0\"\n\n\ndef parse_rules(text: str) -> list[Rule]:\n    \"\"\"One rule per line (or separated by ``;``); empty lines and ``#`` comments are skipped.\"\"\"\n    rules = []\n    for line in re.split(r\"[;\\n]\", text):\n        line = line.split(\"#\", 1)[0].strip()\n        if line:\n            rules.append(Rule.parse(line))\n    if not rules:\n        raise RuleError(\"no rule given\")\n    return rules\n\n\ndef parse_signature(text: str) -> tuple[list[int], list[int]]:\n    \"\"\"``\"2_2 -> 4_2\"`` -> the relation sizes of each side: ``([2, 2], [2, 2, 2, 2])``.\"\"\"\n    parts = _ARROW.split(text)\n    if len(parts) != 2:\n        raise RuleError(f\"a signature looks like '2_2 -> 4_2', got {text.strip()!r}\")\n    sides = []\n    for part in parts:\n        arities: list[int] = []\n        for item in part.split():\n            match = re.fullmatch(r\"(\\d+)_(\\d+)\", item)\n            if not match or int(match[2]) == 0:\n                raise RuleError(f\"'{item}' is not <count>_<relation size>, e.g. 2_3\")\n            arities.extend([int(match[2])] * int(match[1]))\n        sides.append(arities)\n    if not sides[0]:\n        raise RuleError(\"the left side of a signature needs at least one relation\")\n    return sides[0], sides[1]\n\n\ndef minimal_init(rules: Sequence[Rule]) -> list[Edge]:\n    \"\"\"The smallest start the first rule's left side can match: self-loops on one node.\n\n    For ``{{x,y},{x,z}} -> ...`` this is ``{{1,1},{1,1}}``, as in Wolfram's registry.\n    \"\"\"\n    return [tuple([1] * len(edge)) for edge in rules[0].lhs]\n", "wolfram_physics/matching.py": "\"\"\"Finding every place where a rule's left side fits, and choosing which fits to apply.\n\nThis is the hot path of the engine and works on whole numpy arrays instead of Python loops\nover relations. Its interface is a few functions over plain integer arrays, so a compiled\nimplementation could replace it without touching the rest of the package.\n\nThere are two searches with the same result. ``find_matches`` reads the whole state, which is\nright when most of it changed. ``find_new_matches`` reads only the neighbourhood of the\nrelations the last step made, through an ``Index``, which is right when little changed.\n\nA *table* holds all relations of one size ``k``: ``ids`` (their numbers, shape ``(m,)``) and\n``nodes`` (shape ``(m, k)``). A *match* assigns one relation to every relation of the pattern,\nsuch that equal variables sit on equal nodes. Different variables may sit on the same node,\nbut one relation is never used twice in a match.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom collections.abc import Callable, Mapping, Sequence\nfrom functools import lru_cache\nfrom typing import NamedTuple\n\nimport numpy as np\n\nTable = tuple[np.ndarray, np.ndarray]\nPattern = Sequence[Sequence[int]]\n\n# Node and relation numbers are 64-bit everywhere. Counts passed to np.repeat and np.bincount\n# must be np.intp instead: in the browser (Pyodide, a 32-bit platform) numpy refuses int64 there.\n_INT = np.int64\n\n# Two node numbers below this fit into one 64-bit integer, for lookups by two nodes at once.\nNODE_LIMIT = 2**31\n\n\nclass MatchLimitError(RuntimeError):\n    \"\"\"More partial matches than ``max_rows``: the state is too large for this rule.\"\"\"\n\n\ndef _join_order(lhs: Pattern, first: int = 0) -> list[int]:\n    \"\"\"Pattern relations ordered so that each one shares variables with the ones before.\"\"\"\n    order = [first]\n    bound = set(lhs[first])\n    rest = [p for p in range(len(lhs)) if p != first]\n    while rest:\n        best = max(rest, key=lambda p: len(bound & set(lhs[p])))\n        rest.remove(best)\n        order.append(best)\n        bound |= set(lhs[best])\n    return order\n\n\ndef find_matches(\n    lhs: Pattern,\n    n_vars: int,\n    tables: Mapping[int, Table],\n    max_rows: int = 2_000_000,\n) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"All matches of ``lhs`` in the relations of ``tables``.\n\n    Returns ``(bindings, edge_ids)``: ``bindings[i, v]`` is the node of variable ``v`` in match\n    ``i`` and ``edge_ids[i, p]`` the relation matched to the ``p``-th pattern relation. The\n    matches are built like a database join: start with the relations that fit the first\n    pattern relation, then extend every partial match by the relations that agree with it on\n    the shared variables (looked up in a sorted index).\n    \"\"\"\n    n_pattern = len(lhs)\n    empty = (np.empty((0, n_vars), _INT), np.empty((0, n_pattern), _INT))\n\n    candidates: list[Table] = []\n    base = 1\n    for pattern in lhs:\n        table = tables.get(len(pattern))\n        if table is None:\n            return empty\n        ids, nodes = table\n        keep = None\n        first_position: dict[int, int] = {}\n        for position, var in enumerate(pattern):\n            if (\n                var in first_position\n            ):  # {x,y,y}: the relation itself must repeat the node\n                same = nodes[:, position] == nodes[:, first_position[var]]\n                keep = same if keep is None else keep & same\n            else:\n                first_position[var] = position\n        if keep is not None:\n            ids, nodes = ids[keep], nodes[keep]\n        if ids.size == 0:\n            return empty\n        candidates.append((ids, nodes))\n        base = max(base, int(nodes.max()) + 1)\n\n    order = _join_order(lhs)\n    ids, nodes = candidates[order[0]]\n    bindings = np.full((ids.size, n_vars), -1, _INT)\n    for position, var in enumerate(lhs[order[0]]):\n        bindings[:, var] = nodes[:, position]\n    edge_ids = np.full((ids.size, n_pattern), -1, _INT)\n    edge_ids[:, order[0]] = ids\n    bound = set(lhs[order[0]])\n    done = [order[0]]\n\n    for p in order[1:]:\n        pattern = lhs[p]\n        ids, nodes = candidates[p]\n        n_rows = bindings.shape[0]\n        shared = [\n            position\n            for position, var in enumerate(pattern)\n            if var in bound and pattern.index(var) == position\n        ]\n        # Join on up to two shared variables at once (one integer key), filter the others below.\n        key_positions = shared[: 2 if base < 2**31 else 1]\n        if key_positions:\n            cand_key = nodes[:, key_positions[0]]\n            row_key = bindings[:, pattern[key_positions[0]]]\n            for position in key_positions[1:]:\n                cand_key = cand_key * base + nodes[:, position]\n                row_key = row_key * base + bindings[:, pattern[position]]\n            index = np.argsort(cand_key, kind=\"stable\")\n            sorted_key = cand_key[index]\n            low = np.searchsorted(sorted_key, row_key, side=\"left\")\n            counts = np.searchsorted(sorted_key, row_key, side=\"right\") - low\n        else:  # a pattern relation unconnected to the others: every combination\n            index = np.arange(ids.size)\n            low = np.zeros(n_rows, _INT)\n            counts = np.full(n_rows, ids.size, np.intp)\n        total = int(counts.sum())\n        if total > max_rows:\n            raise MatchLimitError(\n                f\"more than {max_rows} partial matches ({total}); \"\n                \"the state is too large for this rule\"\n            )\n        rows = np.repeat(np.arange(n_rows), counts)\n        within = np.arange(total) - np.repeat(np.cumsum(counts) - counts, counts)\n        cand = index[np.repeat(low, counts) + within]\n\n        keep = np.ones(total, bool)\n        for position in shared[len(key_positions) :]:\n            keep &= nodes[cand, position] == bindings[rows, pattern[position]]\n        for q in done:\n            keep &= ids[cand] != edge_ids[rows, q]\n        rows, cand = rows[keep], cand[keep]\n\n        bindings = bindings[rows]\n        edge_ids = edge_ids[rows]\n        for position, var in enumerate(pattern):\n            if var not in bound:\n                bindings[:, var] = nodes[cand, position]\n        edge_ids[:, p] = ids[cand]\n        bound |= set(pattern)\n        done.append(p)\n\n    return bindings, edge_ids\n\n\nclass Index:\n    \"\"\"The relations of one size, findable by the nodes at some of their positions.\n\n    It answers \"which relations have these nodes at ``positions``\" without reading the whole\n    state: a large part is sorted once (``rebuild``), relations made since then are collected\n    in a small recent part (``add``). A few questions are compared with all of the recent\n    part directly; for many questions it is sorted first. Used-up relations stay inside until\n    ``forget`` drops them, ``settle`` drops them and sorts the recent part into the large\n    one; whoever looks up filters them out. With no positions at all, every relation answers\n    every question.\n\n    ``repeats`` narrows the index to the relations that a pattern relation such as\n    ``{x,y,y}`` can take at all: pairs ``(position, earlier position)`` that must hold the\n    same node. The others are never stored, so they are neither answers nor counted against\n    the limit of a lookup, just as ``find_matches`` drops them before it joins.\n    \"\"\"\n\n    # up to this many comparisons the recent part is not sorted but compared as a whole\n    _DIRECT = 2**15\n\n    def __init__(\n        self,\n        arity: int,\n        positions: tuple[int, ...],\n        repeats: tuple[tuple[int, int], ...] = (),\n    ) -> None:\n        self.positions = positions\n        self.repeats = repeats\n        self._columns = list(positions)\n        self._main = (np.empty(0, _INT), np.empty(0, _INT), np.empty((0, arity), _INT))\n        # the recent part, in arrays that grow at the end\n        self._keys = np.empty(256, _INT)\n        self._ids = np.empty(256, _INT)\n        self._nodes = np.empty((256, arity), _INT)\n        self._recent_sorted: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None\n        self.recent_size = 0\n\n    @property\n    def main_size(self) -> int:\n        return self._main[1].size\n\n    def rebuild(self, ids: np.ndarray, nodes: np.ndarray) -> None:\n        \"\"\"Start again from ``ids`` and ``nodes``, all relations of this size in the state.\"\"\"\n        ids, nodes = self._fitting(ids, nodes)\n        self._main = self._sorted(self._key(nodes[:, self._columns]), ids, nodes)\n        self._recent_sorted = None\n        self.recent_size = 0\n\n    def add(self, ids: np.ndarray, nodes: np.ndarray) -> None:\n        \"\"\"Relations made after the last ``rebuild``.\"\"\"\n        ids, nodes = self._fitting(ids, nodes)\n        begin = self.recent_size\n        end = begin + ids.size\n        if end > self._ids.size:\n            size = max(end, 2 * self._ids.size)\n            keys = np.empty(size, _INT)\n            grown_ids = np.empty(size, _INT)\n            grown_nodes = np.empty((size, self._nodes.shape[1]), _INT)\n            keys[:begin] = self._keys[:begin]\n            grown_ids[:begin] = self._ids[:begin]\n            grown_nodes[:begin] = self._nodes[:begin]\n            self._keys, self._ids, self._nodes = keys, grown_ids, grown_nodes\n        self._keys[begin:end] = self._key(nodes[:, self._columns])\n        self._ids[begin:end] = ids\n        self._nodes[begin:end] = nodes\n        self._recent_sorted = None\n        self.recent_size = end\n\n    def forget(self, used_up: np.ndarray) -> bool:\n        \"\"\"Drop the relations ``i`` with ``used_up[i] >= 0``. Returns whether there were any.\"\"\"\n        keys, ids, nodes = self._main\n        keep = used_up[ids] < 0\n        dropped = not keep.all()\n        if dropped:\n            self._main = (keys[keep], ids[keep], nodes[keep])\n        recent = self.recent_size\n        keep = used_up[self._ids[:recent]] < 0\n        if not keep.all():\n            dropped = True\n            kept = int(np.count_nonzero(keep))\n            self._keys[:kept] = self._keys[:recent][keep]\n            self._ids[:kept] = self._ids[:recent][keep]\n            self._nodes[:kept] = self._nodes[:recent][keep]\n            self._recent_sorted = None\n            self.recent_size = kept\n        return dropped\n\n    def settle(self, used_up: np.ndarray) -> None:\n        \"\"\"Sort the recent part into the large one, without the used-up relations (those\n        ``i`` with ``used_up[i] >= 0``). Reads what the index holds, not the state.\"\"\"\n        self.forget(used_up)\n        recent = self.recent_size\n        if recent:\n            keys, ids, nodes = self._main\n            self._main = self._sorted(\n                np.concatenate([keys, self._keys[:recent]]),\n                np.concatenate([ids, self._ids[:recent]]),\n                np.concatenate([nodes, self._nodes[:recent]]),\n            )\n        self._recent_sorted = None\n        self.recent_size = 0\n\n    def lookup(\n        self, values: np.ndarray, max_rows: int\n    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:\n        \"\"\"The relations whose nodes at ``positions`` equal a row of ``values``.\n\n        Returns ``(rows, ids, nodes)``: relation ``ids[i]`` with the nodes ``nodes[i]`` answers\n        row ``rows[i]`` of ``values``. Raises ``MatchLimitError`` above ``max_rows`` answers.\n        \"\"\"\n        wanted = self._key(values)\n        found = []  # (rows, ids, nodes) of answers already written out\n        ranges = []  # (sorted part, first answer, number of answers per row) still to write\n        total = 0\n        recent = self.recent_size\n        sorted_parts = [self._main] if self._main[1].size else []\n        if recent and wanted.size * recent <= self._DIRECT:\n            rows, at = np.nonzero(wanted[:, None] == self._keys[:recent])\n            if rows.size:\n                found.append((rows, self._ids[at], self._nodes[at]))\n                total = rows.size\n        elif recent:\n            if self._recent_sorted is None:\n                self._recent_sorted = self._sorted(\n                    self._keys[:recent], self._ids[:recent], self._nodes[:recent]\n                )\n            sorted_parts.append(self._recent_sorted)\n        for part in sorted_parts:\n            low = np.searchsorted(part[0], wanted, side=\"left\")\n            counts = np.searchsorted(part[0], wanted, side=\"right\") - low\n            size = int(counts.sum())\n            if size:\n                ranges.append((part, low, counts, size))\n                total += size\n        if total > max_rows:\n            raise MatchLimitError(\n                f\"more than {max_rows} partial matches ({total}); \"\n                \"the state is too large for this rule\"\n            )\n        for (_, ids, nodes), low, counts, size in ranges:\n            rows = np.repeat(np.arange(wanted.size), counts)\n            at = np.arange(size) + np.repeat(low - (np.cumsum(counts) - counts), counts)\n            found.append((rows, ids[at], nodes[at]))\n        if len(found) == 1:\n            return found[0]\n        if not found:\n            return np.empty(0, np.intp), self._ids[:0], self._nodes[:0]\n        return (\n            np.concatenate([rows for rows, _, _ in found]),\n            np.concatenate([ids for _, ids, _ in found]),\n            np.concatenate([nodes for _, _, nodes in found]),\n        )\n\n    def _fitting(\n        self, ids: np.ndarray, nodes: np.ndarray\n    ) -> tuple[np.ndarray, np.ndarray]:\n        \"\"\"Of the given relations, the ones that repeat a node where ``repeats`` says.\"\"\"\n        for position, first in self.repeats:\n            agree = nodes[:, position] == nodes[:, first]\n            ids, nodes = ids[agree], nodes[agree]\n        return ids, nodes\n\n    def _key(self, values: np.ndarray) -> np.ndarray:\n        \"\"\"One integer per row of ``values`` (the nodes at ``positions``).\"\"\"\n        if not self._columns:\n            return np.zeros(values.shape[0], _INT)\n        key = values[:, 0]\n        for column in range(1, len(self._columns)):\n            key = key * NODE_LIMIT + values[:, column]\n        return key\n\n    def _sorted(\n        self, keys: np.ndarray, ids: np.ndarray, nodes: np.ndarray\n    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:\n        if not self._columns:\n            return keys, ids, nodes\n        order = np.argsort(keys, kind=\"stable\")\n        return keys[order], ids[order], nodes[order]\n\n\nclass _Join(NamedTuple):\n    \"\"\"How one more pattern relation is added to partial matches (see ``_plan``).\"\"\"\n\n    p: int  # the pattern relation\n    arity: int\n    key_positions: tuple[int, ...]  # looked up by the nodes at these positions ...\n    key_vars: list[int]  # ... which are the nodes of these variables\n    checks: tuple[\n        tuple[int, int], ...\n    ]  # (position, variable): further nodes that must agree\n    repeats: tuple[\n        tuple[int, int], ...\n    ]  # (position, earlier position) holding the same node\n    fills: tuple[tuple[int, int], ...]  # (position, variable): variables bound here\n    earlier: tuple[\n        int, ...\n    ]  # pattern relations matched before: must be other relations\n    old_only: bool  # it stands before the seed and may only take old relations\n\n\ndef _repeats(pattern: Sequence[int]) -> tuple[tuple[int, int], ...]:\n    \"\"\"Positions of a pattern relation that repeat an earlier variable ({x,y,y}: (2, 1)).\"\"\"\n    return tuple(\n        (position, pattern.index(var))\n        for position, var in enumerate(pattern)\n        if pattern.index(var) != position\n    )\n\n\n@lru_cache(maxsize=512)\ndef _plan(\n    lhs: tuple[tuple[int, ...], ...], two_keys: bool\n) -> tuple[tuple[tuple[tuple[int, int], ...], tuple[_Join, ...]], ...]:\n    \"\"\"For every pattern relation as the seed: its repeats and the joins that complete it.\"\"\"\n    plans = []\n    for seed, pattern in enumerate(lhs):\n        bound = set(pattern)\n        done = [seed]\n        joins = []\n        for p in _join_order(lhs, seed)[1:]:\n            pattern = lhs[p]\n            shared = [\n                position\n                for position, var in enumerate(pattern)\n                if var in bound and pattern.index(var) == position\n            ]\n            keys = tuple(shared[: 2 if two_keys else 1])\n            joins.append(\n                _Join(\n                    p,\n                    len(pattern),\n                    keys,\n                    [pattern[position] for position in keys],\n                    tuple((q, pattern[q]) for q in shared[len(keys) :]),\n                    _repeats(pattern),\n                    tuple(\n                        (position, var)\n                        for position, var in enumerate(pattern)\n                        if var not in bound and pattern.index(var) == position\n                    ),\n                    tuple(done),\n                    p < seed,\n                )\n            )\n            bound |= set(pattern)\n            done.append(p)\n        plans.append((_repeats(lhs[seed]), tuple(joins)))\n    return tuple(plans)\n\n\ndef find_new_matches(\n    lhs: Pattern,\n    n_vars: int,\n    new: Mapping[int, Table],\n    first_new: int,\n    index: Callable[[int, tuple[int, ...], tuple[tuple[int, int], ...]], Index],\n    used_up: np.ndarray,\n    max_rows: int = 2_000_000,\n    two_keys: bool = True,\n) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"All matches of ``lhs`` that contain at least one new relation.\n\n    ``new`` holds the new relations as tables; they are the relations numbered ``first_new``\n    and above. ``index(size, positions, repeats)`` gives the ``Index`` of the relations of a\n    size by the nodes at ``positions`` (only those that hold the same node where ``repeats``\n    says, see ``Index``), and ``used_up[i] >= 0`` says that relation ``i`` is gone.\n    ``two_keys`` allows lookups by two nodes at once; all node numbers must then be below\n    ``NODE_LIMIT``.\n\n    After a step every match contains a relation that the step made, so this finds the same\n    matches as ``find_matches`` over the whole state, and returns them in the same order,\n    while it only reads the neighbourhood of the new relations.\n\n    ``max_rows`` bounds the partial matches of one lookup, counted like those of\n    ``find_matches``: over relations that exist and that fit the pattern relation. The\n    numbers still differ (that one joins the whole state, this only what starts at a new\n    relation, and with three or more pattern relations in another order), so close to the\n    limit one search can raise ``MatchLimitError`` where the other does not.\n\n    Each pattern relation takes its turn as the seed: it is matched to the new relations and\n    the match is completed through the index. Pattern relations before the seed only take old\n    relations, so a match with several new relations is found once.\n    \"\"\"\n    lhs = tuple(tuple(pattern) for pattern in lhs)\n    n_pattern = len(lhs)\n    all_bindings = []\n    all_edge_ids = []\n    for seed, (repeats, joins) in enumerate(_plan(lhs, two_keys)):\n        pattern = lhs[seed]\n        table = new.get(len(pattern))\n        if table is None:\n            continue\n        ids, nodes = table\n        for position, first in repeats:\n            agree = nodes[:, position] == nodes[:, first]\n            ids, nodes = ids[agree], nodes[agree]\n        if ids.size == 0:\n            continue\n        bindings = np.full((ids.size, n_vars), -1, _INT)\n        bindings[:, list(pattern)] = nodes\n        edge_ids = np.full((ids.size, n_pattern), -1, _INT)\n        edge_ids[:, seed] = ids\n\n        for join in joins:\n            by_node = index(join.arity, join.key_positions, join.repeats)\n            values = bindings[:, join.key_vars]\n            try:\n                rows, ids, nodes = by_node.lookup(values, max_rows)\n            except MatchLimitError:\n                # The count includes relations that are used up and still in the index.\n                # Only what exists may count against the limit: drop them and look again.\n                if not by_node.forget(used_up):\n                    raise\n                rows, ids, nodes = by_node.lookup(values, max_rows)\n            if ids.size:\n                keep = used_up[ids] < 0\n                if join.old_only:\n                    keep &= ids < first_new\n                for position, var in join.checks:\n                    keep &= nodes[:, position] == bindings[rows, var]\n                for q in join.earlier:\n                    keep &= ids != edge_ids[rows, q]\n                rows, ids, nodes = rows[keep], ids[keep], nodes[keep]\n            if ids.size == 0:\n                edge_ids = edge_ids[:0]\n                break\n            bindings = bindings[rows]\n            edge_ids = edge_ids[rows]\n            for position, var in join.fills:\n                bindings[:, var] = nodes[:, position]\n            edge_ids[:, join.p] = ids\n        if edge_ids.shape[0]:\n            all_bindings.append(bindings)\n            all_edge_ids.append(edge_ids)\n\n    if not all_edge_ids:\n        return np.empty((0, n_vars), _INT), np.empty((0, n_pattern), _INT)\n    if len(all_edge_ids) == 1:\n        bindings, edge_ids = all_bindings[0], all_edge_ids[0]\n    else:\n        bindings = np.vstack(all_bindings)\n        edge_ids = np.vstack(all_edge_ids)\n    if edge_ids.shape[0] > 1:\n        # the order of find_matches: by the relations, read in the order they were joined\n        rank = np.lexsort(edge_ids[:, _join_order(lhs)[::-1]].T)\n        bindings, edge_ids = bindings[rank], edge_ids[rank]\n    return bindings, edge_ids\n\n\ndef standard_order(edge_ids: Sequence[np.ndarray]) -> np.ndarray:\n    \"\"\"The order in which matches get their turn, for the matches of several rules.\n\n    ``edge_ids[r]`` are the matched relations of rule ``r`` (one row per match). Returns the\n    indices into the concatenation of all rows, best match first. The criteria are those of\n    the Wolfram model's default (\"LeastRecentEdge\", \"RuleOrdering\", \"RuleIndex\"): prefer the\n    match whose newest relation is oldest (then its second newest, ...), then the match whose\n    relations, read in the order of the rule's left side, are oldest, then the earlier rule.\n    Relation numbers grow with time, so \"older\" is \"smaller number\".\n    \"\"\"\n    width = max(e.shape[1] for e in edge_ids)\n    columns = []\n    for rule_index, e in enumerate(edge_ids):\n        pad = np.full((e.shape[0], width - e.shape[1]), -1, _INT)\n        newest_first = -np.sort(-e, axis=1)\n        rule_column = np.full((e.shape[0], 1), rule_index, _INT)\n        columns.append(np.hstack([newest_first, pad, e, pad, rule_column]))\n    keys = np.vstack(columns)\n    return np.lexsort(keys.T[::-1])\n\n\ndef select_non_overlapping(\n    edges: np.ndarray, n_edges: int, max_rounds: int = 24\n) -> np.ndarray:\n    \"\"\"Which matches are applied when they are taken in order and may not share a relation.\n\n    ``edges[i]`` are the relations of the ``i``-th best match (``-1`` pads shorter matches),\n    all smaller than ``n_edges``. Returns a boolean mask: exactly the matches a one-by-one\n    pass would accept (\"take the match unless one of its relations is already used\").\n\n    The pass is done in rounds on whole arrays: a match that is the best one on each of its\n    relations is certainly taken; taking it rules out the matches that overlap it; repeat\n    with what is left. Long chains of overlapping matches would need one round each, so after\n    ``max_rounds`` the remaining matches are walked one by one.\n    \"\"\"\n    n_matches, width = edges.shape\n    if n_matches == 1:\n        return (edges >= 0).any(axis=1)\n    accepted = np.zeros(n_matches, bool)\n    owner = np.repeat(np.arange(n_matches), width)\n    flat = edges.ravel()\n    valid = flat >= 0\n    owner, flat = owner[valid], flat[valid]\n    size = np.bincount(owner, minlength=n_matches)\n    best = np.empty(n_edges, _INT)\n    used = np.zeros(n_edges, bool)\n\n    for _ in range(max_rounds):\n        if owner.size == 0:\n            return accepted\n        # owner is ascending; assigning in reverse leaves the smallest owner on each relation\n        best[flat[::-1]] = owner[::-1]\n        wins = np.bincount(owner[best[flat] == owner], minlength=n_matches)\n        take = (wins == size) & (wins > 0)\n        accepted |= take\n        used[flat[take[owner]]] = True\n        dead = np.zeros(n_matches, bool)\n        dead[owner[used[flat]]] = True\n        alive = ~dead[owner]\n        owner, flat = owner[alive], flat[alive]\n\n    taken: set[int] = set()\n    for i in np.unique(owner).tolist():\n        row = [e for e in edges[i].tolist() if e >= 0]\n        if taken.isdisjoint(row):\n            taken.update(row)\n            accepted[i] = True\n    return accepted\n", "wolfram_physics/evolution.py": "\"\"\"The world: a hypergraph that is rewritten step by step, with its whole history kept.\n\n``Evolution`` holds every relation (hyperedge) that ever existed, together with the event\nthat created it and the event that used it up. From that one record come the state at any\nstep, the list of events and the causal graph (\"which event needed the result of which\").\n\nOne *step* applies as many matches as possible at once: all matches in the current state are\nput in the standard order and taken one by one unless they overlap a match already taken.\nThe relations created in a step can only be used from the next step on.\n\nA step costs what it changes, not what the world holds. A match is only left out if it\nshares a relation with a match that was applied, so after a step every match contains a\nrelation that the step made: when little changed, only the neighbourhood of the new relations\nis searched. The numbers of relations and nodes are kept by adding and subtracting, and the\ntables of the current state are built when somebody asks for them.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport math\nfrom collections.abc import Iterable, Sequence\n\nimport numpy as np\n\nfrom wolfram_physics.matching import (\n    NODE_LIMIT,\n    Index,\n    Table,\n    find_matches,\n    find_new_matches,\n    select_non_overlapping,\n    standard_order,\n)\nfrom wolfram_physics.rules import Edge, Rule, minimal_init\n\n_INT = np.int64\nNEVER = int(np.iinfo(_INT).max)\nORDERINGS = (\"standard\", \"random\")\n\n# The whole state is searched when more than one relation in this many is new; otherwise\n# only the neighbourhood of the new relations. Both searches give the same matches.\n_NEW_SHARE = 8\n# Places per node are counted in an array as long as the largest node number. A start state\n# with node numbers above this limit would waste memory; its nodes are counted from scratch.\n_COUNTED_NODES = 2**20\n\n\nclass _Column:\n    \"\"\"A 1-D integer array that grows at the end (amortised doubling).\"\"\"\n\n    def __init__(self) -> None:\n        self._data = np.empty(1024, _INT)\n        self.size = 0\n\n    def extend(self, values: np.ndarray) -> None:\n        end = self.size + values.size\n        if end > self._data.size:\n            grown = np.empty(max(end, 2 * self._data.size), _INT)\n            grown[: self.size] = self._data[: self.size]\n            self._data = grown\n        self._data[self.size : end] = values\n        self.size = end\n\n    def keep(self, values: np.ndarray) -> None:\n        \"\"\"Replace the content by ``values``, which must not be longer than it.\"\"\"\n        self._data[: values.size] = values\n        self.size = values.size\n\n    @property\n    def view(self) -> np.ndarray:\n        return self._data[: self.size]\n\n\nclass Evolution:\n    \"\"\"A hypergraph rewritten by ``rules``, starting from ``init``.\n\n    ``rules`` is one rule or several (``Rule`` objects or their text). ``init`` is the list of\n    starting relations over non-negative node numbers; by default the smallest state the first\n    rule can match (self-loops on node 1). ``ordering`` is ``\"standard\"`` (the Wolfram model's\n    default order of matches, fully deterministic) or ``\"random\"`` (matches take their turn in\n    a random order drawn from ``seed``). ``max_matches`` bounds the memory of one step.\n\n    ``incremental`` chooses how matches are searched and never changes a state, an event or\n    a causal link: ``True`` searches only near the relations the last step made, ``False``\n    the whole state, and the default ``None`` picks per step whichever is cheaper. Only\n    ``max_matches`` depends on it: each search counts the partial matches that it holds\n    itself, and the search near the new relations usually holds fewer, so a step that is\n    too large for the whole-state search can still be done by the other.\n    \"\"\"\n\n    def __init__(\n        self,\n        rules: Rule | str | Iterable[Rule | str],\n        init: Iterable[Sequence[int]] | None = None,\n        *,\n        ordering: str = \"standard\",\n        seed: int = 0,\n        max_matches: int = 2_000_000,\n        incremental: bool | None = None,\n    ) -> None:\n        if isinstance(rules, (Rule, str)):\n            rules = [rules]\n        self.rules: tuple[Rule, ...] = tuple(\n            Rule.parse(rule) if isinstance(rule, str) else rule for rule in rules\n        )\n        if not self.rules:\n            raise ValueError(\"at least one rule is needed\")\n        if ordering not in ORDERINGS:\n            raise ValueError(f\"ordering must be one of {ORDERINGS}, got {ordering!r}\")\n        self.ordering = ordering\n        self.max_matches = max_matches\n        self.incremental = incremental\n        self._rng = np.random.default_rng(seed)\n        # per rule: how many nodes and relations one event makes\n        self._rule_new_nodes = np.array(\n            [rule.n_vars - rule.n_lhs_vars for rule in self.rules], _INT\n        )\n        self._rule_outputs = np.array([len(rule.rhs) for rule in self.rules], _INT)\n        made_sizes = {len(edge) for rule in self.rules for edge in rule.rhs}\n        # the size of the relations that events make, if they all have the same\n        self._one_size = made_sizes.pop() if len(made_sizes) == 1 else None\n\n        start = [\n            tuple(int(n) for n in edge) for edge in (init or minimal_init(self.rules))\n        ]\n        if any(len(edge) == 0 or min(edge) < 0 for edge in start):\n            raise ValueError(\n                \"relations need at least one node, numbered from 0 upwards\"\n            )\n        self.init: tuple[Edge, ...] = tuple(start)\n\n        # one entry per relation that ever existed\n        self._arity = _Column()\n        self._start = _Column()  # where its nodes begin in _flat\n        self._created_by = _Column()  # event number, -1 for the initial relations\n        self._destroyed_by = _Column()  # event number, -1 while it exists\n        self._created_step = _Column()\n        self._destroyed_step = _Column()  # NEVER while it exists\n        # which relation of the rule's left side it was matched to, -1 while it exists\n        self._destroyed_slot = _Column()\n        self._flat = _Column()\n        # one entry per event\n        self._event_rule = _Column()\n        self._event_step = _Column()\n\n        self._next_node = 1 + max((max(edge) for edge in start), default=-1)\n        self._finished = False\n        self._frozen = False\n        # the current state: relations that may still exist (used-up ones are dropped\n        # lazily), its tables once somebody asked, and the relations the last step made\n        self._live = _Column()\n        self._tables: dict[int, Table] | None = None\n        self._first_new = 0\n        self._new: dict[int, Table] | None = None\n        # lookups by node for the search near new relations, see _index\n        self._indexes: dict[\n            tuple[int, tuple[int, ...], tuple[tuple[int, int], ...]], Index\n        ] = {}\n        self._two_keys = True\n\n        flat = np.array([n for edge in start for n in edge], _INT)\n        self._append_edges(\n            np.array([len(edge) for edge in start], _INT),\n            flat,\n            np.full(len(start), -1, _INT),\n            step=0,\n        )\n        # how many places every node holds in the current state (None: not kept)\n        self._places: np.ndarray | None = None\n        if self._next_node <= _COUNTED_NODES:\n            self._places = np.zeros(max(1024, 2 * self._next_node), _INT)\n            self._places[: self._next_node] = np.bincount(\n                flat.astype(np.intp), minlength=self._next_node\n            )\n        self._edge_counts = [len(start)]\n        self._node_counts = [int(np.unique(flat).size)]\n        self._event_counts = [0]\n\n    @classmethod\n    def from_history(\n        cls,\n        rules: Rule | str | Iterable[Rule | str],\n        init: Iterable[Sequence[int]] | None,\n        *,\n        relations: Sequence[Sequence[int]],\n        created_by: Sequence[int],\n        destroyed_by: Sequence[int],\n        event_rule: Sequence[int],\n        event_inputs: Sequence[Sequence[int]],\n        event_generation: Sequence[int],\n        ordering: str = \"\",\n        finished: bool = False,\n    ) -> Evolution:\n        \"\"\"A history that was made elsewhere, one event at a time (see\n        ``wolfram_physics.ordering``), as an ``Evolution`` that can be read like any other\n        but not continued (``frozen``).\n\n        ``relations`` are the relations made by events, in the order they were made, and\n        ``created_by`` their events; ``destroyed_by`` has one entry per relation, the\n        start's first (-1: still there). Events are described by ``event_rule``,\n        ``event_inputs`` (the relations used, in the order of the rule's left side, numbered\n        with the start's relations first) and ``event_generation``. The steps of the result\n        are the generations: its events and relations are numbered generation by\n        generation, in the order given within a generation.\n        \"\"\"\n        world = cls(rules, init)\n        world.ordering = ordering\n        world._frozen = True\n        world._finished = finished\n        n_init = len(world.init)\n        generation = np.asarray(event_generation, _INT).reshape(-1)\n        order = np.argsort(generation, kind=\"stable\")\n        new_event = np.empty(order.size, _INT)\n        new_event[order] = np.arange(order.size)\n        made = new_event[np.asarray(created_by, _INT).reshape(-1)]\n        by_event = np.argsort(made, kind=\"stable\")\n        new_relation = np.arange(n_init + made.size)\n        new_relation[n_init + by_event] = n_init + np.arange(made.size)\n\n        steps = generation[order]\n        made_sorted = made[by_event]\n        last = int(steps[-1]) if steps.size else 0\n        bounds = np.searchsorted(\n            steps[made_sorted], np.arange(1, last + 1), side=\"right\"\n        )\n        begin = 0\n        for step, end in zip(range(1, last + 1), bounds.tolist(), strict=True):\n            chosen = by_event[begin:end]\n            rows = [relations[i] for i in chosen.tolist()]\n            world._first_new = world.total_edges\n            world._append_edges(\n                np.array([len(row) for row in rows], _INT),\n                np.array([node for row in rows for node in row], _INT),\n                made_sorted[begin:end],\n                step,\n            )\n            begin = end\n        world._event_rule.extend(np.asarray(event_rule, _INT).reshape(-1)[order])\n        world._event_step.extend(steps)\n\n        used = np.asarray(destroyed_by, _INT).reshape(-1)\n        gone = np.flatnonzero(used >= 0)\n        world._destroyed_by.view[new_relation[gone]] = new_event[used[gone]]\n        world._destroyed_step.view[new_relation[gone]] = generation[used[gone]]\n        for inputs in event_inputs:\n            world._destroyed_slot.view[new_relation[list(inputs)]] = np.arange(\n                len(inputs)\n            )\n\n        flat = world._flat.view\n        world._next_node = 1 + int(flat.max()) if flat.size else 0\n        world._places = None\n        world._event_counts = np.bincount(\n            steps.astype(np.intp), minlength=last + 1\n        ).tolist()\n        world._edge_counts = []\n        world._node_counts = []\n        for step in range(last + 1):\n            tables = world._tables_at(step)\n            world._edge_counts.append(sum(ids.size for ids, _ in tables.values()))\n            nodes = [nodes.ravel() for _, nodes in tables.values()]\n            world._node_counts.append(\n                int(np.unique(np.concatenate(nodes)).size) if nodes else 0\n            )\n        return world\n\n    # ------------------------------------------------------------------ size and history\n\n    @property\n    def frozen(self) -> bool:\n        \"\"\"True for a history that was made elsewhere (``from_history``): it can be read\n        but takes no further steps.\"\"\"\n        return self._frozen\n\n    @property\n    def step_count(self) -> int:\n        \"\"\"Number of steps done so far; states are numbered ``0 .. step_count``.\"\"\"\n        return len(self._edge_counts) - 1\n\n    @property\n    def event_count(self) -> int:\n        return self._event_rule.size\n\n    @property\n    def edge_count(self) -> int:\n        \"\"\"Relations in the current state.\"\"\"\n        return self._edge_counts[-1]\n\n    @property\n    def node_count(self) -> int:\n        \"\"\"Nodes that occur in at least one relation of the current state.\"\"\"\n        return self._node_counts[-1]\n\n    @property\n    def total_edges(self) -> int:\n        \"\"\"Relations that ever existed, including the ones already used up.\"\"\"\n        return self._arity.size\n\n    @property\n    def finished(self) -> bool:\n        \"\"\"True once a step found nothing to rewrite: the state will not change any more.\"\"\"\n        return self._finished\n\n    @property\n    def edge_counts(self) -> np.ndarray:\n        \"\"\"Relations in state ``0, 1, ..., step_count``.\"\"\"\n        return np.array(self._edge_counts, _INT)\n\n    @property\n    def node_counts(self) -> np.ndarray:\n        return np.array(self._node_counts, _INT)\n\n    @property\n    def event_counts(self) -> np.ndarray:\n        \"\"\"Events applied in step ``0`` (always 0), ``1``, ..., ``step_count``.\"\"\"\n        return np.array(self._event_counts, _INT)\n\n    @property\n    def event_rule(self) -> np.ndarray:\n        \"\"\"For every event the index of the rule it applied.\"\"\"\n        return self._event_rule.view\n\n    @property\n    def event_step(self) -> np.ndarray:\n        \"\"\"For every event the step (1-based) in which it happened.\"\"\"\n        return self._event_step.view\n\n    @property\n    def edge_created_by(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: the event that made it (-1: initial).\"\"\"\n        return self._created_by.view\n\n    @property\n    def edge_destroyed_by(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: the event that used it up (-1: still there).\"\"\"\n        return self._destroyed_by.view\n\n    @property\n    def edge_created_step(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: the step that made it (0: initial).\"\"\"\n        return self._created_step.view\n\n    @property\n    def edge_destroyed_step(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: the step that used it up (``NEVER``: still\n        there).\"\"\"\n        return self._destroyed_step.view\n\n    @property\n    def edge_destroyed_slot(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: which relation of the rule's left side it\n        was matched to when it was used up, counted from 0 (-1: still there).\"\"\"\n        return self._destroyed_slot.view\n\n    @property\n    def edge_arity(self) -> np.ndarray:\n        \"\"\"For every relation that ever existed: how many nodes it has.\"\"\"\n        return self._arity.view\n\n    def relation_nodes(self, ids: np.ndarray) -> np.ndarray:\n        \"\"\"The nodes of the relations ``ids`` (which must all have the same size), one row\n        per relation. Works for relations that are already used up too.\"\"\"\n        ids = np.asarray(ids, _INT)\n        if ids.size == 0:\n            return np.empty((0, 0), _INT)\n        size = int(self._arity.view[ids[0]])\n        return self._flat.view[self._start.view[ids][:, None] + np.arange(size)]\n\n    # ------------------------------------------------------------------ states\n\n    def tables(self, step: int | None = None) -> dict[int, Table]:\n        \"\"\"The state after ``step`` steps (default: now) as one table per relation size.\n\n        ``{size: (ids, nodes)}`` with ``ids`` of shape ``(m,)`` and ``nodes`` of shape\n        ``(m, size)``; see ``wolfram_physics.matching``.\n        \"\"\"\n        if step is None:\n            return self._current_tables()\n        if not 0 <= step <= self.step_count:\n            raise IndexError(f\"step {step} is outside 0..{self.step_count}\")\n        return self._tables_at(step)\n\n    def _tables_at(self, step: int) -> dict[int, Table]:\n        \"\"\"The state after ``step`` steps, read from the whole history.\"\"\"\n        alive = np.flatnonzero(\n            (self._created_step.view <= step) & (self._destroyed_step.view > step)\n        )\n        return self._tables_of(alive)\n\n    def _current_tables(self) -> dict[int, Table]:\n        \"\"\"The state now, from the list of relations that may still exist; remembered\n        until the next step.\"\"\"\n        if self._tables is None:\n            self._drop_used_up()\n            self._tables = self._tables_of(self._live.view.copy())\n        return self._tables\n\n    def _drop_used_up(self) -> None:\n        live = self._live.view\n        self._live.keep(live[self._destroyed_by.view[live] < 0])\n\n    def _tables_of(self, ids: np.ndarray) -> dict[int, Table]:\n        \"\"\"The relations ``ids`` (ascending) as one table per relation size.\"\"\"\n        arity = self._arity.view[ids]\n        start = self._start.view[ids]\n        flat = self._flat.view\n        tables = {}\n        for k in np.unique(arity).tolist():\n            chosen = arity == k\n            tables[k] = (ids[chosen], flat[start[chosen][:, None] + np.arange(k)])\n        return tables\n\n    def edges(self, step: int | None = None) -> list[Edge]:\n        \"\"\"The relations of a state as tuples, oldest first.\"\"\"\n        rows: list[tuple[int, Edge]] = []\n        for ids, nodes in self.tables(step).values():\n            rows.extend(zip(ids.tolist(), map(tuple, nodes.tolist()), strict=True))\n        return [edge for _, edge in sorted(rows)]\n\n    def nodes(self, step: int | None = None) -> np.ndarray:\n        \"\"\"The nodes that occur in a state, ascending.\"\"\"\n        tables = self.tables(step)\n        if not tables:\n            return np.empty(0, _INT)\n        return np.unique(\n            np.concatenate([nodes.ravel() for _, nodes in tables.values()])\n        )\n\n    def causal_edges(self) -> np.ndarray:\n        \"\"\"The causal graph as rows ``(cause, effect)`` of event numbers.\n\n        One row per relation that one event created and a later event used up, so two events\n        can be linked more than once. Events are numbered in the order they were applied.\n        \"\"\"\n        created = self._created_by.view\n        destroyed = self._destroyed_by.view\n        passed = (created >= 0) & (destroyed >= 0)\n        return np.column_stack([created[passed], destroyed[passed]])\n\n    # ------------------------------------------------------------------ evolution\n\n    def run(self, steps: int, max_edges: int | None = None) -> int:\n        \"\"\"Do up to ``steps`` steps; stop early when nothing matches or the state has more\n        than ``max_edges`` relations. Returns the number of steps done.\"\"\"\n        done = 0\n        while done < steps and not self._finished and not self._frozen:\n            if max_edges is not None and self.edge_count > max_edges:\n                break\n            if self.step() == 0:\n                break\n            done += 1\n        return done\n\n    def step(self) -> int:\n        \"\"\"Rewrite every non-overlapping match once. Returns the number of events.\"\"\"\n        if self._finished or self._frozen:\n            return 0\n        bindings, edge_ids = self._matches()\n        sizes = [e.shape[0] for e in edge_ids]\n        n_matches = sum(sizes)\n        if n_matches == 0:\n            self._finished = True\n            return 0\n\n        if self.ordering == \"random\":\n            order = self._rng.permutation(n_matches)\n        elif n_matches == 1:\n            order = np.zeros(1, np.intp)\n        else:\n            order = standard_order(edge_ids)\n        if len(self.rules) == 1:\n            ranked = edge_ids[0][order]\n            mask = select_non_overlapping(ranked, self.total_edges)\n            # indices into the matches, in order of application\n            row_of = order[mask]\n            rule_of = np.zeros(row_of.size, np.intp)\n        else:\n            width = max(e.shape[1] for e in edge_ids)\n            padded = np.full((n_matches, width), -1, _INT)\n            counts = np.array(sizes, _INT)\n            offsets = np.cumsum(counts) - counts\n            for offset, e in zip(offsets.tolist(), edge_ids, strict=True):\n                padded[offset : offset + e.shape[0], : e.shape[1]] = e\n            ranked = padded[order]\n            mask = select_non_overlapping(ranked, self.total_edges)\n            chosen = order[mask]  # indices into the concatenated matches\n            rule_of = np.searchsorted(offsets, chosen, side=\"right\") - 1\n            row_of = chosen - offsets[rule_of]\n\n        step = self.step_count + 1\n        n_events = row_of.size\n        events = self.event_count + np.arange(n_events)\n        new_nodes = self._rule_new_nodes[rule_of]\n        outputs = self._rule_outputs[rule_of]\n        node_offset = self._next_node + np.cumsum(new_nodes) - new_nodes\n        edge_offset = (\n            np.cumsum(outputs) - outputs\n        )  # within the relations made in this step\n\n        arity = np.empty(int(outputs.sum()), _INT)\n        per_rule = []\n        for rule_index, rule in enumerate(self.rules):\n            mine = np.flatnonzero(rule_of == rule_index)\n            per_rule.append(mine)\n            for i, edge in enumerate(rule.rhs):\n                arity[edge_offset[mine] + i] = len(edge)\n        start = np.cumsum(arity) - arity\n        flat = np.empty(int(arity.sum()), _INT)\n        left = []  # the nodes of the relations that are used up, place by place\n        for rule, mine, b in zip(self.rules, per_rule, bindings, strict=True):\n            fresh = node_offset[mine][:, None] + np.arange(\n                rule.n_vars - rule.n_lhs_vars\n            )\n            values = np.hstack([b[row_of[mine]], fresh])\n            for i, edge in enumerate(rule.rhs):\n                target = start[edge_offset[mine] + i][:, None] + np.arange(len(edge))\n                flat[target] = values[:, list(edge)]\n            left.append(values[:, [var for edge in rule.lhs for var in edge]].ravel())\n\n        consumed = ranked[mask]\n        of_event, column = np.nonzero(consumed >= 0)  # without the padding\n        used_up = consumed[of_event, column]\n        self._destroyed_by.view[used_up] = events[of_event]\n        self._destroyed_step.view[used_up] = step\n        # the columns of a match are in the order of the rule's left side\n        self._destroyed_slot.view[used_up] = column\n        self._event_rule.extend(rule_of)\n        self._event_step.extend(np.full(n_events, step, _INT))\n        self._next_node += int(new_nodes.sum())\n        self._first_new = self.total_edges\n        self._append_edges(\n            arity, flat, np.repeat(events, outputs.astype(np.intp)), step\n        )\n\n        self._tables = None\n        self._new = None\n        if self._one_size is not None:  # the usual case: one table, no sorting by size\n            ids = np.arange(self._first_new, self.total_edges)\n            self._new = {self._one_size: (ids, flat.reshape(-1, self._one_size))}\n        self._edge_counts.append(self._edge_counts[-1] + arity.size - used_up.size)\n        self._node_counts.append(\n            self._count_nodes(left[0] if len(left) == 1 else np.concatenate(left), flat)\n        )\n        self._event_counts.append(n_events)\n        if self._live.size > 2 * self._edge_counts[-1] + 1024:\n            self._drop_used_up()\n        if self._indexes:\n            new = self._new_tables()\n            for (k, _, _), index in self._indexes.items():\n                if k in new:\n                    index.add(*new[k])\n        return n_events\n\n    # ------------------------------------------------------------------ internals\n\n    def _matches(self) -> tuple[list[np.ndarray], list[np.ndarray]]:\n        \"\"\"Bindings and matched relations of every match in the current state, per rule.\"\"\"\n        made = self.total_edges - self._first_new\n        incremental = self.incremental\n        if incremental is None:\n            incremental = _NEW_SHARE * made <= self._edge_counts[-1]\n        bindings = []\n        edge_ids = []\n        if not incremental:\n            self._indexes.clear()  # they are not kept up to date by steps of this kind\n            tables = self._current_tables()\n            for rule in self.rules:\n                b, e = find_matches(rule.lhs, rule.n_lhs_vars, tables, self.max_matches)\n                bindings.append(b)\n                edge_ids.append(e)\n            return bindings, edge_ids\n\n        two_keys = self._next_node <= NODE_LIMIT\n        if two_keys != self._two_keys:\n            self._two_keys = two_keys\n            self._indexes.clear()\n        new = self._new_tables()\n        used_up = self._destroyed_by.view\n        for rule in self.rules:\n            b, e = find_new_matches(\n                rule.lhs,\n                rule.n_lhs_vars,\n                new,\n                self._first_new,\n                self._index,\n                used_up,\n                self.max_matches,\n                two_keys,\n            )\n            bindings.append(b)\n            edge_ids.append(e)\n        return bindings, edge_ids\n\n    def _new_tables(self) -> dict[int, Table]:\n        \"\"\"The relations the last step made (at the start: all), one table per size.\"\"\"\n        if self._new is None:\n            self._new = self._tables_of(np.arange(self._first_new, self.total_edges))\n        return self._new\n\n    def _index(\n        self,\n        arity: int,\n        positions: tuple[int, ...],\n        repeats: tuple[tuple[int, int], ...],\n    ) -> Index:\n        \"\"\"The relations of one size, findable by the nodes at ``positions``: all of them,\n        or with ``repeats`` only those that hold the same node at the positions it pairs.\n\n        Built from the current state when it is first asked for, then kept up to date by\n        ``step``. It is sorted again, without the relations used up since, when its unsorted\n        recent part has grown too large: with ``c`` new relations per step and ``n`` in the\n        index that is about every ``sqrt(2n/c)`` steps, which balances sorting everything\n        against sorting the recent part in every step. That reads the index only, not the\n        state.\n        \"\"\"\n        index = self._indexes.get((arity, positions, repeats))\n        if index is None:\n            index = Index(arity, positions, repeats)\n            self._indexes[(arity, positions, repeats)] = index\n            table = self._current_tables().get(arity)\n            if table is not None:\n                index.rebuild(*table)\n            return index\n        made = self.total_edges - self._first_new\n        if index.recent_size > 64 + math.isqrt(2 * index.main_size * made):\n            index.settle(self._destroyed_by.view)\n        return index\n\n    def _count_nodes(self, left: np.ndarray, entered: np.ndarray) -> int:\n        \"\"\"The number of nodes after a step that took the places ``left`` away from their\n        nodes and gave the places ``entered`` to theirs.\"\"\"\n        if self._places is None:\n            tables = self._current_tables()\n            if not tables:\n                return 0\n            return int(\n                np.unique(\n                    np.concatenate([nodes.ravel() for _, nodes in tables.values()])\n                ).size\n            )\n        n = self._next_node\n        if n > self._places.size:\n            grown = np.zeros(2 * n, _INT)\n            grown[: self._places.size] = self._places\n            self._places = grown\n        places = self._places\n        if 2 * (left.size + entered.size) > n:  # most nodes are touched: count them all\n            places[:n] += np.bincount(entered.astype(np.intp), minlength=n)\n            places[:n] -= np.bincount(left.astype(np.intp), minlength=n)\n            return int(np.count_nonzero(places[:n]))\n        nodes, inverse = np.unique(np.concatenate([left, entered]), return_inverse=True)\n        before = places[nodes]\n        after = (\n            before\n            + np.bincount(inverse[left.size :], minlength=nodes.size)\n            - np.bincount(inverse[: left.size], minlength=nodes.size)\n        )\n        places[nodes] = after\n        return (\n            self._node_counts[-1]\n            + int(np.count_nonzero(after))\n            - int(np.count_nonzero(before))\n        )\n\n    def _append_edges(\n        self, arity: np.ndarray, flat: np.ndarray, created_by: np.ndarray, step: int\n    ) -> None:\n        count = arity.size\n        self._live.extend(np.arange(self._arity.size, self._arity.size + count))\n        self._start.extend(self._flat.size + np.cumsum(arity) - arity)\n        self._arity.extend(arity)\n        self._flat.extend(flat)\n        self._created_by.extend(created_by)\n        self._destroyed_by.extend(np.full(count, -1, _INT))\n        self._created_step.extend(np.full(count, step, _INT))\n        self._destroyed_step.extend(np.full(count, NEVER, _INT))\n        self._destroyed_slot.extend(np.full(count, -1, _INT))\n", "wolframs_game_of_life/__init__.py": "\"\"\"Conway's Game of Life played by a Wolfram model: a start hypergraph and rewriting rules.\n\n``life`` is the ordinary Game of Life (the reference), ``model`` the 17 rules, the start\nhypergraph and the reading of a state, ``world`` plays both side by side and compares them,\n``session`` is the thin layer the browser page talks to and ``page`` writes that page as one\nHTML file. The rewriting itself is done by the unchanged engine of ``wolfram_physics``.\n\"\"\"\n\nfrom wolframs_game_of_life.life import life_step\nfrom wolframs_game_of_life.model import (\n    STEPS_PER_GENERATION,\n    life_rules,\n    project,\n    read_state,\n    start_hypergraph,\n)\nfrom wolframs_game_of_life.world import LifeWorld\n\n__all__ = [\n    \"STEPS_PER_GENERATION\",\n    \"LifeWorld\",\n    \"life_rules\",\n    \"life_step\",\n    \"project\",\n    \"read_state\",\n    \"start_hypergraph\",\n]\n", "wolframs_game_of_life/layout.py": "\"\"\"Places in space for the nodes of the hypergraph, computed from its links alone.\n\nA picture needs a place for every node, and the model has none: a node is only what it is\nrelated to. ``places`` therefore works from one thing only, the list of which two nodes are\nlinked, and never from rows and columns.\n\nHow, in plain words: on any graph one can ask for the smoothest ways to give every node a\nnumber so that linked nodes get similar numbers (the slowest \"waves\" on the graph; the\neigenvectors of its Laplacian matrix with the smallest eigenvalues). On a world that wraps\nround in two directions the four slowest waves are one cosine and one sine wave round each\ndirection. Two numbers of one direction say where on a circle a node sits, so every node\ngets two angles, and two angles are a place on a ring (a doughnut, a torus). Nothing tells\nthe code which wave belongs to which direction (all four are equally slow when the world is\nsquare); it finds the two pairs from the fact that on such a world the two circles are\nequally large at every node.\n\nWhen the links are not those of a world that wraps round in two directions with equal\nsides, the test for the two circles fails, and the three slowest waves are used directly as\ncoordinates (a spectral layout), which is a fair picture of any graph.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport numpy as np\n\nRING_RADIUS = 2.2  # the radius of the ring, in units of the radius of its tube\nLINK_LENGTH = 30.0  # what the links of the picture are scaled to, on average\n\n\ndef slowest_waves(pairs: np.ndarray, count: int, waves: int) -> np.ndarray:\n    \"\"\"The ``waves`` smoothest ways to spread numbers over the nodes ``0 .. count-1`` linked\n    by ``pairs``, one per column; the constant one is left out.\"\"\"\n    adjacency = np.zeros((count, count))\n    adjacency[pairs[:, 0], pairs[:, 1]] = 1.0\n    adjacency[pairs[:, 1], pairs[:, 0]] = 1.0\n    laplacian = np.diag(adjacency.sum(axis=1)) - adjacency\n    _, vectors = np.linalg.eigh(laplacian)\n    return vectors[:, 1 : waves + 1]\n\n\ndef two_circles(points: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:\n    \"\"\"Split four coordinates per node into two pairs, each of which goes round a circle.\n\n    On a world that wraps round in two directions, some rotation of the four slowest waves\n    is ``(cos a, sin a, cos b, sin b)``, with ``a`` and ``b`` the two angles of a node. Then\n    ``w1^2 + w2^2 - w3^2 - w4^2`` is 0 at every node. This looks for the one way to weigh\n    the products of coordinates (a symmetric 4 x 4 matrix) that gives 0 at every node, and\n    reads the two pairs off it. Returns the two angles per node, or ``None`` if there is no\n    such way or more than one.\n    \"\"\"\n    upper = np.triu_indices(4)\n    weight = np.where(upper[0] == upper[1], 1.0, 2.0)\n    products = points[:, upper[0]] * points[:, upper[1]] * weight\n    _, singular, rows = np.linalg.svd(products, full_matrices=False)\n    if singular[-1] > 1e-8 * singular[0] or singular[-2] < 1e-4 * singular[0]:\n        return None\n    form = np.zeros((4, 4))\n    form[upper] = rows[-1]\n    form = form + form.T - np.diag(np.diag(form))\n    values, axes = np.linalg.eigh(form)\n    if not (values[1] < 0 < values[2]):\n        return None\n    first, second = points @ axes[:, :2], points @ axes[:, 2:]\n    # the proof: both pairs must lie on circles of one and the same size at every node\n    radii = np.concatenate([np.hypot(*first.T), np.hypot(*second.T)])\n    if np.ptp(radii) > 1e-6 * radii.mean():\n        return None\n    return (\n        np.arctan2(first[:, 1], first[:, 0]),\n        np.arctan2(second[:, 1], second[:, 0]),\n    )\n\n\ndef places(pairs: np.ndarray, count: int) -> np.ndarray:\n    \"\"\"A place ``(x, y, z)`` for each of the nodes ``0 .. count-1``, from the links ``pairs``\n    (rows of two node numbers) alone. Linked nodes come to lie near each other, and the\n    links are ``LINK_LENGTH`` long on average.\"\"\"\n    pairs = np.asarray(pairs, np.intp).reshape(-1, 2)\n    if count < 5 or len(pairs) == 0:\n        raise ValueError(\"a picture needs at least five nodes and a link\")\n    waves = slowest_waves(pairs, count, 4)\n    angles = two_circles(waves)\n    if angles is None:\n        result = waves[:, :3].copy()\n    else:\n        round_ring, round_tube = angles\n        reach = RING_RADIUS + np.cos(round_tube)\n        result = np.column_stack(\n            [reach * np.cos(round_ring), reach * np.sin(round_ring), np.sin(round_tube)]\n        )\n    lengths = np.linalg.norm(result[pairs[:, 0]] - result[pairs[:, 1]], axis=1)\n    return result * (LINK_LENGTH / lengths.mean())\n", "wolframs_game_of_life/life.py": "\"\"\"The ordinary Game of Life on a world that wraps round at its borders, and some patterns.\n\nThis is the reference the Wolfram model is held against. It knows nothing of hypergraphs and\nmust stay that way: a world is a numpy array of 0 (dead) and 1 (alive), one generation is a\ncount of the eight neighbours.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\n\nimport numpy as np\n\n# the eight neighbours, clockwise from the one above: (row, column) offsets\nDIRECTIONS = ((-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1))\nMIN_SIDE = 3  # below this a cell would be its own neighbour\n\n\ndef life_step(grid: np.ndarray) -> np.ndarray:\n    \"\"\"One generation: alive next with exactly 3 alive neighbours, unchanged with exactly 2,\n    dead otherwise. Leaving the world on one side means coming back on the other.\"\"\"\n    neighbours = sum(np.roll(grid, (dr, dc), (0, 1)) for dr, dc in DIRECTIONS)\n    return ((neighbours == 3) | ((grid == 1) & (neighbours == 2))).astype(np.int64)\n\n\n@dataclass(frozen=True)\nclass Pattern:\n    key: str\n    title: str\n    rows: tuple[str, ...]  # \"#\" is an alive cell\n\n\nPATTERNS: tuple[Pattern, ...] = (\n    Pattern(\"glider\", \"Glider (moves diagonally)\", (\".#.\", \"..#\", \"###\")),\n    Pattern(\"blinker\", \"Blinker (flips every generation)\", (\"###\",)),\n    Pattern(\"toad\", \"Toad (period 2)\", (\".###\", \"###.\")),\n    Pattern(\"beacon\", \"Beacon (period 2)\", (\"##..\", \"##..\", \"..##\", \"..##\")),\n    Pattern(\"block\", \"Block (stays as it is)\", (\"##\", \"##\")),\n    Pattern(\"r-pentomino\", \"R-pentomino (grows wildly)\", (\".##\", \"##.\", \".#.\")),\n    Pattern(\n        \"spaceship\",\n        \"Lightweight spaceship (moves sideways)\",\n        (\".#..#\", \"#....\", \"#...#\", \"####.\"),\n    ),\n    Pattern(\n        \"pulsar\",\n        \"Pulsar (period 3)\",\n        (\n            \"..###...###..\",\n            \".............\",\n            \"#....#.#....#\",\n            \"#....#.#....#\",\n            \"#....#.#....#\",\n            \"..###...###..\",\n            \".............\",\n            \"..###...###..\",\n            \"#....#.#....#\",\n            \"#....#.#....#\",\n            \"#....#.#....#\",\n            \".............\",\n            \"..###...###..\",\n        ),\n    ),\n)\n\n\ndef empty_world(rows: int, columns: int) -> np.ndarray:\n    if min(rows, columns) < MIN_SIDE:\n        raise ValueError(\n            f\"a world that wraps round needs at least {MIN_SIDE} rows and columns\"\n        )\n    return np.zeros((rows, columns), np.int64)\n\n\ndef pattern_world(key: str, rows: int, columns: int) -> np.ndarray:\n    \"\"\"A world with one pattern in its middle.\"\"\"\n    grid = empty_world(rows, columns)\n    for pattern in PATTERNS:\n        if pattern.key == key:\n            break\n    else:\n        raise ValueError(f\"unknown pattern {key!r}\")\n    height, width = len(pattern.rows), len(pattern.rows[0])\n    if height > rows or width > columns:\n        raise ValueError(\n            f\"the pattern '{pattern.title}' needs a world of at least \"\n            f\"{height} x {width} cells\"\n        )\n    top, left = (rows - height) // 2, (columns - width) // 2\n    for r, line in enumerate(pattern.rows):\n        for c, mark in enumerate(line):\n            grid[top + r, left + c] = int(mark == \"#\")\n    return grid\n\n\ndef random_world(\n    rows: int, columns: int, rng: np.random.Generator, share: float = 0.3\n) -> np.ndarray:\n    \"\"\"Every cell alive with chance ``share``.\"\"\"\n    return (rng.random(empty_world(rows, columns).shape) < share).astype(np.int64)\n", "wolframs_game_of_life/model.py": "\"\"\"The Game of Life as a Wolfram model: 17 rewriting rules and a start hypergraph.\n\nA node is a cell. A relation carries no label, so what it means is told by its size and by\nwhich of its places hold the same node. With ``c`` a cell, ``n1 .. n8`` its neighbours\n(clockwise from the one above), ``s`` a sender and ``r`` a receiver::\n\n    {c}                   cell c is alive\n    {c,c,c,c,c}           cell c is dead\n    {c,c,c,c,c,c}         cell c is ready to send its state\n    loops of 7, 8, 10,    cell c has counted 0, 1, 2, 3, \"4 or more\" alive neighbours\n      11, 12 places\n    {c,x}                 the reader of cell c stands at x (c itself, or a neighbour)\n    {c,x,y}               in the round of cell c, y comes after x (c, n1 .. n8, c)\n    {c,n1,..,n8}          cell c and its eight neighbours\n    {s,r,r,r}             the line from cell s to cell r is empty\n    {s,s,r,r}             a message \"dead\" from s waits for r\n    {s,s,s,r}             a message \"alive\" from s waits for r\n\nOne generation of Life is ``STEPS_PER_GENERATION`` steps of the engine: every cell sends its\nstate to its eight neighbours (1 step), its reader takes the eight messages one by one and\ncounts the alive ones (8 steps), and the count decides the new state (1 step).\n\nWhy a rule cannot take a relation of the wrong kind: patterns whose places are all different\nexist only in sizes 2, 3 and 9, and each of these sizes holds one kind. The three kinds of\nsize 4 differ in which places repeat, and sender and receiver are never the same node (a\nworld has at least 3 rows and columns). Every other kind is a loop of a size used for\nnothing else.\n\nThe model is rules and a start, nothing more. This module builds them and reads states; the\nrewriting is done by the unchanged engine of ``wolfram_physics``.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom collections.abc import Callable, Mapping, Sequence\nfrom dataclasses import dataclass\nfrom functools import lru_cache\nfrom itertools import pairwise\n\nimport numpy as np\n\nfrom wolfram_physics.rules import Rule\nfrom wolframs_game_of_life.life import DIRECTIONS, MIN_SIDE\n\nRelation = tuple[int, ...]\nPattern = tuple[str, ...]\nTables = Mapping[int, tuple[np.ndarray, np.ndarray]]\n\nSTEPS_PER_GENERATION = 10  # send, eight messages read, decide\nFIRST_NODE = (\n    1  # cells are numbered from 1, row by row, as in the Wolfram project's notation\n)\n\nALIVE_SIZE, READER_SIZE, ROUND_SIZE, LINE_SIZE, DEAD_SIZE, READY_SIZE = 1, 2, 3, 4, 5, 6\nNEIGHBOURHOOD_SIZE = 9\nCOUNT_SIZES = (7, 8, 10, 11, 12)  # counted 0, 1, 2, 3, 4 or more\nMAX_COUNT = len(COUNT_SIZES) - 1\n\n# what a line holds, and where a reader stands, as numbers for ``LifeState``\nEMPTY, MESSAGE_DEAD, MESSAGE_ALIVE = 0, 1, 2\nAT_HOME = 8  # reader positions 0..7 are the neighbours, in the order of DIRECTIONS\n\n\ndef alive[T](c: T) -> tuple[T, ...]:\n    return (c,) * ALIVE_SIZE\n\n\ndef dead[T](c: T) -> tuple[T, ...]:\n    return (c,) * DEAD_SIZE\n\n\ndef ready[T](c: T) -> tuple[T, ...]:\n    return (c,) * READY_SIZE\n\n\ndef counted[T](c: T, k: int) -> tuple[T, ...]:\n    return (c,) * COUNT_SIZES[k]\n\n\ndef empty_line[T](sender: T, receiver: T) -> tuple[T, ...]:\n    return (sender, receiver, receiver, receiver)\n\n\ndef message_dead[T](sender: T, receiver: T) -> tuple[T, ...]:\n    return (sender, sender, receiver, receiver)\n\n\ndef message_alive[T](sender: T, receiver: T) -> tuple[T, ...]:\n    return (sender, sender, sender, receiver)\n\n\n@dataclass(frozen=True)\nclass LifeRule:\n    \"\"\"One rewriting rule with what it is for.\"\"\"\n\n    family: str  # \"send\", \"read\" or \"decide\"\n    name: str\n    meaning: str\n    rule: Rule\n\n\ndef life_rules() -> tuple[LifeRule, ...]:\n    \"\"\"The 17 rules: 2 send, 6 read, 9 decide.\"\"\"\n    rules: list[LifeRule] = []\n    neighbours = tuple(f\"n{i}\" for i in range(1, 9))\n    neighbourhood: Pattern = (\"c\", *neighbours)\n    states: tuple[tuple[Callable[[str], Pattern], str], ...] = (\n        (alive, \"alive\"),\n        (dead, \"dead\"),\n    )\n    messages: tuple[Callable[[str, str], Pattern], ...] = (message_alive, message_dead)\n\n    for (state, name), message in zip(states, messages, strict=True):\n        lhs = [neighbourhood, state(\"c\"), ready(\"c\")]\n        lhs += [empty_line(\"c\", n) for n in neighbours]\n        rhs = [neighbourhood, state(\"c\"), (\"c\", \"c\"), counted(\"c\", 0)]\n        rhs += [message(\"c\", n) for n in neighbours]\n        rules.append(\n            LifeRule(\n                \"send\",\n                f\"send {name}\",\n                f\"A ready {name} cell whose eight lines are empty puts the message \"\n                f'\"{name}\" on all eight, and gets a reader at home and the count 0.',\n                Rule.build(lhs, rhs),\n            )\n        )\n\n    rules.append(\n        LifeRule(\n            \"read\",\n            \"read dead\",\n            'The reader steps to the next neighbour of its round and takes the \"dead\" '\n            \"message waiting there. The line is empty again; the count stays.\",\n            Rule.build(\n                [(\"c\", \"x\"), (\"c\", \"x\", \"n\"), message_dead(\"n\", \"c\")],\n                [(\"c\", \"n\"), (\"c\", \"x\", \"n\"), empty_line(\"n\", \"c\")],\n            ),\n        )\n    )\n    for k in range(MAX_COUNT + 1):\n        after = min(k + 1, MAX_COUNT)\n        rules.append(\n            LifeRule(\n                \"read\",\n                f\"read alive, counted {k}{' or more' if k == MAX_COUNT else ''}\",\n                'The reader steps on and takes an \"alive\" message: the count goes from '\n                + (\n                    f\"{k} to {after}{' or more' if after == MAX_COUNT else ''}.\"\n                    if k < MAX_COUNT\n                    else f'\"{MAX_COUNT} or more\" to itself.'\n                ),\n                Rule.build(\n                    [\n                        (\"c\", \"x\"),\n                        (\"c\", \"x\", \"n\"),\n                        message_alive(\"n\", \"c\"),\n                        counted(\"c\", k),\n                    ],\n                    [\n                        (\"c\", \"n\"),\n                        (\"c\", \"x\", \"n\"),\n                        empty_line(\"n\", \"c\"),\n                        counted(\"c\", after),\n                    ],\n                ),\n            )\n        )\n\n    for k in range(MAX_COUNT + 1):\n        label = f\"{k} or more\" if k == MAX_COUNT else str(k)\n        if k == 2:\n            rules.append(\n                LifeRule(\n                    \"decide\",\n                    \"decide 2: stays as it is\",\n                    \"The reader is back home with the count 2: reader and count go, the \"\n                    \"cell is ready again, its state is not touched.\",\n                    Rule.build(\n                        [(\"c\", \"x\"), (\"c\", \"x\", \"c\"), counted(\"c\", 2)],\n                        [(\"c\", \"x\", \"c\"), ready(\"c\")],\n                    ),\n                )\n            )\n            continue\n        becomes, becomes_name = (alive, \"alive\") if k == 3 else (dead, \"dead\")\n        for before, before_name in states:\n            rules.append(\n                LifeRule(\n                    \"decide\",\n                    f\"decide {label}: {before_name} -> {becomes_name}\",\n                    f\"The reader is back home with the count {label}: a cell that was \"\n                    f\"{before_name} is {becomes_name} in the next generation, and ready \"\n                    \"again.\",\n                    Rule.build(\n                        [(\"c\", \"x\"), (\"c\", \"x\", \"c\"), counted(\"c\", k), before(\"c\")],\n                        [(\"c\", \"x\", \"c\"), ready(\"c\"), becomes(\"c\")],\n                    ),\n                )\n            )\n    return tuple(rules)\n\n\n@lru_cache(maxsize=8)\ndef neighbour_table(rows: int, columns: int) -> np.ndarray:\n    \"\"\"``table[cell, direction]``: the cell (0-based, row by row) that lies in that direction.\n    The table is remembered and must not be written to.\"\"\"\n    if min(rows, columns) < MIN_SIDE:\n        raise ValueError(\n            f\"a world that wraps round needs at least {MIN_SIDE} rows and columns\"\n        )\n    row, column = np.divmod(np.arange(rows * columns), columns)\n    table = np.column_stack(\n        [\n            ((row + dr) % rows) * columns + (column + dc) % columns\n            for dr, dc in DIRECTIONS\n        ]\n    )\n    table.setflags(write=False)\n    return table\n\n\ndef start_hypergraph(grid: np.ndarray) -> list[Relation]:\n    \"\"\"The start for a world of alive (1) and dead (0) cells: 20 relations per cell.\n\n    Cell ``(row, column)`` is node ``FIRST_NODE + row * columns + column``.\n    \"\"\"\n    rows, columns = grid.shape\n    table = neighbour_table(rows, columns) + FIRST_NODE\n    states = grid.ravel().tolist()\n    start: list[Relation] = []\n    for index, neighbours in enumerate(table.tolist()):\n        cell = FIRST_NODE + index\n        start.append((cell, *neighbours))\n        start.extend((cell, a, b) for a, b in pairwise([cell, *neighbours, cell]))\n        start.append(alive(cell) if states[index] else dead(cell))\n        start.append(ready(cell))\n        start.extend(empty_line(cell, n) for n in neighbours)\n    return start\n\n\ndef _loops(tables: Tables, size: int) -> np.ndarray:\n    \"\"\"The cells (0-based) that carry a loop of this size.\"\"\"\n    table = tables.get(size)\n    if table is None:\n        return np.empty(0, np.int64)\n    return table[1][:, 0] - FIRST_NODE\n\n\ndef project(tables: Tables, shape: tuple[int, int]) -> np.ndarray:\n    \"\"\"The Life world a state stands for: cell ``c`` is alive if ``{c}`` exists and dead if\n    ``{c,c,c,c,c}`` exists. Nothing else of the state is looked at.\n\n    ``tables`` is a state as ``Evolution.tables()`` gives it: per relation size the numbers\n    and the nodes of the relations.\n    \"\"\"\n    cells = shape[0] * shape[1]\n    marks = np.zeros(cells, np.int64)\n    grid = np.zeros(cells, np.int64)\n    alive_cells, dead_cells = _loops(tables, ALIVE_SIZE), _loops(tables, DEAD_SIZE)\n    np.add.at(marks, alive_cells, 1)\n    np.add.at(marks, dead_cells, 1)\n    if (marks != 1).any():\n        raise ValueError(\"a cell must carry exactly one mark, alive or dead\")\n    grid[alive_cells] = 1\n    return grid.reshape(shape)\n\n\ndef tables_of(\n    relations: Sequence[Relation],\n) -> dict[int, tuple[np.ndarray, np.ndarray]]:\n    \"\"\"A list of relations in the form ``project`` and ``read_state`` take.\"\"\"\n    by_size: dict[int, list[tuple[int, Relation]]] = {}\n    for number, relation in enumerate(relations):\n        by_size.setdefault(len(relation), []).append((number, relation))\n    return {\n        size: (\n            np.array([number for number, _ in rows], np.int64),\n            np.array([relation for _, relation in rows], np.int64),\n        )\n        for size, rows in by_size.items()\n    }\n\n\n@dataclass(frozen=True)\nclass LifeState:\n    \"\"\"Everything a state of the model says, cell by cell (cells 0-based, row by row).\"\"\"\n\n    alive: np.ndarray  # 1 alive, 0 dead\n    ready: np.ndarray  # 1 if the cell carries the ready mark\n    count: (\n        np.ndarray\n    )  # alive neighbours counted so far (MAX_COUNT: that many or more), -1 none\n    reader: np.ndarray  # 0..7: at that neighbour, AT_HOME, or -1: no reader\n    lines: (\n        np.ndarray\n    )  # [cell, direction]: EMPTY, MESSAGE_DEAD or MESSAGE_ALIVE on the line out\n\n\ndef read_state(tables: Tables, shape: tuple[int, int]) -> LifeState:\n    \"\"\"Sort the relations of a state by kind. Raises ``ValueError`` if a relation is of no\n    known kind or a cell lacks one of its fixed relations.\"\"\"\n    rows, columns = shape\n    cells = rows * columns\n    table = neighbour_table(rows, columns)\n    known = {ALIVE_SIZE, READER_SIZE, ROUND_SIZE, LINE_SIZE, DEAD_SIZE, READY_SIZE}\n    known |= {NEIGHBOURHOOD_SIZE, *COUNT_SIZES}\n    if not set(tables) <= known:\n        raise ValueError(f\"relations of unknown sizes {sorted(set(tables) - known)}\")\n\n    ready_marks = np.zeros(cells, np.int64)\n    ready_marks[_loops(tables, READY_SIZE)] = 1\n    count = np.full(cells, -1, np.int64)\n    for k, size in enumerate(COUNT_SIZES):\n        count[_loops(tables, size)] = k\n\n    def direction(home: np.ndarray, other: np.ndarray) -> np.ndarray:\n        \"\"\"In which direction ``other`` lies from ``home``; fails if it is no neighbour.\"\"\"\n        hits = table[home] == other[:, None]\n        if not hits.any(axis=1).all():\n            raise ValueError(\"a relation links two cells that are not neighbours\")\n        return hits.argmax(axis=1)\n\n    reader = np.full(cells, -1, np.int64)\n    if READER_SIZE in tables:\n        nodes = tables[READER_SIZE][1] - FIRST_NODE\n        home = nodes[:, 0] == nodes[:, 1]\n        reader[nodes[home, 0]] = AT_HOME\n        away = nodes[~home]\n        reader[away[:, 0]] = direction(away[:, 0], away[:, 1])\n\n    lines = np.full((cells, len(DIRECTIONS)), -1, np.int64)\n    if LINE_SIZE in tables:\n        nodes = tables[LINE_SIZE][1] - FIRST_NODE\n        sender, receiver = nodes[:, 0], nodes[:, 3]\n        kind = np.full(sender.size, -1, np.int64)\n        kind[(nodes[:, 1] == receiver) & (nodes[:, 2] == receiver)] = EMPTY\n        kind[(nodes[:, 1] == sender) & (nodes[:, 2] == receiver)] = MESSAGE_DEAD\n        kind[(nodes[:, 1] == sender) & (nodes[:, 2] == sender)] = MESSAGE_ALIVE\n        lines[sender, direction(sender, receiver)] = kind\n    if (lines < 0).any():\n        raise ValueError(\n            \"every cell needs its eight lines, each empty or with a message\"\n        )\n\n    for size, per_cell in ((NEIGHBOURHOOD_SIZE, 1), (ROUND_SIZE, 9)):\n        owners = tables[size][1][:, 0] - FIRST_NODE if size in tables else np.empty(0)\n        if not (np.bincount(owners.astype(np.intp), minlength=cells) == per_cell).all():\n            raise ValueError(f\"every cell needs {per_cell} relation(s) of size {size}\")\n    return LifeState(project(tables, shape), ready_marks, count, reader, lines)\n\n\ndef describe(relation: Relation, columns: int) -> str:\n    \"\"\"What one relation says, in words. ``columns`` turns a node into (row, column).\"\"\"\n\n    def cell(node: int) -> str:\n        row, column = divmod(node - FIRST_NODE, columns)\n        return f\"cell {node} (row {row + 1}, column {column + 1})\"\n\n    size, first, last = len(relation), relation[0], relation[-1]\n    loop = all(node == first for node in relation)\n    if size == ALIVE_SIZE:\n        return f\"{cell(first)} is alive\"\n    if size == DEAD_SIZE and loop:\n        return f\"{cell(first)} is dead\"\n    if size == READY_SIZE and loop:\n        return f\"{cell(first)} is ready to send its state\"\n    if size in COUNT_SIZES and loop:\n        k = COUNT_SIZES.index(size)\n        more = \" or more\" if k == MAX_COUNT else \"\"\n        return f\"{cell(first)} has counted {k}{more} alive neighbours so far\"\n    if size == READER_SIZE:\n        where = \"at home\" if last == first else f\"at its neighbour {last}\"\n        return f\"the reader of {cell(first)} stands {where}\"\n    if size == ROUND_SIZE:\n        a = \"home\" if relation[1] == first else f\"neighbour {relation[1]}\"\n        b = \"home\" if last == first else f\"neighbour {last}\"\n        return f\"in the round of cell {first}, {b} comes after {a}\"\n    if size == NEIGHBOURHOOD_SIZE:\n        return f\"{cell(first)} and its eight neighbours, clockwise from the one above\"\n    if size == LINE_SIZE and first != last:\n        if relation == empty_line(first, last):\n            return f\"the line from cell {first} to cell {last} is empty\"\n        if relation == message_dead(first, last):\n            return f'a message \"dead\" from cell {first} waits for cell {last}'\n        if relation == message_alive(first, last):\n            return f'a message \"alive\" from cell {first} waits for cell {last}'\n    raise ValueError(f\"a relation of no known kind: {relation}\")\n\n\ndef fixed_links(tables: Tables) -> np.ndarray:\n    \"\"\"The links that hold the world together, for a picture: rows ``(a, b, pieces)``.\n\n    The way the Wolfram Physics Project draws a hypergraph, a relation is a line through\n    its nodes in their order. The neighbourhoods and rounds never change, and many of them\n    run along the same two nodes, so every pair of nodes ``a < b`` that such a relation\n    joins gets one row; ``pieces`` says how many pieces of relations run along it. These\n    rows are also all a picture needs to give the nodes places (``layout.places``).\n\n    Everything else of a state changes while the world is played and is read by\n    ``read_state``: the marks on a node, the eight lines of a cell, where its reader stands.\n    \"\"\"\n    pieces = []\n    for size in (NEIGHBOURHOOD_SIZE, ROUND_SIZE):\n        if size in tables:\n            nodes = tables[size][1]\n            for position in range(size - 1):\n                pair = nodes[:, position : position + 2]\n                pieces.append(pair[pair[:, 0] != pair[:, 1]])\n    if not pieces:\n        return np.empty((0, 3), np.int64)\n    pairs, counts = np.unique(\n        np.sort(np.vstack(pieces), axis=1), axis=0, return_counts=True\n    )\n    return np.column_stack([pairs, counts])\n", "wolframs_game_of_life/session.py": "\"\"\"The boundary to the browser page: methods that take strings and numbers and return JSON.\n\nThe page (``web/app.js``) holds one ``Session`` and only draws what these methods return; it\ncomputes nothing about Life or the model itself. A world travels as a string of ``rows *\ncolumns`` characters, ``1`` alive and ``0`` dead, row by row.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport json\nimport time\nfrom typing import Any\n\nimport numpy as np\n\nfrom wolfram_physics.rules import format_edges\nfrom wolframs_game_of_life.layout import places\nfrom wolframs_game_of_life.life import (\n    DIRECTIONS,\n    MIN_SIDE,\n    PATTERNS,\n    pattern_world,\n    random_world,\n)\nfrom wolframs_game_of_life.model import (\n    FIRST_NODE,\n    STEPS_PER_GENERATION,\n    describe,\n    life_rules,\n    neighbour_table,\n)\nfrom wolframs_game_of_life.world import LifeWorld\n\nSIZES = (6, 8, 12, 16, 24, 32)\nDEFAULT_SIZE = 12\nMAX_SIDE = 64\nMAX_STEPS_PER_CALL = 1000\n\n\ndef _text(values: np.ndarray) -> str:\n    \"\"\"Small whole numbers 0..9 as one character each.\"\"\"\n    return \"\".join(map(str, np.asarray(values).ravel().tolist()))\n\n\ndef _grid(rows: int, columns: int, cells: str) -> np.ndarray:\n    if not (MIN_SIDE <= rows <= MAX_SIDE and MIN_SIDE <= columns <= MAX_SIDE):\n        raise ValueError(f\"a world has {MIN_SIDE} to {MAX_SIDE} rows and columns\")\n    if len(cells) != rows * columns or set(cells) - {\"0\", \"1\"}:\n        raise ValueError(\n            f\"a world of {rows} x {columns} cells is {rows * columns} characters, 0 or 1\"\n        )\n    return np.array([int(mark) for mark in cells], np.int64).reshape(rows, columns)\n\n\nclass Session:\n    def __init__(self) -> None:\n        self._world: LifeWorld | None = None\n        # what hypergraph() returns, kept for as long as the world has the same size\n        self._picture: str | None = None\n\n    def _playing(self) -> LifeWorld:\n        if self._world is None:\n            raise ValueError(\"no world yet: set one up first\")\n        return self._world\n\n    def setup(self) -> str:\n        \"\"\"What the page shows before any world exists: sizes, patterns, the rules.\"\"\"\n        rules = life_rules()\n        return json.dumps(\n            {\n                \"sizes\": SIZES,\n                \"default_size\": DEFAULT_SIZE,\n                \"patterns\": [\n                    {\n                        \"key\": p.key,\n                        \"title\": p.title,\n                        \"rows\": len(p.rows),\n                        \"columns\": len(p.rows[0]),\n                    }\n                    for p in PATTERNS\n                ],\n                \"steps_per_generation\": STEPS_PER_GENERATION,\n                \"directions\": DIRECTIONS,\n                \"rules\": [\n                    {\n                        \"family\": entry.family,\n                        \"name\": entry.name,\n                        \"meaning\": entry.meaning,\n                        \"text\": str(entry.rule),\n                    }\n                    for entry in rules\n                ],\n            }\n        )\n\n    def pattern(self, key: str, rows: int, columns: int) -> str:\n        \"\"\"A world with the pattern ``key`` in its middle, as a string of cells.\"\"\"\n        return json.dumps({\"cells\": _text(pattern_world(key, rows, columns))})\n\n    def random(self, rows: int, columns: int, seed: int) -> str:\n        \"\"\"A world with about three cells in ten alive.\"\"\"\n        grid = random_world(rows, columns, np.random.default_rng(seed))\n        return json.dumps({\"cells\": _text(grid)})\n\n    def start(self, rows: int, columns: int, cells: str) -> str:\n        \"\"\"Make ``cells`` the world: generation 0 for the ordinary Life, and the start\n        hypergraph of the Wolfram model built from it.\"\"\"\n        previous = self._world\n        self._world = LifeWorld(_grid(rows, columns, cells))\n        if previous is None or previous.shape != self._world.shape:\n            self._picture = None  # other nodes and links: another picture\n        return self.state()\n\n    def advance(self, steps: int) -> str:\n        \"\"\"Do ``steps`` steps of the engine (10 are one generation) and return the state.\"\"\"\n        world = self._playing()\n        if not 1 <= steps <= MAX_STEPS_PER_CALL:\n            raise ValueError(f\"between 1 and {MAX_STEPS_PER_CALL} steps at a time\")\n        begin = time.perf_counter()\n        world.run(steps)\n        return self.state(seconds=time.perf_counter() - begin)\n\n    def state(self, seconds: float | None = None) -> str:\n        \"\"\"Both sides as they are now.\n\n        ``life`` is the ordinary Game of Life at ``generation``. Everything under ``graph``\n        is read off the hypergraph: ``alive``, ``ready`` (1 or 0 per cell), ``count`` (the\n        alive neighbours counted so far, ``4`` for four or more, ``-`` for none), ``reader``\n        (``0`` to ``7``: at that neighbour, ``8``: at home, ``-``: none) and ``lines`` (eight\n        characters per cell, one per direction: ``0`` empty, ``1`` a \"dead\" message, ``2`` an\n        \"alive\" message on the line that leaves the cell in that direction).\n        \"\"\"\n        world = self._playing()\n        state = world.state()\n        rows, columns = world.shape\n        result: dict[str, Any] = {\n            \"rows\": rows,\n            \"columns\": columns,\n            \"generation\": world.generation,\n            \"step\": world.step_in_generation,\n            \"steps\": world.steps,\n            \"life\": _text(world.reference),\n            \"life_alive\": int(world.reference.sum()),\n            \"graph\": {\n                \"alive\": _text(state.alive),\n                \"ready\": _text(state.ready),\n                \"count\": _text(state.count).replace(\"-1\", \"-\"),\n                \"reader\": _text(state.reader).replace(\"-1\", \"-\"),\n                \"lines\": _text(state.lines),\n                \"nodes\": world.node_count,\n                \"relations\": world.relation_count,\n                \"changes\": world.changes,\n            },\n            \"check\": {\n                \"equal\": world.equal,\n                \"generations\": world.checked,\n                \"differing\": world.differing,\n            },\n        }\n        if seconds is not None:\n            result[\"seconds\"] = seconds\n        return json.dumps(result)\n\n    def cell(self, index: int) -> str:\n        \"\"\"The relations that belong to one cell (0-based, row by row) as they are now: those\n        whose first node it is, in notation and in words.\"\"\"\n        world = self._playing()\n        rows, columns = world.shape\n        if not 0 <= index < rows * columns:\n            raise ValueError(f\"cells are numbered 0 to {rows * columns - 1}\")\n        node = FIRST_NODE + index\n        own = [relation for relation in world.relations() if relation[0] == node]\n        own.sort(key=len)\n        return json.dumps(\n            {\n                \"cell\": index,\n                \"node\": node,\n                \"row\": index // columns + 1,\n                \"column\": index % columns + 1,\n                \"relations\": [\n                    {\n                        \"text\": format_edges([relation])[1:-1],\n                        \"meaning\": describe(relation, columns),\n                    }\n                    for relation in own\n                ],\n            }\n        )\n\n    def hypergraph(self) -> str:\n        \"\"\"What a picture of the hypergraph without the grid needs besides ``state``: the\n        part that does not change while a world of this size is played. It is computed once\n        per size and then handed out as it is.\n\n        Cells are numbered from 0, row by row; cell ``c`` is node ``first_node + c``.\n\n        - ``places``: an ``[x, y, z]`` per cell, computed by ``layout.places`` from nothing\n          but which nodes the fixed relations link.\n        - ``fixed``: rows ``[cell, cell, pieces]``, one per pair of nodes that the\n          neighbourhoods and rounds join (``model.fixed_links``).\n        - ``neighbours``: per cell its eight neighbour cells. Place ``d`` of a cell in\n          ``lines`` and a reader at ``d`` (see ``state``) mean the neighbour number ``d``.\n        - ``radius``: how far the farthest place is from the middle.\n        \"\"\"\n        world = self._playing()\n        if self._picture is None:\n            rows, columns = world.shape\n            fixed = world.fixed_links()\n            fixed[:, :2] -= FIRST_NODE\n            where = places(fixed[:, :2], rows * columns)\n            where -= where.mean(axis=0)\n            self._picture = json.dumps(\n                {\n                    \"first_node\": FIRST_NODE,\n                    \"places\": np.round(where, 2).tolist(),\n                    \"fixed\": fixed.tolist(),\n                    \"neighbours\": neighbour_table(rows, columns).tolist(),\n                    \"radius\": round(float(np.linalg.norm(where, axis=1).max()), 2),\n                }\n            )\n        return self._picture\n", "wolframs_game_of_life/world.py": "\"\"\"A world being played twice at once: by the ordinary Game of Life and by the Wolfram model.\n\n``LifeWorld`` holds the reference (``life.life_step``) and the hypergraph (the engine's\n``Evolution`` with the rules and start of ``model``), moves both forward and compares them\nafter every generation. The two never feed each other: the reference is computed from the\nprevious reference, the hypergraph from the previous hypergraph.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport numpy as np\n\nfrom wolfram_physics.evolution import Evolution\nfrom wolframs_game_of_life.life import life_step\nfrom wolframs_game_of_life.model import (\n    STEPS_PER_GENERATION,\n    LifeState,\n    Relation,\n    fixed_links,\n    life_rules,\n    project,\n    read_state,\n    start_hypergraph,\n)\n\n# The engine keeps every relation that ever existed (about 40 more per cell and generation).\n# When it holds more than this many, the world goes on from its current state in a fresh\n# engine: the states are the same, only the record of older changes is dropped.\nHISTORY_LIMIT = 150_000\n\n\nclass LifeWorld:\n    \"\"\"``grid`` (0 dead, 1 alive) played by both; ``step()`` is one step of the engine.\"\"\"\n\n    def __init__(self, grid: np.ndarray, history_limit: int = HISTORY_LIMIT) -> None:\n        self.start = np.array(grid, np.int64)\n        if self.start.ndim != 2 or not np.isin(self.start, (0, 1)).all():\n            raise ValueError(\"a world is a table of cells, each 0 (dead) or 1 (alive)\")\n        self.shape: tuple[int, int] = (self.start.shape[0], self.start.shape[1])\n        self._rules = [entry.rule for entry in life_rules()]\n        self._evolution = Evolution(self._rules, start_hypergraph(self.start))\n        self._history_limit = history_limit\n        self._changes_before = 0  # changes made in engines that were replaced\n        self.reference = self.start.copy()  # the ordinary Life, at `generation`\n        self.steps = 0\n        self.checked = 0  # generations compared with the reference\n        self.differing: list[int] = []  # cells that differed at the last comparison\n\n    @property\n    def generation(self) -> int:\n        \"\"\"Generations finished.\"\"\"\n        return self.steps // STEPS_PER_GENERATION\n\n    @property\n    def step_in_generation(self) -> int:\n        \"\"\"Steps done of the generation under way, 0 to 9.\"\"\"\n        return self.steps % STEPS_PER_GENERATION\n\n    @property\n    def equal(self) -> bool:\n        \"\"\"True while the hypergraph read as a Life world equalled the reference after\n        every generation so far.\"\"\"\n        return not self.differing\n\n    @property\n    def changes(self) -> int:\n        \"\"\"Changes (events) made so far.\"\"\"\n        return self._changes_before + self._evolution.event_count\n\n    @property\n    def node_count(self) -> int:\n        return self._evolution.node_count\n\n    @property\n    def relation_count(self) -> int:\n        return self._evolution.edge_count\n\n    def relations(self) -> list[Relation]:\n        \"\"\"The hypergraph now, oldest relation first.\"\"\"\n        return self._evolution.edges()\n\n    def projected(self) -> np.ndarray:\n        \"\"\"The hypergraph read as a Life world (``model.project``).\"\"\"\n        return project(self._evolution.tables(), self.shape)\n\n    def state(self) -> LifeState:\n        return read_state(self._evolution.tables(), self.shape)\n\n    def step(self) -> int:\n        \"\"\"One step of the engine in the standard order: every change that fits, together.\n        After the last step of a generation the reference moves on and the two are compared.\n        Returns the number of changes.\"\"\"\n        changes = self._evolution.step()\n        self.steps += 1\n        if self.step_in_generation == 0:\n            self.reference = life_step(self.reference)\n            self.checked += 1\n            if self.equal:  # after a difference the first one stays on show\n                differing = np.flatnonzero(self.projected() != self.reference)\n                self.differing = differing.tolist()\n            if self._evolution.total_edges > self._history_limit:\n                self._changes_before += self._evolution.event_count\n                self._evolution = Evolution(self._rules, self._evolution.edges())\n        return changes\n\n    def run(self, steps: int) -> None:\n        for _ in range(steps):\n            self.step()\n\n    def fixed_links(self) -> np.ndarray:\n        \"\"\"The links that never change, as rows ``(node, node, pieces)`` (``model.fixed_links``).\"\"\"\n        return fixed_links(self._evolution.tables())\n"}</script>
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
+<script>
+// The page: loads Python (Pyodide), unpacks the packages embedded in the page
+// (wolframs_game_of_life and the rewriting engine of wolfram_physics), and draws what
+// wolframs_game_of_life.session.Session returns. All computing happens in Python: the
+// ordinary Game of Life, the hypergraph, the comparison of the two, the places of the nodes
+// in the 3D picture. This file only draws and passes on what the person does.
+//
+// Drawing is kept cheap, because it happens after every step of a play: a picture is drawn
+// only when something changed (never in a loop of its own), things of one colour are drawn
+// as one path, and a canvas keeps its size unless the page was resized.
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  // moves per second of the speed slider; 0: as fast as it goes
+  const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16, 0];
+  const DEFAULT_SPEED = 3;
+  const STUB = 0.45;        // length of a link that leaves the grid picture, in cell widths
+  const MESSAGE_AT = 0.38;  // a waiting message sits this far before its receiver
+  const LINK = 30;          // the average length of a link in the places of the 3D picture
+  const LAYERS = 4;         // the 3D picture draws its links in this many layers of depth
+  // The radius of a node in the 3D picture, as a share of the average link. Smaller than
+  // on the grid (0.22), because the links on the inside of the ring are much shorter.
+  const NODE = 0.11;
+
+  let pyodide = null;
+  let pycall = null;       // Python: (method name, JSON list of arguments) -> JSON text
+  let setup = null;        // Session.setup(): sizes, patterns, rules, directions
+  let state = null;        // the last Session.state()
+  let rows = 0;
+  let columns = 0;
+  let startCells = "";     // the world as it was set up: what Restart goes back to
+  let playing = false;
+  let timer = null;
+  let selected = -1;       // the cell whose relations are listed, -1: none
+  let seed = 0;            // for the next random world
+  let draft = null;        // the cells while the person is drawing on the left
+  let paint = 1;           // what the drag in progress sets cells to
+  let perGeneration = null; // milliseconds of computing per generation, last measured
+  let palette = null;      // the colours of the page, read once per colour scheme
+  let view = "grid";       // how the right side is drawn: "grid" or "3d"
+
+  // the 3D picture
+  let picture = null;      // Session.hypergraph(): places, fixed links, neighbours of this size
+  let pictureSize = "";    // the size of world `picture` belongs to, e.g. "12x12"
+  let screenX = null;      // where every node is on the canvas now, how near it is to the
+  let screenY = null;      // eye (depth, larger is nearer) and how large things are drawn
+  let depth = null;        // there (scale)
+  let scale = null;
+  let order = [];          // the nodes from the farthest to the nearest
+  let linkLayer = new Uint8Array(0); // for every fixed link, the layer of depth it is drawn in
+  let yaw = 0.5;           // how the ring is turned round its own axis
+  let pitch = 1.0;         // how far it is tipped towards the eye (0: seen from above)
+  let zoom = 1;
+  let turning = null;      // the drag in progress: last pointer position, distance moved
+  let spaceQueued = false; // a redraw of the 3D picture is waiting for the next frame
+
+  // ---------- helpers ----------
+
+  function showError(error) {
+    let text = String(error && error.message ? error.message : error);
+    if (error && error.name === "PythonError") {
+      // the last line of the traceback is the message, e.g. "ValueError: ..."
+      const lines = text.trim().split("\n");
+      text = lines[lines.length - 1].replace(/^[\w.]+(Error|Exception): /, "");
+    }
+    $("error-text").textContent = text;
+    $("error").hidden = false;
+    console.error(error);
+  }
+
+  function clearError() { $("error").hidden = true; }
+
+  function call(method, ...args) {
+    return JSON.parse(pycall(method, JSON.stringify(args)));
+  }
+
+  function setBusy(isBusy) {
+    document.body.dataset.busy = isBusy ? "1" : "";
+    for (const id of ["size", "pattern", "random", "clear", "play", "generation", "one-step", "restart"]) {
+      $(id).disabled = isBusy || !pycall;
+    }
+  }
+
+  function number(value) { return Number(value).toLocaleString("en-US"); }
+
+  function clamp(value, low, high) { return Math.min(high, Math.max(low, value)); }
+
+  function colours() {
+    if (!palette) {
+      const style = getComputedStyle(document.documentElement);
+      const read = (name) => style.getPropertyValue(name).trim();
+      palette = {
+        surface: read("--surface"), text: read("--text"), muted: read("--muted"),
+        accent: read("--accent"), reader: read("--reader"), link: read("--link"),
+        grid: read("--grid"), fail: read("--fail"), faint: read("--ball-dead"),
+      };
+    }
+    return palette;
+  }
+
+  // Gives the canvas as many pixels as it takes up on the screen; returns its 2D context.
+  // The size is only set when it changed: setting it throws the picture's memory away.
+  function fit(canvas, across, down) {
+    const aspect = across + " / " + down;
+    if (canvas.dataset.aspect !== aspect) {
+      canvas.dataset.aspect = aspect;
+      canvas.style.aspectRatio = aspect;
+    }
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.round(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.round(width * down / across));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    return canvas.getContext("2d");
+  }
+
+  function dot(path, x, y, radius) {
+    path.moveTo(x + radius, y);
+    path.arc(x, y, radius, 0, 2 * Math.PI);
+  }
+
+  // ---------- drawing: the Life world ----------
+
+  function drawLife() {
+    if (!state) return;
+    const canvas = $("life");
+    const context = fit(canvas, columns, rows);
+    const colour = colours();
+    const side = canvas.width / columns;
+    const cells = draft ? draft : state.life;
+    context.fillStyle = colour.surface;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = colour.text;
+    for (let i = 0; i < rows * columns; i++) {
+      if (String(cells[i]) === "1") {
+        const x = (i % columns) * side;
+        const y = Math.floor(i / columns) * side;
+        context.fillRect(Math.floor(x), Math.floor(y), Math.ceil(side), Math.ceil(side));
+      }
+    }
+    context.strokeStyle = colour.grid;
+    context.lineWidth = Math.max(1, side * 0.03);
+    context.beginPath();
+    for (let c = 0; c <= columns; c++) { context.moveTo(c * side, 0); context.lineTo(c * side, canvas.height); }
+    for (let r = 0; r <= rows; r++) { context.moveTo(0, r * side); context.lineTo(canvas.width, r * side); }
+    context.stroke();
+    const outline = (i, stroke) => {
+      context.strokeStyle = stroke;
+      context.lineWidth = Math.max(2, side * 0.1);
+      context.strokeRect((i % columns) * side + 1, Math.floor(i / columns) * side + 1, side - 2, side - 2);
+    };
+    if (!draft) {
+      if (selected >= 0) outline(selected, colour.accent);
+      for (const i of state.check.differing) outline(i, colour.fail);
+    }
+  }
+
+  // ---------- drawing: the hypergraph on the grid ----------
+
+  function drawGraph() {
+    if (!state) return;
+    const canvas = $("graph");
+    const context = fit(canvas, columns + 1, rows + 1);
+    const colour = colours();
+    const graph = state.graph;
+    const cells = rows * columns;
+    // one cell width; a node sits in the middle of its cell, half a cell of margin all round
+    const unit = canvas.width / (columns + 1);
+    const X = (column) => (column + 1) * unit;
+    const Y = (row) => (row + 1) * unit;
+    const radius = 0.22 * unit;
+    const directions = setup.directions;       // [row offset, column offset], clockwise from above
+    context.fillStyle = colour.surface;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.lineCap = "round";
+
+    // the neighbour links (each drawn once; a link that wraps round is two short lines)
+    context.strokeStyle = colour.link;
+    context.lineWidth = Math.max(1, unit * 0.03);
+    context.beginPath();
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < columns; c++) {
+        for (const d of [2, 3, 4, 5]) {
+          const [dr, dc] = directions[d];
+          const r2 = r + dr;
+          const c2 = c + dc;
+          if (r2 >= 0 && r2 < rows && c2 >= 0 && c2 < columns) {
+            context.moveTo(X(c), Y(r));
+            context.lineTo(X(c2), Y(r2));
+          } else {
+            const rw = (r2 + rows) % rows;
+            const cw = (c2 + columns) % columns;
+            context.moveTo(X(c), Y(r));
+            context.lineTo(X(c) + dc * STUB * unit, Y(r) + dr * STUB * unit);
+            context.moveTo(X(cw), Y(rw));
+            context.lineTo(X(cw) - dc * STUB * unit, Y(rw) - dr * STUB * unit);
+          }
+        }
+      }
+    }
+    context.stroke();
+
+    // messages wait near their receiver, on the line they came along; one path per kind
+    const messages = (kind, size) => {
+      context.beginPath();
+      for (let i = 0; i < cells; i++) {
+        const r = Math.floor(i / columns);
+        const c = i % columns;
+        for (let d = 0; d < 8; d++) {
+          if (graph.lines[i * 8 + d] !== kind) continue;
+          const [dr, dc] = directions[d];
+          dot(context, X((c + dc + columns) % columns) - dc * MESSAGE_AT * unit,
+            Y((r + dr + rows) % rows) - dr * MESSAGE_AT * unit, size);
+        }
+      }
+      context.fill();
+    };
+    context.fillStyle = colour.muted;
+    messages("1", Math.max(1, unit * 0.045));
+    context.fillStyle = colour.accent;
+    messages("2", Math.max(1.5, unit * 0.085));
+
+    // the readers: a ring while at home, a short arm towards the neighbour it is at
+    context.strokeStyle = colour.reader;
+    context.lineWidth = Math.max(1.5, unit * 0.05);
+    context.beginPath();
+    for (let i = 0; i < cells; i++) {
+      if (graph.reader[i] === "8") dot(context, X(i % columns), Y(Math.floor(i / columns)), radius + unit * 0.07);
+    }
+    context.stroke();
+    context.lineWidth = Math.max(2, unit * 0.09);
+    context.beginPath();
+    for (let i = 0; i < cells; i++) {
+      const reader = graph.reader[i];
+      if (reader === "8" || reader === "-") continue;
+      const x = X(i % columns);
+      const y = Y(Math.floor(i / columns));
+      const [dr, dc] = directions[Number(reader)];
+      const length = Math.hypot(dr, dc);
+      context.moveTo(x, y);
+      context.lineTo(x + dc / length * (radius + unit * 0.2), y + dr / length * (radius + unit * 0.2));
+    }
+    context.stroke();
+
+    // the nodes: all alive ones in one go, then all dead ones
+    const nodes = (state) => {
+      context.beginPath();
+      for (let i = 0; i < cells; i++) {
+        if (graph.alive[i] === state) dot(context, X(i % columns), Y(Math.floor(i / columns)), radius);
+      }
+    };
+    nodes("1");
+    context.fillStyle = colour.text;
+    context.fill();
+    nodes("0");
+    context.fillStyle = colour.surface;
+    context.fill();
+    context.strokeStyle = colour.muted;
+    context.lineWidth = Math.max(1, unit * 0.035);
+    context.stroke();
+
+    if (radius >= 5) {
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      for (let i = 0; i < cells; i++) {
+        const count = graph.count[i];
+        if (count === "-") continue;
+        const isAlive = graph.alive[i] === "1";
+        // a count of 0 is drawn faintly, so that the cells that found something stand out
+        context.fillStyle = isAlive ? colour.surface : (count === "0" ? colour.muted : colour.text);
+        const size = radius * (count === "4" ? 1.0 : 1.25);
+        context.font = (count === "0" ? "400 " : "700 ") + Math.round(size) + "px system-ui, sans-serif";
+        context.fillText(count === "4" ? "4+" : count, X(i % columns), Y(Math.floor(i / columns)) + radius * 0.08);
+      }
+    }
+
+    const ring = (i, stroke) => {
+      context.strokeStyle = stroke;
+      context.lineWidth = Math.max(2, unit * 0.06);
+      context.beginPath();
+      context.arc(X(i % columns), Y(Math.floor(i / columns)), radius + unit * 0.15, 0, 2 * Math.PI);
+      context.stroke();
+    };
+    if (selected >= 0) ring(selected, colour.accent);
+    for (const i of state.check.differing) ring(i, colour.fail);
+  }
+
+  // ---------- drawing: the hypergraph in 3D, without the grid ----------
+  //
+  // The places of the nodes, the links that never change and the neighbours of every cell
+  // come from Python once per size of world (Session.hypergraph). What changes with every
+  // step (alive, messages, readers, counts) is in `state`, the same that the grid picture
+  // draws. So a step costs no further call to Python here, only a redraw.
+
+  function spacePicture() {
+    const size = rows + "x" + columns;
+    if (pictureSize !== size) {
+      picture = call("hypergraph");
+      pictureSize = size;
+      const cells = rows * columns;
+      screenX = new Float32Array(cells);
+      screenY = new Float32Array(cells);
+      depth = new Float32Array(cells);
+      scale = new Float32Array(cells);
+      order = Array.from({ length: cells }, (_, i) => i);
+    }
+    return picture;
+  }
+
+  // Where every node is on a square canvas `width` pixels wide, seen from the eye.
+  function project(width) {
+    const places = picture.places;
+    const cosYaw = Math.cos(yaw);
+    const sinYaw = Math.sin(yaw);
+    const cosPitch = Math.cos(pitch);
+    const sinPitch = Math.sin(pitch);
+    const eye = 3.2 * picture.radius;   // the eye's distance from the middle of the ring
+    const focus = 0.44 * width * zoom * eye / picture.radius;
+    for (let i = 0; i < places.length; i++) {
+      const place = places[i];
+      const x = place[0] * cosYaw - place[1] * sinYaw;
+      const y = place[0] * sinYaw + place[1] * cosYaw;
+      const up = y * cosPitch - place[2] * sinPitch;
+      const towards = y * sinPitch + place[2] * cosPitch;
+      const size = focus / (eye - towards);
+      screenX[i] = width / 2 + x * size;
+      screenY[i] = width / 2 - up * size;
+      depth[i] = towards;
+      scale[i] = size;
+    }
+  }
+
+  // 0 for a node at the very back of the ring, 1 at the very front
+  function nearness(i) {
+    return clamp((depth[i] + picture.radius) / (2 * picture.radius), 0, 1);
+  }
+
+  function drawSpace() {
+    if (!state) return;
+    const shape = spacePicture();
+    const canvas = $("space");
+    const context = fit(canvas, 1, 1);
+    const width = canvas.width;
+    const pixel = window.devicePixelRatio || 1;
+    const colour = colours();
+    const graph = state.graph;
+    const cells = rows * columns;
+    project(width);
+    context.globalAlpha = 1;
+    context.fillStyle = colour.surface;
+    context.fillRect(0, 0, width, width);
+    context.lineCap = "round";
+
+    // the links that never change, the far ones fainter: one path per layer of depth
+    const fixed = shape.fixed;
+    if (linkLayer.length !== fixed.length) linkLayer = new Uint8Array(fixed.length);
+    for (let k = 0; k < fixed.length; k++) {
+      linkLayer[k] = Math.min(LAYERS - 1, Math.floor((nearness(fixed[k][0]) + nearness(fixed[k][1])) / 2 * LAYERS));
+    }
+    context.strokeStyle = colour.faint;
+    context.lineWidth = Math.max(1, pixel);
+    for (let layer = 0; layer < LAYERS; layer++) {
+      context.beginPath();
+      for (let k = 0; k < fixed.length; k++) {
+        if (linkLayer[k] !== layer) continue;
+        context.moveTo(screenX[fixed[k][0]], screenY[fixed[k][0]]);
+        context.lineTo(screenX[fixed[k][1]], screenY[fixed[k][1]]);
+      }
+      context.globalAlpha = 0.2 + 0.7 * layer / (LAYERS - 1);
+      context.stroke();
+    }
+
+    // messages wait near their receiver, on the line they came along: one path for the far
+    // and one for the near ones of each kind
+    const messages = (kind, isNear, size, least) => {
+      context.beginPath();
+      for (let i = 0; i < cells; i++) {
+        const neighbours = shape.neighbours[i];
+        for (let d = 0; d < 8; d++) {
+          if (graph.lines[i * 8 + d] !== kind) continue;
+          const to = neighbours[d];
+          if ((depth[to] >= 0) !== isNear) continue;
+          dot(context, screenX[to] + MESSAGE_AT * (screenX[i] - screenX[to]),
+            screenY[to] + MESSAGE_AT * (screenY[i] - screenY[to]), Math.max(least, size * LINK * scale[to]));
+        }
+      }
+      context.fill();
+    };
+    context.fillStyle = colour.muted;
+    context.globalAlpha = 0.4;
+    messages("1", false, 0.025, 1);
+    context.globalAlpha = 0.9;
+    messages("1", true, 0.025, 1);
+    context.fillStyle = colour.accent;
+    context.globalAlpha = 0.45;
+    messages("2", false, 0.045, 1.5);
+    context.globalAlpha = 1;
+    messages("2", true, 0.045, 1.5);
+
+    // the nodes with their readers and counts, the farthest first
+    order.sort((a, b) => depth[a] - depth[b]);
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    for (const i of order) {
+      const x = screenX[i];
+      const y = screenY[i];
+      const radius = NODE * LINK * scale[i];
+      const isAlive = graph.alive[i] === "1";
+      context.globalAlpha = 0.4 + 0.6 * nearness(i);
+
+      const reader = graph.reader[i];
+      if (reader !== "-") {
+        context.strokeStyle = colour.reader;
+        context.beginPath();
+        if (reader === "8") {
+          context.lineWidth = Math.max(1.5, 0.03 * LINK * scale[i]);
+          context.arc(x, y, radius + 0.04 * LINK * scale[i], 0, 2 * Math.PI);
+        } else {
+          const to = shape.neighbours[i][Number(reader)];
+          const dx = screenX[to] - x;
+          const dy = screenY[to] - y;
+          const length = Math.hypot(dx, dy) || 1;
+          const reach = Math.min(length, radius + 0.11 * LINK * scale[i]);
+          context.lineWidth = Math.max(2, 0.05 * LINK * scale[i]);
+          context.moveTo(x, y);
+          context.lineTo(x + dx / length * reach, y + dy / length * reach);
+        }
+        context.stroke();
+      }
+
+      context.beginPath();
+      context.arc(x, y, radius, 0, 2 * Math.PI);
+      context.fillStyle = isAlive ? colour.text : colour.surface;
+      context.fill();
+      if (!isAlive) {
+        context.strokeStyle = colour.muted;
+        context.lineWidth = Math.max(1, 0.02 * LINK * scale[i]);
+        context.stroke();
+      }
+
+      const count = graph.count[i];
+      if (count !== "-" && radius >= 5 * pixel) {
+        context.fillStyle = isAlive ? colour.surface : (count === "0" ? colour.muted : colour.text);
+        const size = radius * (count === "4" ? 1.0 : 1.25);
+        context.font = (count === "0" ? "400 " : "700 ") + Math.round(size) + "px system-ui, sans-serif";
+        context.fillText(count === "4" ? "4+" : count, x, y + radius * 0.08);
+      }
+    }
+
+    context.globalAlpha = 1;
+    const ring = (i, stroke) => {
+      context.strokeStyle = stroke;
+      context.lineWidth = Math.max(2, 0.035 * LINK * scale[i]);
+      context.beginPath();
+      context.arc(screenX[i], screenY[i], (NODE + 0.08) * LINK * scale[i], 0, 2 * Math.PI);
+      context.stroke();
+    };
+    if (selected >= 0) ring(selected, colour.accent);
+    for (const i of state.check.differing) ring(i, colour.fail);
+    document.body.dataset.space = "shown";
+    document.body.dataset.spaceLinks = String(shape.fixed.length);
+  }
+
+  // Redraws the 3D picture with the next frame of the screen, however often it is asked.
+  function requestSpace() {
+    if (spaceQueued) return;
+    spaceQueued = true;
+    requestAnimationFrame(() => {
+      spaceQueued = false;
+      if (view === "3d") drawSpace();
+    });
+  }
+
+  // The node of the 3D picture under the pointer (the nearest to the eye, if several), or -1.
+  function nodeUnder(event) {
+    if (!picture || !screenX) return -1;
+    const canvas = $("space");
+    const box = canvas.getBoundingClientRect();
+    const ratio = canvas.width / box.width;
+    const x = (event.clientX - box.left) * ratio;
+    const y = (event.clientY - box.top) * ratio;
+    let found = -1;
+    for (let i = 0; i < screenX.length; i++) {
+      const reach = Math.max((NODE + 0.05) * LINK * scale[i], 8 * ratio);
+      if (Math.hypot(screenX[i] - x, screenY[i] - y) <= reach && (found < 0 || depth[i] > depth[found])) found = i;
+    }
+    return found;
+  }
+
+  function nodeText(i) {
+    return "node " + (picture.first_node + i) + ": the cell in row " + (Math.floor(i / columns) + 1) +
+      ", column " + (i % columns + 1) + ", " + (state.graph.alive[i] === "1" ? "alive" : "dead");
+  }
+
+  function drawPicture() {
+    if (view === "3d") drawSpace(); else drawGraph();
+  }
+
+  function setView(next) {
+    view = next;
+    $("view-grid").setAttribute("aria-pressed", String(view === "grid"));
+    $("view-3d").setAttribute("aria-pressed", String(view === "3d"));
+    $("grid-view").hidden = view !== "grid";
+    $("space-view").hidden = view !== "3d";
+    document.body.dataset.view = view;
+    drawPicture();
+  }
+
+  // ---------- texts ----------
+
+  function writeTexts() {
+    const perStep = setup.steps_per_generation;
+    let status = "Generation " + number(state.generation);
+    if (state.step > 0) {
+      status += " · step " + state.step + " of " + perStep + " towards generation " + number(state.generation + 1);
+    }
+    $("status").textContent = status;
+    $("life-info").textContent = number(state.life_alive) + " of " + number(rows * columns) + " cells alive";
+    let info = number(state.graph.nodes) + " nodes, " + number(state.graph.relations) + " relations, " +
+      number(state.graph.changes) + " changes so far";
+    if (perGeneration !== null) info += " · " + Math.round(perGeneration) + " ms of computing per generation";
+    $("graph-info").textContent = info;
+
+    const check = $("check");
+    const checked = state.check.generations;
+    check.classList.toggle("ok", checked > 0 && state.check.equal);
+    check.classList.toggle("fail", !state.check.equal);
+    if (!state.check.equal) {
+      check.textContent = "Check: the graph read as a Life world is DIFFERENT from the ordinary Game of Life in " +
+        state.check.differing.length + " cell(s), marked red.";
+    } else if (checked === 0) {
+      check.textContent = "Check: after every generation the graph is read as a Life world (a node with the " +
+        "relation {c} is alive) and compared with the left side, cell by cell. Nothing played yet.";
+    } else {
+      check.textContent = "Check: the graph read as a Life world equals the ordinary Game of Life: yes, after " +
+        (checked === 1 ? "the first generation." : "each of " + number(checked) + " generations.");
+    }
+    document.body.dataset.generation = String(state.generation);
+    document.body.dataset.step = String(state.step);
+    document.body.dataset.equal = state.check.equal ? "1" : "0";
+  }
+
+  function draw() {
+    drawLife();
+    drawPicture();
+    writeTexts();
+  }
+
+  function showCell() {
+    const table = $("cell-table");
+    if (selected < 0 || !state) {
+      table.hidden = true;
+      $("cell-note").textContent = "Click a node in the right picture.";
+      return;
+    }
+    const cell = call("cell", selected);
+    $("cell-note").textContent = "Cell in row " + cell.row + ", column " + cell.column + " is node " + cell.node +
+      ". The " + cell.relations.length + " relations that begin with it, as they are now" +
+      (playing ? " (updated when the play is paused):" : ":");
+    const body = table.tBodies[0];
+    body.textContent = "";
+    for (const relation of cell.relations) {
+      const row = body.insertRow();
+      const code = document.createElement("code");
+      code.textContent = relation.text;
+      row.insertCell().appendChild(code);
+      row.insertCell().textContent = relation.meaning;
+    }
+    table.hidden = false;
+  }
+
+  function select(cell) {
+    selected = cell === selected ? -1 : cell;
+    draw();
+    showCell();
+  }
+
+  // ---------- the world ----------
+
+  function startWorld(cells, remember) {
+    state = call("start", rows, columns, cells);
+    if (remember) startCells = cells;
+    perGeneration = null;
+    if (selected >= rows * columns) selected = -1;
+    draw();
+    showCell();
+  }
+
+  function usePattern() {
+    const key = $("pattern").value;
+    if (key === "") return;
+    startWorld(call("pattern", key, rows, columns).cells, true);
+  }
+
+  function resize() {
+    stop();
+    rows = columns = Number($("size").value);
+    selected = -1;
+    if ($("pattern").value !== "") {
+      try {
+        usePattern();
+        return;
+      } catch (error) {
+        showError(error);  // the pattern does not fit into a world of this size
+        $("pattern").value = "";
+      }
+    }
+    // the person's own world does not carry over to another size: begin with an empty one
+    startWorld("0".repeat(rows * columns), true);
+  }
+
+  function advance(steps) {
+    state = call("advance", steps);
+    perGeneration = state.seconds * 1000 * setup.steps_per_generation / steps;
+    draw();
+    if (!playing) showCell();
+  }
+
+  function stop() {
+    if (!playing) return;
+    playing = false;
+    clearTimeout(timer);
+    $("play").textContent = "Start";
+    document.body.dataset.playing = "";
+    showCell();
+  }
+
+  function tick() {
+    if (!playing) return;
+    const begin = performance.now();
+    try {
+      advance($("show-steps").checked ? 1 : setup.steps_per_generation);
+    } catch (error) {
+      stop();
+      showError(error);
+      return;
+    }
+    const rate = SPEEDS[Number($("speed").value)];
+    const wait = rate ? 1000 / rate - (performance.now() - begin) : 0;
+    timer = setTimeout(tick, Math.max(0, wait));  // also lets the browser paint
+  }
+
+  function togglePlay() {
+    if (playing) { stop(); return; }
+    clearError();
+    playing = true;
+    $("play").textContent = "Pause";
+    document.body.dataset.playing = "1";
+    tick();
+  }
+
+  function speedChanged() {
+    const index = Number($("speed").value);
+    const rate = SPEEDS[index];
+    const what = $("show-steps").checked ? "step" : "generation";
+    let text = "as fast as it goes";
+    if (rate >= 1) text = rate + " " + what + (rate === 1 ? "" : "s") + " per second";
+    else if (rate > 0) text = "1 " + what + " every " + (1 / rate) + " seconds";
+    $("speed-text").textContent = text;
+    $("slower").disabled = index <= 0;
+    $("faster").disabled = index >= SPEEDS.length - 1;
+    document.body.dataset.speed = String(rate);
+    // a play that waits for its next move takes the new speed at once
+    if (playing) {
+      clearTimeout(timer);
+      timer = setTimeout(tick, rate ? Math.min(250, 1000 / rate) : 0);
+    }
+  }
+
+  function changeSpeed(by) {
+    $("speed").value = String(clamp(Number($("speed").value) + by, 0, SPEEDS.length - 1));
+    speedChanged();
+  }
+
+  function guarded(action) {
+    return (event) => {
+      try {
+        clearError();
+        action(event);
+      } catch (error) {
+        showError(error);
+      }
+    };
+  }
+
+  // ---------- the person's hands ----------
+
+  function cellUnder(event, canvas, across, down, margin) {
+    const box = canvas.getBoundingClientRect();
+    const unit = box.width / (across + 2 * margin);
+    const column = Math.floor((event.clientX - box.left) / unit - margin);
+    const row = Math.floor((event.clientY - box.top) / unit - margin);
+    if (row < 0 || row >= down || column < 0 || column >= across) return -1;
+    return row * across + column;
+  }
+
+  function beginDrawing(event) {
+    if (!state || document.body.dataset.busy) return;
+    const i = cellUnder(event, $("life"), columns, rows, 0);
+    if (i < 0) return;
+    stop();
+    draft = state.life.split("").map(Number);
+    paint = draft[i] ? 0 : 1;
+    draft[i] = paint;
+    $("life").setPointerCapture(event.pointerId);
+    drawLife();
+  }
+
+  function keepDrawing(event) {
+    if (!draft) return;
+    const i = cellUnder(event, $("life"), columns, rows, 0);
+    if (i >= 0 && draft[i] !== paint) {
+      draft[i] = paint;
+      drawLife();
+    }
+  }
+
+  function endDrawing() {
+    if (!draft) return;
+    const cells = draft.join("");
+    draft = null;
+    $("pattern").value = "";
+    guarded(() => startWorld(cells, true))();
+  }
+
+  function pickNode(event) {
+    if (!state) return;
+    // nodes sit in the middle of squares that begin half a cell in from the border
+    const i = cellUnder(event, $("graph"), columns, rows, 0.5);
+    if (i >= 0) select(i);
+  }
+
+  // The 3D picture: a drag turns it, a click without a drag picks a node, the wheel zooms.
+  function beginTurning(event) {
+    if (!state) return;
+    turning = { x: event.clientX, y: event.clientY, moved: 0 };
+    $("space").setPointerCapture(event.pointerId);
+    $("space").classList.add("turning");
+  }
+
+  function keepTurning(event) {
+    if (!turning) {
+      const i = state ? nodeUnder(event) : -1;
+      const text = i < 0 ? "" : nodeText(i);
+      if ($("space").title !== text) $("space").title = text;
+      return;
+    }
+    const dx = event.clientX - turning.x;
+    const dy = event.clientY - turning.y;
+    turning.x = event.clientX;
+    turning.y = event.clientY;
+    turning.moved += Math.abs(dx) + Math.abs(dy);
+    yaw -= dx * 0.01;
+    pitch = clamp(pitch - dy * 0.01, 0.05, Math.PI - 0.05);
+    requestSpace();
+  }
+
+  function endTurning(event) {
+    if (!turning) return;
+    const wasClick = turning.moved < 5;
+    turning = null;
+    $("space").classList.remove("turning");
+    if (wasClick && event.type === "pointerup") {
+      const i = nodeUnder(event);
+      if (i >= 0) select(i);
+    }
+  }
+
+  function zoomSpace(event) {
+    if (!state) return;
+    event.preventDefault();  // the wheel zooms the picture instead of scrolling the page
+    zoom = clamp(zoom * Math.exp(-event.deltaY * 0.0015), 0.5, 6);
+    requestSpace();
+  }
+
+  // ---------- start ----------
+
+  async function boot() {
+    const status = $("load-status");
+    if (typeof loadPyodide !== "function") {
+      throw new Error("The page could not download Python from cdn.jsdelivr.net. " +
+        "It needs the network once when it is opened: check the connection and reload.");
+    }
+    status.textContent = "Downloading Python (Pyodide with numpy, about 10 MB the first time)…";
+    pyodide = await loadPyodide();
+    await pyodide.loadPackage(["numpy"]);
+    status.textContent = "Starting the engine…";
+    const sources = JSON.parse($("python-sources").textContent);
+    if (Object.keys(sources).length === 0) {
+      throw new Error("This page has no Python inside. Generate it with: python -m wolframs_game_of_life page");
+    }
+    const site = pyodide.runPython("import site; site.getsitepackages()[0]");
+    for (const [path, text] of Object.entries(sources)) {
+      const full = site + "/" + path;
+      pyodide.FS.mkdirTree(full.slice(0, full.lastIndexOf("/")));
+      pyodide.FS.writeFile(full, text);
+    }
+    pycall = pyodide.runPython(
+      "import json\n" +
+      "from wolframs_game_of_life.session import Session\n" +
+      "_session = Session()\n" +
+      "def _call(method, arguments):\n" +
+      "    return getattr(_session, method)(*json.loads(arguments))\n" +
+      "_call\n");
+    setup = call("setup");
+
+    for (const size of setup.sizes) {
+      const option = document.createElement("option");
+      option.value = String(size);
+      option.textContent = size + " x " + size + " cells";
+      $("size").appendChild(option);
+    }
+    $("size").value = String(setup.default_size);
+    const own = document.createElement("option");
+    own.value = "";
+    own.textContent = "(your own)";
+    $("pattern").appendChild(own);
+    for (const pattern of setup.patterns) {
+      const option = document.createElement("option");
+      option.value = pattern.key;
+      option.textContent = pattern.title;
+      $("pattern").appendChild(option);
+    }
+    $("pattern").value = "glider";
+
+    const body = $("rules-table").tBodies[0];
+    for (const rule of setup.rules) {
+      const row = body.insertRow();
+      row.insertCell().textContent = rule.name;
+      row.insertCell().textContent = rule.meaning;
+      const code = document.createElement("code");
+      code.textContent = rule.text;
+      row.insertCell().appendChild(code);
+    }
+
+    rows = columns = setup.default_size;
+    usePattern();
+    status.textContent = "Ready. Both sides are computed by Python running in this browser tab; " +
+      "the right side by the hypergraph rewriting engine of the experiment wolfram-physics.";
+    setBusy(false);
+    speedChanged();
+    document.body.dataset.ready = "1";
+  }
+
+  $("speed").max = String(SPEEDS.length - 1);
+  $("speed").value = String(DEFAULT_SPEED);
+  $("error-close").addEventListener("click", clearError);
+  $("size").addEventListener("change", guarded(resize));
+  $("pattern").addEventListener("change", guarded(() => { stop(); usePattern(); }));
+  $("random").addEventListener("click", guarded(() => {
+    stop();
+    $("pattern").value = "";
+    seed += 1;
+    startWorld(call("random", rows, columns, seed).cells, true);
+  }));
+  $("clear").addEventListener("click", guarded(() => {
+    stop();
+    $("pattern").value = "";
+    startWorld("0".repeat(rows * columns), true);
+  }));
+  $("play").addEventListener("click", guarded(togglePlay));
+  $("generation").addEventListener("click", guarded(() => {
+    stop();
+    // finish the generation under way, or do a whole one
+    advance(setup.steps_per_generation - state.step);
+  }));
+  $("one-step").addEventListener("click", guarded(() => { stop(); advance(1); }));
+  $("restart").addEventListener("click", guarded(() => { stop(); startWorld(startCells, false); }));
+  $("speed").addEventListener("input", speedChanged);
+  $("slower").addEventListener("click", () => changeSpeed(-1));
+  $("faster").addEventListener("click", () => changeSpeed(1));
+  $("show-steps").addEventListener("change", speedChanged);
+  $("life").addEventListener("pointerdown", beginDrawing);
+  $("life").addEventListener("pointermove", keepDrawing);
+  $("life").addEventListener("pointerup", endDrawing);
+  $("life").addEventListener("pointercancel", endDrawing);
+  $("graph").addEventListener("click", guarded(pickNode));
+  $("space").addEventListener("pointerdown", beginTurning);
+  $("space").addEventListener("pointermove", keepTurning);
+  $("space").addEventListener("pointerup", guarded(endTurning));
+  $("space").addEventListener("pointercancel", endTurning);
+  $("space").addEventListener("wheel", zoomSpace, { passive: false });
+  $("view-grid").addEventListener("click", guarded(() => setView("grid")));
+  $("view-3d").addEventListener("click", guarded(() => setView("3d")));
+  window.addEventListener("resize", () => { if (state) { drawLife(); drawPicture(); } });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    palette = null;
+    if (state) { drawLife(); drawPicture(); }
+  });
+  window.addEventListener("error", (event) => showError(event.error || event.message));
+  window.addEventListener("unhandledrejection", (event) => showError(event.reason));
+
+  // For the headless check and for trying things in the browser console:
+  // lifeOnWolfram.call("state"); lifeOnWolfram.step(1) does what the button "1 step" does;
+  // lifeOnWolfram.where(i) says where node i of the 3D picture is in the window.
+  window.lifeOnWolfram = {
+    call: (method, ...args) => call(method, ...args),
+    step: (steps) => advance(steps),
+    where: (i) => {
+      const canvas = $("space");
+      const box = canvas.getBoundingClientRect();
+      const ratio = box.width / canvas.width;
+      return [box.left + screenX[i] * ratio, box.top + screenY[i] * ratio];
+    },
+  };
+
+  setBusy(true);
+  boot().catch((error) => {
+    $("load-status").textContent = "";
+    showError(error);
+  });
+})();
+
+</script>
+</body>
+</html>

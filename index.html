@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>imigraph pages</title>
+<meta name="description" content="Pages of the imigraph project: imitating systems with graphs. They run in the browser.">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f6f5f2;
+    --surface: #fcfcfb;
+    --border: #dcdad3;
+    --text: #0b0b0b;
+    --text-2: #52514e;
+    --muted: #6f6e69;
+    --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121211;
+      --surface: #1a1a19;
+      --border: #383835;
+      --text: #f0efec;
+      --text-2: #c3c2b7;
+      --muted: #9c9b93;
+      --accent: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #383835;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #9c9b93;
+    --accent: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px 48px;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.7rem; margin: 0 0 8px; text-wrap: balance; }
+  h2 { font-size: 1.2rem; margin: 0 0 6px; }
+  .lede { margin: 0 0 28px; color: var(--text-2); }
+  a { color: var(--accent); }
+  .pages { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+  .page {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .page p { margin: 0 0 10px; color: var(--text-2); }
+  .page ul { margin: 0 0 12px; padding-left: 1.2rem; color: var(--text-2); }
+  .page .open { font-weight: 600; }
+  .small { font-size: 0.87rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>imigraph pages</h1>
+  <p class="lede">imigraph imitates systems with graphs: instead of computing a world the usual way,
+  it is written as nodes, relations between them, and rules that rewrite the relations. These pages
+  run in the browser; nothing has to be installed.</p>
+
+  <ul class="pages">
+    <li class="page">
+      <h2><a href="game_of_graphs.html">Game of graphs: the Game of Life on a Wolfram model</a></h2>
+      <p>Conway's Game of Life twice, side by side. On the left it is computed the ordinary way. On
+      the right the same world is a <b>hypergraph</b> in the manner of the Wolfram Physics Project:
+      every cell is a node, and 17 rewriting rules do what the rule of Life does. After every
+      generation the page checks that both sides agree in every cell.</p>
+      <ul>
+        <li>Set up a world (6 × 6 to 32 × 32 cells, ready patterns, random, or draw it), then start,
+        pause, step, restart, and play slower or faster.</li>
+        <li>Play step by step to watch how it is done: every cell sends its state to its eight
+        neighbours, a reader collects the eight messages and counts, and the count decides.</li>
+        <li>A second tab shows the hypergraph in 3D without the grid, placed only by which nodes
+        are related. The world wraps round, so it shows as a ring.</li>
+        <li>The page explains every mark in the picture, why the model looks the way it does, and
+        what was found of earlier work.</li>
+      </ul>
+      <p><a class="open" href="game_of_graphs.html">Open the page</a></p>
+      <p class="small">It runs Python in the browser (Pyodide), which is downloaded when the page
+      opens: allow a few seconds for the start.</p>
+    </li>
+  </ul>
+
+</main>
+</body>
+</html>
