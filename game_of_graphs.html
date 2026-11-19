@@ -142,7 +142,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 }
 .pane > p.small:first-of-type { min-height: 2.6em; }
 .frame { width: 100%; max-width: 600px; margin: 0 auto; }
-canvas { display: block; width: 100%; touch-action: none; border-radius: 6px; }
+canvas { display: block; width: 100%; touch-action: none; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
 #life { cursor: crosshair; }
 #graph { cursor: pointer; }
 #space { cursor: grab; }
@@ -237,11 +237,13 @@ td code { overflow-wrap: anywhere; }
 /* the 3D part: a long pattern name may not widen the page on a phone */
 #mode-3d select { max-width: 100%; }
 
-/* ---- one picture as large as the window ("Full window") ---- */
+/* ---- one picture as large as the window ("Full window") ----
+   Only the picture is shown, in the middle of the window; a round X in the top right
+   corner goes back. The X shows when the pointer moves or the screen is touched and
+   hides again after a while, with the pointer, as on a video player (class "idle"). */
 .pane-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; }
 .pane-bar button { min-height: 32px; }
-.pane-bar .max-only { display: none; flex-wrap: wrap; gap: 6px; align-items: center; }
-.pane-bar .max-status { font-variant-numeric: tabular-nums; }
+.close-max { display: none; }
 .pane.maximized {
   position: fixed;
   inset: 0;
@@ -249,13 +251,41 @@ td code { overflow-wrap: anywhere; }
   margin: 0;
   border: 0;
   border-radius: 0;
-  padding: 12px 16px;
-  overflow: auto;
+  padding: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.pane.maximized .pane-bar .max-only { display: inline-flex; }
-.pane.maximized .maximize { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.pane.maximized .frame { max-width: none; }
-.pane.maximized > p.small:first-of-type { min-height: 0; }
+.pane.maximized > :not(.frame):not(#grid-view):not(#space-view):not(.close-max),
+.pane.maximized > #grid-view > :not(.frame),
+.pane.maximized > #space-view > :not(.frame) { display: none; }
+.pane.maximized .frame { max-width: none; margin: 0; }
+.pane.maximized .close-max {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 51;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  opacity: 0.92;
+  transition: opacity 0.3s;
+}
+.pane.maximized .close-max:hover { opacity: 1; }
+.pane.maximized.idle .close-max { opacity: 0; pointer-events: none; }
+.pane.maximized.idle .close-max:focus-visible { opacity: 1; pointer-events: auto; }
+.pane.maximized.idle, .pane.maximized.idle canvas { cursor: none !important; }
 body.has-maximized { overflow: hidden; }
 #pattern-note { margin: 2px 0 0; flex-basis: 100%; }
 /* the flat part: a long pattern name may not widen the page on a phone */
@@ -325,15 +355,9 @@ body.has-maximized { overflow: hidden; }
     <h2>Game of Life <span class="muted small">an ordinary program</span></h2>
     <p class="muted small">Click or drag to set cells. An edit makes this world the new start.</p>
     <div class="pane-bar">
-      <button type="button" class="maximize" aria-pressed="false" title="Show this picture as large as the window (Esc goes back)">Full window</button>
-      <span class="max-only">
-        <button type="button" data-press="play" class="primary">Start</button>
-        <button type="button" data-press="generation">1 generation</button>
-        <button type="button" data-press="one-step">1 step</button>
-        <button type="button" data-press="restart">Restart</button>
-        <span class="max-status muted small"></span>
-      </span>
+      <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
     </div>
+    <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
     <div class="frame"><canvas id="life" aria-label="The Life world; click cells to change them"></canvas></div>
     <p id="life-info" class="muted small"></p>
   </section>
@@ -344,15 +368,9 @@ body.has-maximized { overflow: hidden; }
       <button id="view-3d" type="button" aria-pressed="false">3D hypergraph</button>
     </div>
     <div class="pane-bar">
-      <button type="button" class="maximize" aria-pressed="false" title="Show this picture as large as the window (Esc goes back)">Full window</button>
-      <span class="max-only">
-        <button type="button" data-press="play" class="primary">Start</button>
-        <button type="button" data-press="generation">1 generation</button>
-        <button type="button" data-press="one-step">1 step</button>
-        <button type="button" data-press="restart">Restart</button>
-        <span class="max-status muted small"></span>
-      </span>
+      <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
     </div>
+    <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
     <div id="grid-view">
       <p class="muted small">Every node is drawn at the place of its cell. Click a node to list its relations.
       The world wraps round: the short lines at the border go on at the opposite side.</p>
@@ -1612,7 +1630,6 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     for (const id of ["size", "pattern", "random", "clear", "play", "generation", "one-step", "restart"]) {
       $(id).disabled = isBusy || !ready;
     }
-    mirrorBars();
   }
 
   function number(value) { return Number(value).toLocaleString("en-US"); }
@@ -1846,7 +1863,6 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     if (long) {
       setBusy(true);
       $("status").textContent = "Arranging " + number(cells) + " nodes in space (once per size of world)…";
-      mirrorBars();
     }
     try {
       picture = await call("hypergraph");
@@ -2190,8 +2206,14 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   // ---------- one picture as large as the window ----------
   //
   // "Full window" lays the pane of a picture over the whole window (CSS: .pane.maximized)
-  // and makes its picture as large as fits; the bar above it gets the play buttons, which
-  // press the buttons of the page. Esc or the button again goes back.
+  // and shows nothing but the picture, as large as fits. A round X in the top right corner
+  // goes back, and so does Esc. The X shows when the pointer moves or the screen is touched
+  // and hides after IDLE_AFTER ms without that, together with the pointer (class "idle"),
+  // as on a video player. Space starts and pauses the play. The pictures keep working:
+  // turn and zoom the 3D one, click nodes, draw cells.
+
+  const IDLE_AFTER = 2500;
+  let idleTimer = null;
 
   function maximizedPane() { return document.querySelector(".pane.maximized"); }
 
@@ -2203,40 +2225,38 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     if (!frame) return;
     const canvas = frame.querySelector("canvas");
     const [across, down] = (canvas.dataset.aspect || "1 / 1").split("/").map(Number);
-    // everything in the pane but the picture keeps its height; the picture gets the rest
-    const rest = pane.scrollHeight - frame.offsetHeight;
+    // the pane is the window; the picture is all there is in it
     const style = getComputedStyle(pane);
-    const inside = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const height = Math.max(160, window.innerHeight - rest - 4);
-    frame.style.width = Math.floor(Math.min(inside, height * across / down)) + "px";
+    const wide = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const high = pane.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    frame.style.width = Math.floor(Math.max(100, Math.min(wide, high * across / down))) + "px";
+  }
+
+  // Shows the X (and the pointer) of the full window, and hides them again after a while.
+  function wake() {
+    const pane = maximizedPane();
+    clearTimeout(idleTimer);
+    if (!pane) return;
+    pane.classList.remove("idle");
+    idleTimer = setTimeout(function rest() {
+      // not while the pointer rests on the X itself
+      if (pane.querySelector(".close-max:hover")) { idleTimer = setTimeout(rest, IDLE_AFTER); return; }
+      pane.classList.add("idle");
+    }, IDLE_AFTER);
   }
 
   function maximize(pane) {
     const already = maximizedPane();
-    if (already) already.classList.remove("maximized");
+    if (already) already.classList.remove("maximized", "idle");
     if (pane && pane !== already) pane.classList.add("maximized");
     const now = maximizedPane();
     document.body.classList.toggle("has-maximized", Boolean(now));
     document.body.dataset.maximized = now ? now.querySelector("canvas").id : "";
-    for (const button of document.querySelectorAll(".maximize")) {
-      const on = button.closest(".pane") === now;
-      button.setAttribute("aria-pressed", String(on));
-      button.textContent = on ? "Back to the page" : "Full window";
-    }
+    // the button that opened it is hidden now: let Space go to the play, not to it
+    if (now && document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    wake();
     fitMaximized();
     if (state) { drawLife(); drawPicture(); writeTexts(); }
-  }
-
-  // the play buttons of the bars mirror those of the page
-  function mirrorBars() {
-    for (const button of document.querySelectorAll(".pane-bar [data-press]")) {
-      const original = $(button.dataset.press);
-      button.disabled = original.disabled;
-      if (button.textContent !== original.textContent) button.textContent = original.textContent;
-    }
-    for (const status of document.querySelectorAll(".max-status")) {
-      status.textContent = $("status").textContent;
-    }
   }
 
   // ---------- texts ----------
@@ -2271,7 +2291,6 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     document.body.dataset.generation = String(state.generation);
     document.body.dataset.step = String(state.step);
     document.body.dataset.equal = state.check.equal ? "1" : "0";
-    mirrorBars();
   }
 
   function draw() {
@@ -2394,7 +2413,6 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     clearTimeout(timer);
     $("play").textContent = "Start";
     document.body.dataset.playing = "";
-    mirrorBars();
     later(showCell);
   }
 
@@ -2426,7 +2444,6 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     playing = true;
     $("play").textContent = "Pause";
     document.body.dataset.playing = "1";
-    mirrorBars();
     tick();
   }
 
@@ -2660,11 +2677,23 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   for (const button of document.querySelectorAll("#mode-2d .maximize")) {
     button.addEventListener("click", () => maximize(button.closest(".pane")));
   }
-  for (const button of document.querySelectorAll("#mode-2d .pane-bar [data-press]")) {
-    button.addEventListener("click", () => $(button.dataset.press).click());
+  for (const button of document.querySelectorAll("#mode-2d .close-max")) {
+    button.addEventListener("click", () => maximize(null));
+  }
+  // in the full window: any move of the pointer or touch shows the X for a while
+  for (const kind of ["pointermove", "pointerdown"]) {
+    document.addEventListener(kind, () => { if (maximizedPane()) wake(); }, { passive: true });
   }
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && maximizedPane()) maximize(null);
+    if (!maximizedPane()) return;
+    if (event.key === "Escape") {
+      maximize(null);
+    } else if (event.key === " " && !(event.target instanceof HTMLButtonElement)) {
+      event.preventDefault();  // no scrolling; Space starts and pauses the play
+      if (!$("play").disabled) $("play").click();
+    } else {
+      wake();
+    }
   });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     palette = null;
