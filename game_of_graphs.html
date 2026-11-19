@@ -670,6 +670,10 @@ body.has-maximized { overflow: hidden; }
     <h2>The same world as a Wolfram model <span class="muted small">hypergraph, every node a cell</span></h2>
     <p class="muted small">Every node of the hypergraph is drawn, each at the place of its cell, with all its
     relations. Drag to turn, wheel or two fingers to zoom, click a node to list its relations.</p>
+    <div class="pane-bar">
+      <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
+    </div>
+    <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
     <div class="frame"><canvas id="graph-3d" aria-label="The hypergraph of the 3D world, every node at its cell"></canvas></div>
     <label class="inline links-choice">Lines between neighbours
       <select id="links-3d">
@@ -939,7 +943,7 @@ uniform vec3 uUp;
 uniform vec3 uTowards;
 uniform float uEye;
 uniform float uFocus;
-uniform float uHalf;
+uniform vec2 uHalf;
 uniform float uRadius;
 uniform vec3 uBg;
 vec3 eyeOf(vec3 p) { return vec3(dot(uAcross, p), dot(uUp, p), dot(uTowards, p)); }
@@ -1294,7 +1298,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       gl.uniform3fv(u.uTowards, view.towards);
       gl.uniform1f(u.uEye, view.eye);
       gl.uniform1f(u.uFocus, view.focus);
-      gl.uniform1f(u.uHalf, view.half);
+      gl.uniform2f(u.uHalf, view.half[0], view.half[1]);
       gl.uniform1f(u.uRadius, view.radius);
       gl.uniform3fv(u.uBg, view.bg);
       return u;
@@ -1322,7 +1326,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       // Starts a picture: clears the canvas and sets the camera for everything drawn until
       // the next begin. view: { across, up, towards, eye, focus, radius, bg: [r, g, b] }.
       begin(next) {
-        view = Object.assign({ half: canvas.width / 2 }, next);
+        view = Object.assign({ half: [canvas.width / 2, canvas.height / 2] }, next);
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(view.bg[0], view.bg[1], view.bg[2], 1);
         gl.clearDepth(1);
@@ -1727,14 +1731,18 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   function drawGraph() {
     if (!state) return;
     const canvas = $("graph");
-    const context = fit(canvas, columns + 1, rows + 1);
+    const context = fit(canvas, ...shapeOf(canvas, columns + 1, rows + 1));
     const colour = colours();
     const graph = state.graph;
     const cells = rows * columns;
-    // one cell width; a node sits in the middle of its cell, half a cell of margin all round
-    const unit = canvas.width / (columns + 1);
-    const X = (column) => (column + 1) * unit;
-    const Y = (row) => (row + 1) * unit;
+    // a node sits in the middle of its cell, half a cell of margin all round. Cells are
+    // square, except in the full window, where the picture takes the window's shape: there
+    // the nodes keep their size (`unit`) and only the spaces between them stretch.
+    const unitX = canvas.width / (columns + 1);
+    const unitY = canvas.height / (rows + 1);
+    const unit = Math.min(unitX, unitY);
+    const X = (column) => (column + 1) * unitX;
+    const Y = (row) => (row + 1) * unitY;
     const radius = 0.22 * unit;
     const directions = setup.directions;       // [row offset, column offset], clockwise from above
     context.setTransform(1, 0, 0, 1, 0, 0);
@@ -1761,9 +1769,9 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
             const rw = (r2 + rows) % rows;
             const cw = (c2 + columns) % columns;
             context.moveTo(X(c), Y(r));
-            context.lineTo(X(c) + dc * STUB * unit, Y(r) + dr * STUB * unit);
+            context.lineTo(X(c) + dc * STUB * unitX, Y(r) + dr * STUB * unitY);
             context.moveTo(X(cw), Y(rw));
-            context.lineTo(X(cw) - dc * STUB * unit, Y(rw) - dr * STUB * unit);
+            context.lineTo(X(cw) - dc * STUB * unitX, Y(rw) - dr * STUB * unitY);
           }
         }
       }
@@ -1779,8 +1787,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
         for (let d = 0; d < 8; d++) {
           if (graph.lines[i * 8 + d] !== kind) continue;
           const [dr, dc] = directions[d];
-          dot(context, X((c + dc + columns) % columns) - dc * MESSAGE_AT * unit,
-            Y((r + dr + rows) % rows) - dr * MESSAGE_AT * unit, size);
+          dot(context, X((c + dc + columns) % columns) - dc * MESSAGE_AT * unitX,
+            Y((r + dr + rows) % rows) - dr * MESSAGE_AT * unitY, size);
         }
       }
       context.fill();
@@ -1806,9 +1814,9 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       const x = X(i % columns);
       const y = Y(Math.floor(i / columns));
       const [dr, dc] = directions[reader];
-      const length = Math.hypot(dr, dc);
+      const length = Math.hypot(dr * unitY, dc * unitX);
       context.moveTo(x, y);
-      context.lineTo(x + dc / length * (radius + unit * 0.2), y + dr / length * (radius + unit * 0.2));
+      context.lineTo(x + dc * unitX / length * (radius + unit * 0.2), y + dr * unitY / length * (radius + unit * 0.2));
     }
     context.stroke();
 
@@ -1901,15 +1909,22 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     order = Array.from({ length: cells }, (_, i) => i);
   }
 
-  // Where every node is on a square canvas `width` pixels wide, seen from the eye.
-  function project(width) {
+  // The focus of the camera (pixels per unit at the distance of one unit from the eye),
+  // with the eye 3.2 radii of the ring away: the ring fits into the smaller side of the
+  // canvas, which is square, or has the window's shape in the full window.
+  function spaceFocus(width, height) {
+    return 0.44 * Math.min(width, height) * zoom * 3.2;
+  }
+
+  // Where every node is on a canvas `width` x `height` pixels, seen from the eye.
+  function project(width, height) {
     const places = picture.places;
     const cosYaw = Math.cos(yaw);
     const sinYaw = Math.sin(yaw);
     const cosPitch = Math.cos(pitch);
     const sinPitch = Math.sin(pitch);
     const eye = 3.2 * picture.radius;   // the eye's distance from the middle of the ring
-    const focus = 0.44 * width * zoom * eye / picture.radius;
+    const focus = spaceFocus(width, height);
     for (let i = 0; i < places.length; i++) {
       const place = places[i];
       const x = place[0] * cosYaw - place[1] * sinYaw;
@@ -1918,7 +1933,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       const towards = y * sinPitch + place[2] * cosPitch;
       const size = focus / (eye - towards);
       screenX[i] = width / 2 + x * size;
-      screenY[i] = width / 2 - up * size;
+      screenY[i] = height / 2 - up * size;
       depth[i] = towards;
       scale[i] = size;
     }
@@ -1935,16 +1950,17 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const canvas = $("space");
     const gl = spaceDrawer();
     if (gl) { drawSpaceGL(canvas, gl); return; }
-    const context = fit(canvas, 1, 1);
+    const context = fit(canvas, ...shapeOf(canvas, 1, 1));
     const width = canvas.width;
+    const height = canvas.height;
     const pixel = window.devicePixelRatio || 1;
     const colour = colours();
     const graph = state.graph;
     const cells = rows * columns;
-    project(width);
+    project(width, height);
     context.globalAlpha = 1;
     context.fillStyle = colour.surface;
-    context.fillRect(0, 0, width, width);
+    context.fillRect(0, 0, width, height);
     context.lineCap = "round";
 
     // the links that never change, the far ones fainter: one path per layer of depth
@@ -2089,9 +2105,10 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const cells = rows * columns;
     const pixel = window.devicePixelRatio || 1;
     const colour = colours();
-    fitSize(canvas, 1, 1);
+    fitSize(canvas, ...shapeOf(canvas, 1, 1));
     const width = canvas.width;
-    project(width);  // where the nodes are on the screen, for pointing at them
+    const height = canvas.height;
+    project(width, height);  // where the nodes are on the screen, for pointing at them
     const buffer = (name, stride) => made[name] || (made[name] = drawer.buffer(stride));
     const places = shape.places;
 
@@ -2151,7 +2168,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       across: [cosYaw, -sinYaw, 0],
       up: [sinYaw * cosPitch, cosYaw * cosPitch, -sinPitch],
       towards: [sinYaw * sinPitch, cosYaw * sinPitch, cosPitch],
-      eye, focus: 0.44 * width * zoom * eye / shape.radius, radius: shape.radius, bg: rgb(colour.surface),
+      eye, focus: spaceFocus(width, height), radius: shape.radius, bg: rgb(colour.surface),
     });
     drawer.lines(made.links, { fog: false, colour: rgb(colour.faint), alpha: [0.2, 0.9], widthPx: Math.max(1, pixel) });
     drawer.points(made.messages1, { fog: false, mode: "dot", colour: rgb(colour.muted), alpha: [0.4, 0.9], radiusUnits: 0.025 * LINK, radiusMin: 1 });
@@ -2241,6 +2258,24 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
 
   function maximizedPane() { return document.querySelector(".pane.maximized"); }
 
+  // The room for the picture in the full window, in CSS pixels: the pane is the window,
+  // and the picture is all there is in it.
+  function roomIn(pane) {
+    const style = getComputedStyle(pane);
+    const wide = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const high = pane.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    return [Math.max(100, Math.floor(wide)), Math.max(100, Math.floor(high))];
+  }
+
+  // The shape a canvas is drawn in: its own (`across` x `down`), except for the pictures of
+  // the hypergraph in the full window, which take the window's shape and fill it also when
+  // a phone is held sideways (where a node is drawn is a hint, not part of the model).
+  const FILLS_WINDOW = new Set(["graph", "space", "graph-3d"]);
+  function shapeOf(canvas, across, down) {
+    const pane = FILLS_WINDOW.has(canvas.id) ? canvas.closest(".pane.maximized") : null;
+    return pane ? roomIn(pane) : [across, down];
+  }
+
   function fitMaximized() {
     const pane = maximizedPane();
     for (const frame of document.querySelectorAll(".frame")) frame.style.width = "";
@@ -2248,11 +2283,13 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const frame = Array.from(pane.querySelectorAll(".frame")).find((f) => f.offsetParent !== null);
     if (!frame) return;
     const canvas = frame.querySelector("canvas");
+    const [wide, high] = roomIn(pane);
+    if (FILLS_WINDOW.has(canvas.id)) {
+      frame.style.width = wide + "px";
+      fitSize(canvas, wide, high);  // the shape of the window at once, not at the next drawing
+      return;
+    }
     const [across, down] = (canvas.dataset.aspect || "1 / 1").split("/").map(Number);
-    // the pane is the window; the picture is all there is in it
-    const style = getComputedStyle(pane);
-    const wide = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const high = pane.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
     frame.style.width = Math.floor(Math.max(100, Math.min(wide, high * across / down))) + "px";
   }
 
@@ -2280,7 +2317,10 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     if (now && document.activeElement && document.activeElement.blur) document.activeElement.blur();
     wake();
     fitMaximized();
-    if (state) { drawLife(); drawPicture(); writeTexts(); }
+    // a pane of the 3D part: app3d.js draws it, on the event below
+    const changed = now || already;
+    if (state && !(changed && changed.closest("#mode-3d"))) { drawLife(); drawPicture(); writeTexts(); }
+    window.dispatchEvent(new Event("life-full-window"));
   }
 
   // ---------- texts ----------
@@ -2509,9 +2549,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
 
   function cellUnder(event, canvas, across, down, margin) {
     const box = canvas.getBoundingClientRect();
-    const unit = box.width / (across + 2 * margin);
-    const column = Math.floor((event.clientX - box.left) / unit - margin);
-    const row = Math.floor((event.clientY - box.top) / unit - margin);
+    const column = Math.floor((event.clientX - box.left) / (box.width / (across + 2 * margin)) - margin);
+    const row = Math.floor((event.clientY - box.top) / (box.height / (down + 2 * margin)) - margin);
     if (row < 0 || row >= down || column < 0 || column >= across) return -1;
     return row * across + column;
   }
@@ -2843,11 +2882,24 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   $("space").addEventListener("wheel", zoomSpace, { passive: false });
   $("view-grid").addEventListener("click", guarded(() => setView("grid")));
   $("view-3d").addEventListener("click", guarded(() => setView("3d")));
-  window.addEventListener("resize", () => { fitMaximized(); if (state) { drawLife(); drawPicture(); } });
-  for (const button of document.querySelectorAll("#mode-2d .maximize")) {
+  // A phone that is turned may say its new size a moment late: in the full window the
+  // picture is fitted once more after a while.
+  let resizeTimer = null;
+  const refit = () => {
+    fitMaximized();
+    if (state) { drawLife(); drawPicture(); }
+    window.dispatchEvent(new Event("life-full-window"));
+  };
+  window.addEventListener("resize", () => {
+    refit();
+    clearTimeout(resizeTimer);
+    if (maximizedPane()) resizeTimer = setTimeout(refit, 300);
+  });
+  // the full window serves both parts of the page, the flat game and the 3D one
+  for (const button of document.querySelectorAll(".maximize")) {
     button.addEventListener("click", () => maximize(button.closest(".pane")));
   }
-  for (const button of document.querySelectorAll("#mode-2d .close-max")) {
+  for (const button of document.querySelectorAll(".close-max")) {
     button.addEventListener("click", () => maximize(null));
   }
   // in the full window: any move of the pointer or touch shows the X for a while
@@ -2860,7 +2912,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       maximize(null);
     } else if (event.key === " " && !(event.target instanceof HTMLButtonElement)) {
       event.preventDefault();  // no scrolling; Space starts and pauses the play
-      if (!$("play").disabled) $("play").click();
+      const play = maximizedPane().closest("#mode-3d") ? $("play-3d") : $("play");
+      if (!play.disabled) play.click();
     } else {
       wake();
     }
@@ -2879,7 +2932,9 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   // lifeOnWolfram.step(1) does what the button "1 step" does; lifeOnWolfram.where(i) says
   // where node i of the 3D picture is in the window. lifeOnWolfram.turn(0.01) turns the 3D
   // picture a little and draws it at once, as a drag does with the next frame; zoom() is
-  // the zoom of the 3D picture, gridView() that of the grid picture. stop(),
+  // the zoom of the 3D picture, gridView() that of the grid picture; windowShape(canvas,
+  // across, down) is the shape app3d.js draws its right picture in (the window's in the
+  // full window). stop(),
   // redraw() and `python` (the worker) are for the switch to the 3D game and back
   // (app3d.js).
   window.lifeOnWolfram = {
@@ -2892,6 +2947,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     turn: (by) => { yaw -= by; if (state && view === "3d") drawSpace(); },
     zoom: () => zoom,
     gridView: () => ({ ...gridView }),
+    windowShape: (canvas, across, down) => shapeOf(canvas, across, down),
     where: (i) => {
       const canvas = $("space");
       const box = canvas.getBoundingClientRect();
@@ -3176,15 +3232,23 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
 
   // ---------- the camera ----------
 
-  function camera(width) {
+  // The camera for a canvas `width` x `height` pixels (square, except the right picture in
+  // the full window, which has the window's shape): the box fits into the smaller side.
+  function camera(width, height = width) {
     const radius = Math.sqrt(3) * side / 2;
     const eye = 2.9 * radius;
     return {
       cosYaw: Math.cos(yaw), sinYaw: Math.sin(yaw),
       cosPitch: Math.cos(pitch), sinPitch: Math.sin(pitch),
-      eye, radius, half: width / 2,
-      focus: 0.47 * width * zoom * eye / radius,
+      eye, radius, halfX: width / 2, halfY: height / 2,
+      focus: 0.47 * Math.min(width, height) * zoom * eye / radius,
     };
+  }
+
+  // The shape the right picture is drawn in: square, or the window's in the full window
+  // (app.js keeps the full window for both parts of the page).
+  function graphShape(canvas) {
+    return window.lifeOnWolfram.windowShape(canvas, 1, 1);
   }
 
   // Writes x, y on the canvas, depth (larger is nearer) and pixels per cell width at
@@ -3195,8 +3259,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const up = away * cam.cosPitch + z * cam.sinPitch;
     const towards = -away * cam.sinPitch + z * cam.cosPitch;
     const size = cam.focus / (cam.eye - towards);
-    out[k] = cam.half + across * size;
-    out[k + 1] = cam.half - up * size;
+    out[k] = cam.halfX + across * size;
+    out[k + 1] = cam.halfY - up * size;
     out[k + 2] = towards;
     out[k + 3] = size;
   }
@@ -3369,19 +3433,20 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const canvas = $("graph-3d");
     const gl = drawerOf(canvas);
     if (gl) { drawGraphGL(canvas, gl); return; }
-    const context = fit(canvas, 1, 1);
+    const context = fit(canvas, ...graphShape(canvas));
     const width = canvas.width;
+    const height = canvas.height;
     const pixel = window.devicePixelRatio || 1;
     const colour = colours();
     const box = shapeOf(side);
     const graph = state.graph;
-    const cam = camera(width);
+    const cam = camera(width, height);
     graphCamera = cam;
     const cells = box.cells;
     for (let i = 0; i < cells; i++) project(cam, box.places[3 * i], box.places[3 * i + 1], box.places[3 * i + 2], nodeScreen, 4 * i);
     context.globalAlpha = 1;
     context.fillStyle = colour.surface;
-    context.fillRect(0, 0, width, width);
+    context.fillRect(0, 0, width, height);
     context.lineCap = "round";
 
     // the lines between neighbours, which never change: one path per layer of depth
@@ -3590,14 +3655,14 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   }
 
   function drawGraphGL(canvas, gl) {
-    size(canvas, 1, 1);
+    size(canvas, ...graphShape(canvas));
     const { drawer, made } = gl;
     const rgb = window.lifeGL.rgb;
     const pixel = window.devicePixelRatio || 1;
     const colour = colours();
     const box = shapeOf(side);
     const graph = state.graph;
-    const cam = camera(canvas.width);
+    const cam = camera(canvas.width, canvas.height);
     graphCamera = cam;
     const cells = box.cells;
     for (let i = 0; i < cells; i++) project(cam, box.places[3 * i], box.places[3 * i + 1], box.places[3 * i + 2], nodeScreen, 4 * i);
@@ -4220,6 +4285,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     $(id).addEventListener("wheel", zoomPictures, { passive: false });
   }
   window.addEventListener("resize", () => { if (active && state) drawPictures(); });
+  // app.js has opened, closed or fitted the full window anew
+  window.addEventListener("life-full-window", () => { if (active && state) drawPictures(); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     palette = null;
     if (active && state) drawPictures();
