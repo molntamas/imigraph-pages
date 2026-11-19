@@ -372,14 +372,15 @@ body.has-maximized { overflow: hidden; }
     </div>
     <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
     <div id="grid-view">
-      <p class="muted small">Every node is drawn at the place of its cell. Click a node to list its relations.
+      <p class="muted small">Every node is drawn at the place of its cell. Click a node to list its relations; zoom
+      with the mouse wheel or two fingers, drag to move the zoomed picture.
       The world wraps round: the short lines at the border go on at the opposite side.</p>
       <div class="frame"><canvas id="graph" aria-label="The hypergraph, drawn with every node at its cell"></canvas></div>
     </div>
     <div id="space-view" hidden>
       <p class="muted small">The same nodes and relations without the grid: every place is computed only from
-      which nodes are related, so that related nodes lie near each other. Drag to turn it, use the mouse
-      wheel to zoom, click a node to list its relations.</p>
+      which nodes are related, so that related nodes lie near each other. Drag to turn it, zoom with the
+      mouse wheel or two fingers, click a node to list its relations.</p>
       <div class="frame"><canvas id="space" aria-label="The hypergraph in 3D, arranged by its relations alone"></canvas></div>
     </div>
     <p id="graph-info" class="muted small"></p>
@@ -445,7 +446,7 @@ body.has-maximized { overflow: hidden; }
     surface that closes on itself in two directions is a ring. Everything is drawn with the same
     marks as on the grid, listed above: black and hollow circles, grey lines between neighbours, blue
     and grey dots for messages, the orange reader, the count. What lies at the back of the ring is
-    drawn fainter. Drag to turn the ring, use the mouse wheel to zoom.</p>
+    drawn fainter. Drag to turn the ring, zoom with the mouse wheel or two fingers.</p>
     <p><b>Why the black dots seem to move.</b> Nothing travels across the picture. In every generation the
     rules take the alive mark away from some nodes and put one on others, exactly where the Game of Life
     on the left lets cells die and be born. A glider "moves" on the right the same way it does on the
@@ -652,7 +653,7 @@ body.has-maximized { overflow: hidden; }
   <section class="pane" aria-label="The ordinary 3D Game of Life">
     <h2>Game of Life in 3D <span class="muted small">an ordinary program</span></h2>
     <p class="muted small">Every alive cell is a cube. The box wraps round: what leaves it on one face comes
-    back on the opposite one. Drag to turn, use the mouse wheel to zoom; both pictures turn together.</p>
+    back on the opposite one. Drag to turn, zoom with the mouse wheel or two fingers; both pictures turn together.</p>
     <div class="frame"><canvas id="life-3d" aria-label="The 3D Life world as cubes in a box; drag to turn it"></canvas></div>
     <p id="life-info-3d" class="muted small"></p>
     <div class="layer-edit">
@@ -668,7 +669,7 @@ body.has-maximized { overflow: hidden; }
   <section class="pane" aria-label="The Wolfram model of the 3D world">
     <h2>The same world as a Wolfram model <span class="muted small">hypergraph, every node a cell</span></h2>
     <p class="muted small">Every node of the hypergraph is drawn, each at the place of its cell, with all its
-    relations. Drag to turn, wheel to zoom, click a node to list its relations.</p>
+    relations. Drag to turn, wheel or two fingers to zoom, click a node to list its relations.</p>
     <div class="frame"><canvas id="graph-3d" aria-label="The hypergraph of the 3D world, every node at its cell"></canvas></div>
     <label class="inline links-choice">Lines between neighbours
       <select id="links-3d">
@@ -1515,7 +1516,16 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   let pitch = 1.0;         // how far it is tipped towards the eye (0: seen from above)
   let zoom = 1;
   let turning = null;      // the drag in progress: last pointer position, distance moved
+  let pinch = null;        // two fingers on the 3D picture: their spread and the zoom at the start
+  const spacePointers = new Map(); // pointers (mouse, fingers) down on the 3D picture, by id
   let spaceQueued = false; // a redraw of the 3D picture is waiting for the next frame
+  // The grid picture can be zoomed (wheel, two fingers) and moved (drag) while zoomed in:
+  // drawn `zoom` times as large, its top left corner at (x, y), in widths and heights of
+  // the canvas. Only the drawing changes; picking a node undoes the same transform.
+  const gridView = { zoom: 1, x: 0, y: 0 };
+  let gridGesture = null;  // the drag or pinch in progress on the grid picture
+  const graphPointers = new Map(); // pointers down on the grid picture, by id
+  let graphQueued = false; // a redraw of the grid picture is waiting for the next frame
 
   // ---------- helpers ----------
 
@@ -1727,8 +1737,11 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     const Y = (row) => (row + 1) * unit;
     const radius = 0.22 * unit;
     const directions = setup.directions;       // [row offset, column offset], clockwise from above
+    context.setTransform(1, 0, 0, 1, 0, 0);
     context.fillStyle = colour.surface;
     context.fillRect(0, 0, canvas.width, canvas.height);
+    // zoomed in: everything below is drawn larger and moved (gridView)
+    context.setTransform(gridView.zoom, 0, 0, gridView.zoom, gridView.x * canvas.width, gridView.y * canvas.height);
     context.lineCap = "round";
 
     // the neighbour links (each drawn once; a link that wraps round is two short lines)
@@ -1843,6 +1856,17 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     };
     if (selected >= 0) ring(selected, colour.accent);
     for (const i of state.check.differing) ring(i, colour.fail);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  // Redraws the grid picture with the next frame of the screen, however often it is asked.
+  function requestGraph() {
+    if (graphQueued) return;
+    graphQueued = true;
+    requestAnimationFrame(() => {
+      graphQueued = false;
+      if (view === "grid") drawGraph();
+    });
   }
 
   // ---------- drawing: the hypergraph in 3D, without the grid ----------
@@ -2522,19 +2546,140 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     later(() => startWorld(cells, true));
   }
 
+  // How far apart the first two pointers of `pointers` are, and the point between them.
+  function spread(pointers) {
+    const [a, b] = pointers.values();
+    return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+  }
+
+  function middle(pointers) {
+    const [a, b] = pointers.values();
+    return [(a.x + b.x) / 2, (a.y + b.y) / 2];
+  }
+
+  // The grid picture: a click (a tap) without a drag picks a node; the wheel or two fingers
+  // zoom; a drag (one finger) moves the picture while it is zoomed in.
+  const GRID_MOST = 8;     // the grid picture is drawn at most this many times as large
+
+  // Where a point of the window is on the grid canvas, in its width and height (0 to 1).
+  function onGraph(x, y) {
+    const box = $("graph").getBoundingClientRect();
+    return [(x - box.left) / box.width, (y - box.top) / box.height];
+  }
+
+  // Zooms and moves the grid picture; it always fills the canvas.
+  function setGridView(zoom, x, y) {
+    const to = clamp(zoom, 1, GRID_MOST);
+    x = clamp(x, 1 - to, 0);
+    y = clamp(y, 1 - to, 0);
+    if (to === gridView.zoom && x === gridView.x && y === gridView.y) return;
+    gridView.zoom = to;
+    gridView.x = x;
+    gridView.y = y;
+    requestGraph();
+  }
+
+  function zoomGraph(event) {
+    if (!state) return;
+    const to = clamp(gridView.zoom * Math.exp(-event.deltaY * 0.0015), 1, GRID_MOST);
+    if (to === gridView.zoom) return;  // at either end of the zoom the wheel scrolls the page
+    event.preventDefault();
+    // the point under the pointer stays under it
+    const [u, v] = onGraph(event.clientX, event.clientY);
+    const k = to / gridView.zoom;
+    setGridView(to, u - (u - gridView.x) * k, v - (v - gridView.y) * k);
+  }
+
+  // Two fingers on the grid picture: from now on the point of the picture between them
+  // stays between them, and their spread sets the zoom.
+  function startGridPinch() {
+    const [u, v] = onGraph(...middle(graphPointers));
+    gridGesture.moved = Infinity;  // a pinch picks no node
+    gridGesture.pinch = {
+      spread: spread(graphPointers), zoom: gridView.zoom,
+      u: (u - gridView.x) / gridView.zoom, v: (v - gridView.y) / gridView.zoom,
+    };
+  }
+
+  function beginGraphGesture(event) {
+    if (!state) return;
+    if (event.isPrimary) graphPointers.clear();  // the first finger of a new touch, or a mouse
+    graphPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    $("graph").setPointerCapture(event.pointerId);
+    if (graphPointers.size === 1) {
+      gridGesture = { x: event.clientX, y: event.clientY, moved: 0, pinch: null };
+    } else if (graphPointers.size === 2 && gridGesture) {
+      startGridPinch();
+    }
+  }
+
+  function keepGraphGesture(event) {
+    if (!gridGesture || !graphPointers.has(event.pointerId)) return;
+    graphPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const pinch = gridGesture.pinch;
+    if (pinch) {
+      if (graphPointers.size < 2) return;
+      const to = clamp(pinch.zoom * spread(graphPointers) / pinch.spread, 1, GRID_MOST);
+      const [u, v] = onGraph(...middle(graphPointers));
+      setGridView(to, u - pinch.u * to, v - pinch.v * to);
+      return;
+    }
+    const dx = event.clientX - gridGesture.x;
+    const dy = event.clientY - gridGesture.y;
+    gridGesture.x = event.clientX;
+    gridGesture.y = event.clientY;
+    gridGesture.moved += Math.abs(dx) + Math.abs(dy);
+    const box = $("graph").getBoundingClientRect();
+    setGridView(gridView.zoom, gridView.x + dx / box.width, gridView.y + dy / box.height);
+  }
+
+  function endGraphGesture(event) {
+    if (!graphPointers.delete(event.pointerId) || !gridGesture) return;
+    if (gridGesture.pinch) {
+      if (graphPointers.size === 1) {
+        // one finger stays: it goes on moving the picture from where it is
+        const [p] = graphPointers.values();
+        gridGesture = { x: p.x, y: p.y, moved: Infinity, pinch: null };
+      } else if (graphPointers.size >= 2) {
+        startGridPinch();
+      }
+    }
+    if (graphPointers.size > 0) return;
+    const wasClick = gridGesture.moved < 5;
+    gridGesture = null;
+    if (wasClick && event.type === "pointerup") pickNode(event);
+  }
+
   function pickNode(event) {
     if (!state) return;
+    // where the pointer would be on the picture drawn without zoom
+    const box = $("graph").getBoundingClientRect();
+    const [u, v] = onGraph(event.clientX, event.clientY);
+    const at = {
+      clientX: box.left + (u - gridView.x) / gridView.zoom * box.width,
+      clientY: box.top + (v - gridView.y) / gridView.zoom * box.height,
+    };
     // nodes sit in the middle of squares that begin half a cell in from the border
-    const i = cellUnder(event, $("graph"), columns, rows, 0.5);
+    const i = cellUnder(at, $("graph"), columns, rows, 0.5);
     if (i >= 0) select(i);
   }
 
-  // The 3D picture: a drag turns it, a click without a drag picks a node, the wheel zooms.
+  // The 3D picture: a drag turns it, a click without a drag picks a node, the wheel or two
+  // fingers zoom.
   function beginTurning(event) {
     if (!state) return;
-    turning = { x: event.clientX, y: event.clientY, moved: 0 };
+    if (event.isPrimary) spacePointers.clear();  // the first finger of a new touch, or a mouse
+    spacePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     $("space").setPointerCapture(event.pointerId);
     $("space").classList.add("turning");
+    if (spacePointers.size === 1) {
+      turning = { x: event.clientX, y: event.clientY, moved: 0 };
+      pinch = null;
+    } else if (spacePointers.size === 2 && turning) {
+      // a second finger: the two zoom, and the touch neither turns nor picks
+      turning.moved = Infinity;
+      pinch = { spread: spread(spacePointers), zoom };
+    }
   }
 
   function keepTurning(event) {
@@ -2542,6 +2687,15 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       const i = state ? nodeUnder(event) : -1;
       const text = i < 0 ? "" : nodeText(i);
       if ($("space").title !== text) $("space").title = text;
+      return;
+    }
+    if (!spacePointers.has(event.pointerId)) return;
+    spacePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch) {
+      if (spacePointers.size >= 2) {
+        zoom = clamp(pinch.zoom * spread(spacePointers) / pinch.spread, 0.5, 6);
+        requestSpace();
+      }
       return;
     }
     const dx = event.clientX - turning.x;
@@ -2555,7 +2709,19 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   }
 
   function endTurning(event) {
-    if (!turning) return;
+    if (!spacePointers.delete(event.pointerId) || !turning) return;
+    if (pinch) {
+      if (spacePointers.size === 1) {
+        // one finger stays: it goes on turning from where it is
+        const [p] = spacePointers.values();
+        pinch = null;
+        turning.x = p.x;
+        turning.y = p.y;
+      } else if (spacePointers.size >= 2) {
+        pinch = { spread: spread(spacePointers), zoom };
+      }
+    }
+    if (spacePointers.size > 0) return;
     const wasClick = turning.moved < 5;
     turning = null;
     $("space").classList.remove("turning");
@@ -2665,7 +2831,11 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   $("life").addEventListener("pointermove", keepDrawing);
   $("life").addEventListener("pointerup", endDrawing);
   $("life").addEventListener("pointercancel", endDrawing);
-  $("graph").addEventListener("click", guarded(pickNode));
+  $("graph").addEventListener("pointerdown", beginGraphGesture);
+  $("graph").addEventListener("pointermove", keepGraphGesture);
+  $("graph").addEventListener("pointerup", guarded(endGraphGesture));
+  $("graph").addEventListener("pointercancel", endGraphGesture);
+  $("graph").addEventListener("wheel", zoomGraph, { passive: false });
   $("space").addEventListener("pointerdown", beginTurning);
   $("space").addEventListener("pointermove", keepTurning);
   $("space").addEventListener("pointerup", guarded(endTurning));
@@ -2708,7 +2878,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   // is what the page gets for a move (summary and cells), without drawing it;
   // lifeOnWolfram.step(1) does what the button "1 step" does; lifeOnWolfram.where(i) says
   // where node i of the 3D picture is in the window. lifeOnWolfram.turn(0.01) turns the 3D
-  // picture a little and draws it at once, as a drag does with the next frame. stop(),
+  // picture a little and draws it at once, as a drag does with the next frame; zoom() is
+  // the zoom of the 3D picture, gridView() that of the grid picture. stop(),
   // redraw() and `python` (the worker) are for the switch to the 3D game and back
   // (app3d.js).
   window.lifeOnWolfram = {
@@ -2719,6 +2890,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     stop: () => stop(),
     redraw: () => { if (state) { drawLife(); drawPicture(); } },
     turn: (by) => { yaw -= by; if (state && view === "3d") drawSpace(); },
+    zoom: () => zoom,
+    gridView: () => ({ ...gridView }),
     where: (i) => {
       const canvas = $("space");
       const box = canvas.getBoundingClientRect();
@@ -2791,6 +2964,8 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   let pitch = 1.12;         // 0: seen from above, pi/2: from the side
   let zoom = 1;
   let turning = null;
+  let pinch = null;         // two fingers on a picture: their spread and the zoom at the start
+  const pointers = new Map(); // pointers (mouse, fingers) down on a picture, by id
   let queued = false;
 
   // what depends only on the size of the box (and the choice of lines)
@@ -3822,12 +3997,35 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       ", column " + (c + 1) + ", " + (state.graph.alive[i] === 1 ? "alive" : "dead");
   }
 
-  // Both 3D pictures: a drag turns them (together), a click picks a cell, the wheel zooms.
+  // How far apart the first two pointers down are.
+  function spread() {
+    const [a, b] = pointers.values();
+    return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+  }
+
+  // Both 3D pictures: a drag turns them (together), a click picks a cell, the wheel or two
+  // fingers zoom.
   function beginTurning(event) {
     if (!state) return;
-    turning = { x: event.clientX, y: event.clientY, moved: 0, canvas: event.currentTarget };
+    if (event.isPrimary) {
+      // the first finger of a new touch, or a mouse: whatever was going on is over
+      pointers.clear();
+      if (turning) turning.canvas.classList.remove("turning");
+      turning = null;
+    } else if (turning && turning.canvas !== event.currentTarget) {
+      return;  // one picture at a time
+    }
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.classList.add("turning");
+    if (pointers.size === 1) {
+      turning = { x: event.clientX, y: event.clientY, moved: 0, canvas: event.currentTarget };
+      pinch = null;
+    } else if (pointers.size === 2 && turning) {
+      // a second finger: the two zoom, and the touch neither turns nor picks
+      turning.moved = Infinity;
+      pinch = { spread: spread(), zoom };
+    }
   }
 
   function keepTurning(event) {
@@ -3836,6 +4034,15 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
         const i = nodeUnder(event);
         const text = i < 0 ? "" : nodeText(i);
         if ($("graph-3d").title !== text) $("graph-3d").title = text;
+      }
+      return;
+    }
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch) {
+      if (pointers.size >= 2) {
+        zoom = clamp(pinch.zoom * spread() / pinch.spread, 0.5, 6);
+        requestDraw();
       }
       return;
     }
@@ -3850,7 +4057,19 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   }
 
   function endTurning(event) {
-    if (!turning) return;
+    if (!pointers.delete(event.pointerId) || !turning) return;
+    if (pinch) {
+      if (pointers.size === 1) {
+        // one finger stays: it goes on turning from where it is
+        const [p] = pointers.values();
+        pinch = null;
+        turning.x = p.x;
+        turning.y = p.y;
+      } else if (pointers.size >= 2) {
+        pinch = { spread: spread(), zoom };
+      }
+    }
+    if (pointers.size > 0) return;
     const wasClick = turning.moved < 5;
     const canvas = turning.canvas;
     turning = null;
@@ -4012,12 +4231,13 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   // drawing it; lifeOnWolfram3d.step(1) is what "1 step" does;
   // lifeOnWolfram3d.where(i) says where node i of the right picture is in the window;
   // lifeOnWolfram3d.turn(0.01) turns both pictures a little and draws them at once, as a
-  // drag does with the next frame.
+  // drag does with the next frame; lifeOnWolfram3d.zoom() is their zoom.
   window.lifeOnWolfram3d = {
     call: (method, ...args) => later(() => call(method, ...args)),
     fetch: (method, ...args) => later(() => fetchState(method, ...args)),
     step: (steps) => later(() => advance(steps)),
     turn: (by) => { yaw -= by; if (active && state) { drawLife(); drawGraph(); } },
+    zoom: () => zoom,
     where: (i) => {
       const canvas = $("graph-3d");
       const box = canvas.getBoundingClientRect();
