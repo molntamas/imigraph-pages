@@ -284,7 +284,7 @@ td code { overflow-wrap: anywhere; }
   align-items: center;
   justify-content: center;
 }
-.pane.maximized > :not(.frame):not(#grid-view):not(#space-view):not(.close-max),
+.pane.maximized > :not(.frame):not(#grid-view):not(#space-view):not(.close-max):not(.max-play),
 .pane.maximized > #grid-view > :not(.frame),
 .pane.maximized > #space-view > :not(.frame) { display: none; }
 .pane.maximized .frame { max-width: none; margin: 0; }
@@ -312,6 +312,35 @@ td code { overflow-wrap: anywhere; }
 .pane.maximized .close-max:hover { opacity: 1; }
 .pane.maximized.idle .close-max { opacity: 0; pointer-events: none; }
 .pane.maximized.idle .close-max:focus-visible { opacity: 1; pointer-events: auto; }
+/* Start and Stop at the bottom middle, shown and hidden together with the X; the one that
+   would do nothing now is disabled (app.js, showPlaying). */
+.max-play { display: none; }
+.pane.maximized .max-play {
+  display: flex;
+  gap: 12px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 51;
+  opacity: 0.92;
+  transition: opacity 0.3s;
+}
+.pane.maximized .max-play button {
+  min-width: 104px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+}
+.pane.maximized .max-play button:disabled { opacity: 0.45; cursor: default; }
+.pane.maximized .max-play:hover { opacity: 1; }
+.pane.maximized.idle .max-play { opacity: 0; pointer-events: none; }
+.pane.maximized.idle .max-play:focus-within { opacity: 1; pointer-events: auto; }
 .pane.maximized.idle, .pane.maximized.idle canvas { cursor: none !important; }
 body.has-maximized { overflow: hidden; }
 #pattern-note { margin: 2px 0 0; flex-basis: 100%; }
@@ -454,6 +483,7 @@ svg.cell-picture { display: block; width: 100%; height: auto; aspect-ratio: 1; b
       <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
     </div>
     <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
+    <div class="max-play" role="group" aria-label="Play"><button type="button" class="max-start" title="Start the play (Space)">&#x25B6; Start</button><button type="button" class="max-stop" title="Stop the play (Space)">&#x25A0; Stop</button></div>
     <div class="frame"><canvas id="life" aria-label="The Life world; click cells to change them"></canvas></div>
     <p id="life-info" class="muted small"></p>
   </section>
@@ -467,6 +497,7 @@ svg.cell-picture { display: block; width: 100%; height: auto; aspect-ratio: 1; b
       <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
     </div>
     <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
+    <div class="max-play" role="group" aria-label="Play"><button type="button" class="max-start" title="Start the play (Space)">&#x25B6; Start</button><button type="button" class="max-stop" title="Stop the play (Space)">&#x25A0; Stop</button></div>
     <div id="grid-view">
       <p class="muted small">Every node is drawn at the place of its cell. Zoom with the mouse wheel or two
       fingers, drag to move the zoomed picture.
@@ -581,6 +612,7 @@ svg.cell-picture { display: block; width: 100%; height: auto; aspect-ratio: 1; b
           <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
         </div>
         <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
+        <div class="max-play" role="group" aria-label="Play"><button type="button" class="max-start" title="Start the play (Space)">&#x25B6; Start</button><button type="button" class="max-stop" title="Stop the play (Space)">&#x25A0; Stop</button></div>
         <div class="frame"><svg id="cell-svg" role="img" aria-label="The relations of the chosen cell, drawn as arrows between its node and its neighbours"></svg></div>
       </section>
       <div id="cell-stepper" class="stepper" role="group" aria-label="The steps of the generation, for this cell" hidden>
@@ -835,6 +867,7 @@ svg.cell-picture { display: block; width: 100%; height: auto; aspect-ratio: 1; b
       <button type="button" class="maximize" title="Show only this picture, as large as the window (Esc or the X goes back; Space starts and pauses)">Full window</button>
     </div>
     <button type="button" class="close-max" aria-label="Close the full window" title="Back to the page (Esc)">&#x2715;</button>
+    <div class="max-play" role="group" aria-label="Play"><button type="button" class="max-start" title="Start the play (Space)">&#x25B6; Start</button><button type="button" class="max-stop" title="Stop the play (Space)">&#x25A0; Stop</button></div>
     <div class="frame"><canvas id="graph-3d" aria-label="The hypergraph of the 3D world, every node at its cell"></canvas></div>
     <label class="inline links-choice">Lines between neighbours
       <select id="links-3d">
@@ -2872,8 +2905,9 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   // and shows nothing but the picture, as large as fits. A round X in the top right corner
   // goes back, and so does Esc. The X shows when the pointer moves or the screen is touched
   // and hides after IDLE_AFTER ms without that, together with the pointer (class "idle"),
-  // as on a video player. Space starts and pauses the play. The pictures keep working:
-  // turn and zoom the 3D one, click nodes, draw cells.
+  // as on a video player, and so do Start and Stop at the bottom; Space starts and pauses
+  // the play too. The pictures keep working: turn and zoom the 3D one, click nodes, draw
+  // cells.
 
   const IDLE_AFTER = 2500;
   let idleTimer = null;
@@ -2922,10 +2956,27 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
     if (!pane) return;
     pane.classList.remove("idle");
     idleTimer = setTimeout(function rest() {
-      // not while the pointer rests on the X itself
-      if (pane.querySelector(".close-max:hover")) { idleTimer = setTimeout(rest, IDLE_AFTER); return; }
+      // not while the pointer rests on the X, Start or Stop
+      if (pane.querySelector(".close-max:hover, .max-play:hover")) { idleTimer = setTimeout(rest, IDLE_AFTER); return; }
       pane.classList.add("idle");
     }, IDLE_AFTER);
+  }
+
+  // The play button of the part (flat or 3D) a pane belongs to, and whether that part plays
+  // (app.js and app3d.js say so in data-playing and data-playing3d of the body).
+  function playButtonOf(element) { return element.closest("#mode-3d") ? $("play-3d") : $("play"); }
+  function playingIn(element) {
+    const data = document.body.dataset;
+    return (element.closest("#mode-3d") ? data.playing3d : data.playing) === "1";
+  }
+
+  // Start and Stop of the full window: the one that would do nothing now is disabled.
+  function showPlaying() {
+    for (const group of document.querySelectorAll(".max-play")) {
+      const on = playingIn(group);
+      group.querySelector(".max-start").disabled = on;
+      group.querySelector(".max-stop").disabled = !on;
+    }
   }
 
   function maximize(pane) {
@@ -3758,6 +3809,23 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
   for (const button of document.querySelectorAll(".close-max")) {
     button.addEventListener("click", () => maximize(null));
   }
+  // Start and Stop press the play button of their part, Start only when it does not play
+  // and Stop only when it does; they follow the play however it was started.
+  for (const group of document.querySelectorAll(".max-play")) {
+    const press = (wanted) => {
+      const play = playButtonOf(group);
+      if (playingIn(group) !== wanted && !play.disabled) play.click();
+      // the pressed button gets disabled: let Space go to the play, not to it
+      if (group.contains(document.activeElement)) document.activeElement.blur();
+      wake();
+    };
+    group.querySelector(".max-start").addEventListener("click", () => press(true));
+    group.querySelector(".max-stop").addEventListener("click", () => press(false));
+  }
+  new MutationObserver(showPlaying).observe(document.body, {
+    attributes: true, attributeFilter: ["data-playing", "data-playing3d"],
+  });
+  showPlaying();
   // in the full window: any move of the pointer or touch shows the X for a while
   for (const kind of ["pointermove", "pointerdown"]) {
     document.addEventListener(kind, () => { if (maximizedPane()) wake(); }, { passive: true });
@@ -3768,7 +3836,7 @@ void main() { outColour = vec4(uColour * uOpacity, uOpacity); }`;
       maximize(null);
     } else if (event.key === " " && !(event.target instanceof HTMLButtonElement)) {
       event.preventDefault();  // no scrolling; Space starts and pauses the play
-      const play = maximizedPane().closest("#mode-3d") ? $("play-3d") : $("play");
+      const play = playButtonOf(maximizedPane());
       if (!play.disabled) play.click();
     } else {
       wake();
