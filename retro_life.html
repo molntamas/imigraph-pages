@@ -149,6 +149,9 @@ textarea {
 }
 .about p { margin: 8px 0; font-size: 13.5px; line-height: 1.55; }
 .about p.keys { color: var(--dim); font-size: 12px; }
+.legend { list-style: none; margin: 6px 0 8px; padding: 0; display: grid; gap: 6px; font-size: 13.5px; line-height: 1.4; }
+.legend li { display: flex; align-items: center; gap: 10px; }
+.swatch { flex: none; width: 18px; height: 18px; border: var(--px) solid var(--ink); }
 
 @media (max-width: 560px) {
   #bar { gap: 6px; padding: 8px 8px 11px; }
@@ -247,6 +250,18 @@ textarea {
       <div id="theme-list" class="chips"></div>
     </section>
     <section>
+      <h3 data-px="RING"></h3>
+      <p class="note">The second screen. A drag turns the ring any way you like; these go straight to a view.</p>
+      <div id="ring-views" class="chips">
+        <button type="button" data-ring="top" title="Look at the ring from the top" data-px="FROM THE TOP"></button>
+        <button type="button" data-ring="side" title="Look at the ring from the side" data-px="FROM THE SIDE"></button>
+        <button type="button" data-ring="tilted" title="Look at the ring as the game opens it" data-px="TILTED"></button>
+      </div>
+      <div class="chips">
+        <button type="button" id="signals" aria-pressed="true" title="Paint the lines along which alive nodes send their state" data-px="LIFE SIGNALS"></button>
+      </div>
+    </section>
+    <section>
       <h3 data-px="KEEP"></h3>
       <div class="chips">
         <button type="button" id="save" data-px="SAVE"></button>
@@ -265,8 +280,16 @@ textarea {
     </section>
     <section class="about">
       <h3 data-px="WHAT THIS IS"></h3>
-      <p><b>Map</b> <span lang="ja">(マップ)</span> is Conway's Game of Life, in Japanese <span lang="ja">ライフゲーム</span>: a cell is born with exactly 3 alive neighbours, stays alive with 2 or 3, and dies otherwise. Alive cells show their age: just born, young, old. A finger or the mouse sets and unsets cells; two fingers or the wheel zoom and move.</p>
-      <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> shows the same world as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a grey rock while it is dead, a light while it is alive. The thin lines are the relations that never change, those that say which cells are neighbours. Because the world wraps round, the nodes close into a ring. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. Drag to turn the ring; tap a node to set or unset its cell.</p>
+      <p><b>Map</b> <span lang="ja">(マップ)</span> is Conway's Game of Life, in Japanese <span lang="ja">ライフゲーム</span>: a cell is born with exactly 3 alive neighbours, stays alive with 2 or 3, and dies otherwise. There are only two kinds of cells, alive and dead; a dead cell is empty ground. A finger or the mouse sets and unsets cells; two fingers or the wheel zoom and move.</p>
+      <p id="colours"><b>The colours of alive cells</b> tell how long a cell has been alive, so that you see at a glance what is new and what stays:</p>
+      <ul class="legend">
+        <li><i class="swatch" data-colour="born"></i><span><b>just born</b>: alive for the first generation (also a cell you have just set)</span></li>
+        <li><i class="swatch" data-colour="young"></i><span><b>young</b>: alive since the generation before</span></li>
+        <li><i class="swatch" data-colour="old"></i><span><b>old</b>: alive for 12 generations or more</span></li>
+      </ul>
+      <p>In between, the colour passes step by step from young to old (close up, where cells are faces, the face changes at 12). So a block, which never changes, is soon all old; a glider and everything that blinks keep showing new and young cells; and where something is happening, the colours are mixed. The lights of the ring have the same colours.</p>
+      <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> shows the same world as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Because the world wraps round, the nodes close into a ring. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. Drag to turn the ring any way you like, also to see it from the top (Ring, further up in these settings, has ready views); tap a node to set or unset its cell.</p>
+      <p><b>The lines of the ring.</b> The thin dark lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Ring, in these settings) turns the colours off.</p>
       <p>How the two belong together: a Wolfram model of 17 rewriting rules plays Life on exactly this hypergraph, cell for cell. This game turns that round. It computes with the ordinary rule, which is far faster, and shows the hypergraph that the 17 rules would hold at that moment. Tests hold the two equal, relation for relation, between every two generations.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens · A add · S settings · R F turn/mirror · 0 show all</p>
     </section>
@@ -680,8 +703,7 @@ textarea {
 
 </script>
 <script>
-// From a Life map to the hypergraph of the Wolfram model: what the screens GRAPH and
-// WOLFRAM show.
+// From a Life map to the hypergraph of the Wolfram model: what the screen DONUT shows.
 //
 // The game computes with the ordinary rule of Life and generates the hypergraph from the
 // map. Between two generations the hypergraph of the 17-rule model is exactly its start
@@ -854,6 +876,27 @@ textarea {
     return pairs;
   }
 
+  // The life signals, for a picture: the lines that carry a message "alive" once the next
+  // generation has begun. Between two generations every line is empty. In the first of the
+  // ten steps of a generation every cell puts its state on its eight lines: an alive cell
+  // s puts {s,s,s,r} on the line to each of its neighbours r (a dead one {s,s,r,r}). So
+  // these are the eight lines out of every alive cell, as [sender, receiver, ...],
+  // 0-based, in the order of the cells and of DIRECTIONS. Each runs along a fixed pair.
+  function aliveLines(cells, width, height) {
+    let alive = 0;
+    for (let index = 0; index < width * height; index++) if (cells[index]) alive++;
+    const lines = new Uint32Array(alive * 16);
+    let at = 0;
+    for (let index = 0; index < width * height; index++) {
+      if (!cells[index]) continue;
+      for (const receiver of neighbours(width, height, index)) {
+        lines[at++] = index;
+        lines[at++] = receiver;
+      }
+    }
+    return lines;
+  }
+
   // A place (x, y, z) for every cell on a ring (a doughnut): the columns go round the
   // ring, the rows round its tube. The model has no places; these are the ones the layout
   // of wolframs-game-of-life works out from the fixed links alone for a world that wraps
@@ -876,7 +919,7 @@ textarea {
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.graph = {
-    RING_RADIUS, fixedPairs, torusPlaces,
+    RING_RADIUS, fixedPairs, aliveLines, torusPlaces,
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
     neighbours, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
     alive, dead, ready, emptyLine,
@@ -1415,23 +1458,31 @@ textarea {
 //
 // What it shows: every node of the hypergraph at its place on the ring (hypergraph.js,
 // torusPlaces: the columns of the map go round the ring, the rows round its tube). A dead
-// node is a grey rock, an alive node a coloured light (just born, young, old, in the
-// colours of the map). There are only these two: a node that died is a rock like any
-// other at once (asked for by the user on 2026-11-21). The thin lines are the
-// links that never change: the neighbourhood and the round of every cell, which run along
-// the same pairs of nodes (hypergraph.js, fixedPairs); they are drawn for worlds of up to
-// LINKS_UP_TO nodes. Behind it all: stars, which turn with the ring.
+// node is a faint grey rock that one sees through, an alive node a coloured light (just
+// born, young, old, in the colours of the map). There are only these two: a node that
+// died is a rock like any other at once (asked for by the user on 2026-11-21). What is
+// further from the eye is fainter, so that the near side of the ring reads first.
+//
+// The thin dark lines are the links that never change: the neighbourhood and the round of
+// every cell, which run along the same pairs of nodes (hypergraph.js, fixedPairs). The
+// coloured lines are the life signals (hypergraph.js, aliveLines): the lines along which
+// an alive node sends "alive" to its eight neighbours when the next generation begins.
+// Such a line has the colour of the node that sends, strong at that node and fading
+// towards a dead neighbour; between two alive nodes it is strong all the way. Links and
+// signals are drawn for worlds of up to LINKS_UP_TO nodes. Behind it all: stars, which
+// turn with the ring.
 //
 // It is drawn with WebGL on a canvas of few pixels, shown enlarged with hard edges, so
 // that the picture is pixel art like the rest of the game. Every node is one point: a
 // world of 512 x 512 cells is 262,144 points, handed to the graphics card once; a turn
-// only changes the camera, a generation only the shade of every node (one byte each).
-// Where the browser has no WebGL, a plain canvas draws the nodes one by one (large worlds:
-// the alive ones and a part of the rocks).
+// only changes the camera, a generation only the shade of every node (one byte each, and
+// two bytes for each end of a link). Where the browser has no WebGL, a plain canvas draws
+// the nodes one by one (large worlds: the alive ones and a part of the rocks).
 //
 // The camera: a point p is seen at
 //   across = A.p, up = U.p, towards = T.p   (A, U, T: the rows of the turn)
-// and drawn `focus / (eye - towards)` pixels per unit from the middle of the canvas.
+// and drawn `focus / (eye - towards)` pixels per unit from the middle of the canvas. The
+// turn is free: any three such rows that stand at right angles (turned, spun, turnOf).
 (function (root) {
   "use strict";
 
@@ -1441,9 +1492,12 @@ textarea {
 
   const EYE = 9;                 // how far the eye is from the middle of the ring
   const RADIUS = graph.RING_RADIUS + 1.2;  // a ball that holds the ring: for near and far
-  const LINKS_UP_TO = 128 * 128; // nodes; larger worlds are drawn without their links
+  const LINKS_UP_TO = 128 * 128; // nodes; larger worlds are drawn without links and signals
   const STARS = 420;
   const PLAIN_UP_TO = 7000;      // without WebGL: nodes drawn at most
+  const PLAIN_LINES_UP_TO = 64 * 64;  // without WebGL: nodes up to which signals are drawn
+  const ROCK = 0.5;              // how much of a rock is seen where it is nearest (1: all)
+  const LIGHTS = 0, ROCKS = 1, GLOW = 2;  // what the program of the nodes draws
 
   const NODE_VERTEX = `
 attribute vec3 aPlace;
@@ -1456,55 +1510,69 @@ uniform float uEye;
 uniform float uFocus;
 uniform vec2 uHalf;
 uniform float uRadius;
+uniform float uDepth;
 uniform float uNode;
-uniform mediump float uGlow;
+uniform mediump float uPass;
 uniform float uAgeCap;
 uniform float uOldAge;
+uniform float uRockSeen;
 uniform vec3 uBg;
 uniform vec3 uBorn;
 uniform vec3 uYoung;
 uniform vec3 uOld;
 uniform vec3 uRock;
 varying vec3 vColour;
-varying float vKind;
+varying float vSeen;
 varying float vSeed;
 void main() {
   vec3 e = vec3(dot(uAcross, aPlace), dot(uUp, aPlace), dot(uTowards, aPlace));
   float w = uEye - e.z;
-  float near = clamp((e.z + uRadius) / (2.0 * uRadius), 0.0, 1.0);
+  // 1 where the ring is nearest to the eye, 0 where it is furthest
+  float near = clamp((e.z + uDepth) / (2.0 * uDepth), 0.0, 1.0);
   float size = uNode * uFocus / w;
-  vec3 colour;
-  float light = 0.3 + 0.7 * near;   // far things fade into space
-  if (aShade > 0.5 && aShade < uAgeCap + 0.5) {
-    colour = aShade < 1.5 ? uBorn : mix(uYoung, uOld, clamp((aShade - 2.0) / (uOldAge - 2.0), 0.0, 1.0));
-    vKind = 1.0;
-    light = 0.55 + 0.45 * near;
-    size *= uGlow > 0.5 ? 3.6 : 1.3;
-  } else {
-    colour = uRock * (0.7 + 0.6 * aSeed);
-    vKind = 0.0;
-    size *= uGlow > 0.5 ? 0.0 : 0.7 + 0.5 * aSeed;
-  }
-  vColour = mix(uBg, colour, light);
+  bool alive = aShade > 0.5 && aShade < uAgeCap + 0.5;
+  bool rocks = uPass > 0.5 && uPass < 1.5;
   vSeed = aSeed;
+  vSeen = 1.0;
+  vColour = uBg;
+  if (alive == rocks) {   // not drawn in this pass
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    gl_PointSize = 1.0;
+    return;
+  }
+  if (alive) {
+    vec3 colour = aShade < 1.5 ? uBorn : mix(uYoung, uOld, clamp((aShade - 2.0) / (uOldAge - 2.0), 0.0, 1.0));
+    float light = 0.3 + 0.7 * near * sqrt(near);   // far lights fade into space
+    if (uPass > 1.5) {
+      vColour = colour * (0.25 + 0.75 * near);
+      size *= 3.6;
+    } else {
+      vColour = mix(uBg, colour, light);
+      size *= 1.3;
+    }
+  } else {
+    vColour = uRock * (0.7 + 0.6 * aSeed);
+    size *= 0.7 + 0.5 * aSeed;
+    // far rocks nearly vanish; a rock smaller than a pixel is seen as much as it fills
+    vSeen = uRockSeen * (0.1 + 0.9 * near * near) * clamp(size * size, 0.0, 1.0);
+  }
   gl_Position = vec4(e.xy * uFocus / uHalf, -e.z / (3.0 * uRadius) * w, w);
-  if (size <= 0.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   gl_PointSize = max(size, 1.0);
 }`;
 
   const NODE_FRAGMENT = `
 precision mediump float;
-uniform mediump float uGlow;
+uniform mediump float uPass;
 varying vec3 vColour;
-varying float vKind;
+varying float vSeen;
 varying float vSeed;
 void main() {
   vec2 p = gl_PointCoord;
   vec2 q = abs(p - 0.5);
-  if (uGlow > 0.5) {
+  if (uPass > 1.5) {
     float a = max(0.0, 1.0 - length(p - 0.5) * 2.0);
     gl_FragColor = vec4(vColour * a * a * 0.55, 1.0);
-  } else if (vKind > 0.5) {
+  } else if (uPass < 0.5) {
     if (q.x + q.y > 0.72) discard;
     vec3 c = vColour;
     if (p.x > 0.2 && p.x < 0.45 && p.y > 0.2 && p.y < 0.45) c = mix(c, vec3(1.0), 0.6);
@@ -1512,12 +1580,14 @@ void main() {
   } else {
     if (q.x + q.y > 0.78 + 0.2 * vSeed) discard;   // a rock with a corner knocked off
     float light = p.y < 0.34 ? 1.3 : (p.y > 0.72 || p.x > 0.72 ? 0.6 : 1.0);
-    gl_FragColor = vec4(vColour * light, 1.0);
+    gl_FragColor = vec4(vColour * light, vSeen);
   }
 }`;
 
   const LINE_VERTEX = `
 attribute vec3 aPlace;
+attribute float aOwn;     // the shade of the node at this end of the link
+attribute float aOther;   // the shade of the node at its other end
 uniform vec3 uAcross;
 uniform vec3 uUp;
 uniform vec3 uTowards;
@@ -1525,23 +1595,37 @@ uniform float uEye;
 uniform float uFocus;
 uniform vec2 uHalf;
 uniform float uRadius;
-uniform vec3 uBg;
+uniform float uDepth;
+uniform float uAgeCap;
+uniform float uOldAge;
+uniform float uSignals;
+uniform vec3 uBorn;
+uniform vec3 uYoung;
+uniform vec3 uOld;
 uniform vec3 uLink;
 uniform float uBehind;
-varying vec3 vColour;
+varying vec4 vColour;
+vec3 ofAge(float shade) {
+  return shade < 1.5 ? uBorn : mix(uYoung, uOld, clamp((shade - 2.0) / (uOldAge - 2.0), 0.0, 1.0));
+}
 void main() {
   vec3 e = vec3(dot(uAcross, aPlace), dot(uUp, aPlace), dot(uTowards, aPlace));
   float w = uEye - e.z;
-  float near = clamp((e.z + uRadius) / (2.0 * uRadius), 0.0, 1.0);
-  vColour = mix(uBg, uLink, 0.15 + 0.85 * near);
+  float near = clamp((e.z + uDepth) / (2.0 * uDepth), 0.0, 1.0);
+  bool own = uSignals > 0.5 && aOwn > 0.5 && aOwn < uAgeCap + 0.5;
+  bool other = uSignals > 0.5 && aOther > 0.5 && aOther < uAgeCap + 0.5;
+  float far = 0.12 + 0.88 * near * sqrt(near);
+  if (own) vColour = vec4(ofAge(aOwn), 0.9 * far);            // this node sends "alive"
+  else if (other) vColour = vec4(ofAge(aOther), 0.2 * far);   // it only receives
+  else vColour = vec4(uLink, 0.1 + 0.9 * near * near);        // a link, no signal on it
   // a little further away than it is, so that a link ends behind its own two nodes
   gl_Position = vec4(e.xy * uFocus / uHalf, (-e.z / (3.0 * uRadius) + uBehind) * w, w);
 }`;
 
   const LINE_FRAGMENT = `
 precision mediump float;
-varying vec3 vColour;
-void main() { gl_FragColor = vec4(vColour, 1.0); }`;
+varying vec4 vColour;
+void main() { gl_FragColor = vColour; }`;
 
   const STAR_VERTEX = `
 attribute vec3 aPlace;
@@ -1552,11 +1636,11 @@ uniform vec3 uTowards;
 uniform vec2 uHalf;
 uniform vec3 uBg;
 uniform vec3 uStar;
-varying vec3 vColour;
+varying vec4 vColour;
 void main() {
   vec3 e = vec3(dot(uAcross, aPlace), dot(uUp, aPlace), dot(uTowards, aPlace));
   float reach = 1.25 * max(uHalf.x, uHalf.y);
-  vColour = mix(uBg, uStar, 0.25 + 0.75 * aSeed);
+  vColour = vec4(mix(uBg, uStar, 0.25 + 0.75 * aSeed), 1.0);
   gl_Position = e.z > 0.0 ? vec4(2.0, 2.0, 2.0, 1.0) : vec4(e.xy * reach / uHalf, 0.99, 1.0);
   gl_PointSize = aSeed > 0.86 ? 2.0 : 1.0;
 }`;
@@ -1570,8 +1654,10 @@ void main() {
     return root.RetroLife.life.randomMaker(seed);
   }
 
-  // The rows of the turn: first round the axis of the ring (yaw), then tipped towards the
-  // eye (tilt; 0 looks along the axis, at the ring from above).
+  // ---- the turn: three rows at right angles (across, up, towards the eye)
+
+  // First round the axis of the ring (yaw), then tipped towards the eye (tilt; 0 looks
+  // along the axis, at the ring from the top; a quarter turn looks at it from the side).
   function turnOf(yaw, tilt) {
     const cy = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
     return {
@@ -1581,15 +1667,58 @@ void main() {
     };
   }
 
+  const sum = (a, s, b, t) => [a[0] * s + b[0] * t, a[1] * s + b[1] * t, a[2] * s + b[2] * t];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+  function unitLong(a) {
+    const length = Math.hypot(a[0], a[1], a[2]) || 1;
+    return [a[0] / length, a[1] / length, a[2] / length];
+  }
+
+  // The same turn with its rows at right angles again (many small turns add up errors).
+  function squared(turn) {
+    const towards = unitLong(turn.towards);
+    const up = unitLong(sum(turn.up, 1, towards, -dot(turn.up, towards)));
+    const across = [
+      up[1] * towards[2] - up[2] * towards[1],
+      up[2] * towards[0] - up[0] * towards[2],
+      up[0] * towards[1] - up[1] * towards[0],
+    ];
+    return { across, up, towards };
+  }
+
+  // The turn after a finger moved: by `right` radians about the upright of the screen and
+  // by `down` radians about its level line, so that what is nearest to the eye follows
+  // the finger. Nothing stops it: the ring turns all the way round, in every direction.
+  function turned(turn, right, down) {
+    let c = Math.cos(right), s = Math.sin(right);
+    const across = sum(turn.across, c, turn.towards, s);
+    const sideways = sum(turn.towards, c, turn.across, -s);
+    c = Math.cos(down);
+    s = Math.sin(down);
+    return squared({ across, up: sum(turn.up, c, sideways, -s), towards: sum(sideways, c, turn.up, s) });
+  }
+
+  // The turn after the ring went round its own axis by `angle` radians.
+  function spun(turn, angle) {
+    const c = Math.cos(angle), s = Math.sin(angle);
+    const row = (r) => [r[0] * c + r[1] * s, -r[0] * s + r[1] * c, r[2]];
+    return { across: row(turn.across), up: row(turn.up), towards: row(turn.towards) };
+  }
+
   function create(canvas) {
     const state = {
       world: null,       // the world the buffers are for
       width: 0,          // its size when the buffers were made
       height: 0,
-      version: -1,
+      version: -1,       // the version of the world whose shades the card has
+      signalled: -1,     // the version of the world whose signals the card has
       places: null,
       seeds: null,
+      pairs: null,
+      ends: null,        // per end of a link: the shade of its node, of the other node
       linked: false,
+      lineEnds: 0,
       pixel: 3,          // screen pixels per pixel of the picture
       cssWidth: 1,
       cssHeight: 1,
@@ -1642,7 +1771,8 @@ void main() {
       stars = program(STAR_VERTEX, LINE_FRAGMENT);
       buffers = {
         places: gl.createBuffer(), seeds: gl.createBuffer(), shade: gl.createBuffer(),
-        lines: gl.createBuffer(), stars: gl.createBuffer(), starSeeds: gl.createBuffer(),
+        lines: gl.createBuffer(), ends: gl.createBuffer(),
+        stars: gl.createBuffer(), starSeeds: gl.createBuffer(),
       };
       const random = randomMaker(7);
       const where = new Float32Array(STARS * 3);
@@ -1683,11 +1813,14 @@ void main() {
       state.width = world.width;
       state.height = world.height;
       state.version = -1;
+      state.signalled = -1;
       state.places = graph.torusPlaces(world.width, world.height);
       const random = randomMaker(world.width * 131 + world.height);
       state.seeds = new Float32Array(count);
       for (let i = 0; i < count; i++) state.seeds[i] = random();
       state.linked = count <= LINKS_UP_TO;
+      state.pairs = null;
+      state.ends = null;
       if (!gl) return;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.places);
       gl.bufferData(gl.ARRAY_BUFFER, state.places, gl.STATIC_DRAW);
@@ -1696,7 +1829,7 @@ void main() {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.shade);
       gl.bufferData(gl.ARRAY_BUFFER, count, gl.DYNAMIC_DRAW);
       if (state.linked) {
-        const pairs = graph.fixedPairs(world.width, world.height);
+        const pairs = (state.pairs = graph.fixedPairs(world.width, world.height));
         const ends = new Float32Array(pairs.length * 3);
         for (let i = 0; i < pairs.length; i++) {
           ends[i * 3] = state.places[pairs[i] * 3];
@@ -1706,21 +1839,46 @@ void main() {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.lines);
         gl.bufferData(gl.ARRAY_BUFFER, ends, gl.STATIC_DRAW);
         state.lineEnds = pairs.length;
+        state.ends = new Uint8Array(pairs.length * 2);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ends);
+        gl.bufferData(gl.ARRAY_BUFFER, state.ends, gl.DYNAMIC_DRAW);
       }
+    }
+
+    // What every end of a link has to know to show a signal: the shade of its own node and
+    // of the node at the other end. An alive node sends "alive" along all its eight lines
+    // (hypergraph.js, aliveLines), and those run along the fixed pairs.
+    function signal(world) {
+      const { pairs, ends } = state;
+      const { shade } = world;
+      for (let i = 0; i < pairs.length; i += 2) {
+        const a = shade[pairs[i]];
+        const b = shade[pairs[i + 1]];
+        ends[i * 2] = a;
+        ends[i * 2 + 1] = b;
+        ends[i * 2 + 2] = b;
+        ends[i * 2 + 3] = a;
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ends);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, ends);
+      state.signalled = world.version;
     }
 
     // the numbers of the camera, in pixels of the picture
     function cameraOf(scene) {
       const halfX = canvas.width / 2;
       const halfY = canvas.height / 2;
-      const turn = turnOf(scene.yaw, scene.tilt);
+      const { across, up, towards } = scene.turn;
       const focus = (scene.zoom * Math.min(halfX, halfY) * EYE) / (RADIUS + 0.35);
       // how large a node is: a good half of the way to the next one where they are nearest
       const node = 0.62 * Math.min((2 * Math.PI) / state.height, (2 * Math.PI * (graph.RING_RADIUS - 1)) / state.width);
-      return { ...turn, halfX, halfY, focus, node };
+      // how far the ring reaches towards the eye and away from it, as it is turned now
+      const depth = graph.RING_RADIUS * Math.hypot(towards[0], towards[1]) + 1;
+      return { across, up, towards, halfX, halfY, focus, node, depth };
     }
 
-    // where node `i` is seen: [x, y] in pixels of the picture, its nearness, its size
+    // where node `i` is seen: [x, y] in pixels of the picture, how far towards the eye,
+    // its size
     function seen(camera, i) {
       const p = state.places;
       const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
@@ -1732,12 +1890,14 @@ void main() {
       return [camera.halfX + ex * scale, camera.halfY - ey * scale, ez, camera.node * scale];
     }
 
-    function attribute(programInfo, name, buffer, size, type) {
+    const nearOf = (camera, ez) => Math.max(0, Math.min(1, (ez + camera.depth) / (2 * camera.depth)));
+
+    function attribute(programInfo, name, buffer, size, type, stride, offset) {
       const at = programInfo.attributes[name];
       if (at === undefined || at < 0) return;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.enableVertexAttribArray(at);
-      gl.vertexAttribPointer(at, size, type || gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(at, size, type || gl.FLOAT, false, stride || 0, offset || 0);
     }
 
     function cameraUniforms(programInfo, camera, theme) {
@@ -1750,7 +1910,16 @@ void main() {
       if (u.uFocus) gl.uniform1f(u.uFocus, camera.focus);
       gl.uniform2f(u.uHalf, camera.halfX, camera.halfY);
       if (u.uRadius) gl.uniform1f(u.uRadius, RADIUS);
-      gl.uniform3fv(u.uBg, unit(render.rgbOf(theme.space)));
+      if (u.uDepth) gl.uniform1f(u.uDepth, camera.depth);
+      if (u.uBg) gl.uniform3fv(u.uBg, unit(render.rgbOf(theme.space)));
+    }
+
+    function ages(u, theme) {
+      gl.uniform1f(u.uAgeCap, AGE_CAP);
+      gl.uniform1f(u.uOldAge, render.OLD);
+      gl.uniform3fv(u.uBorn, unit(render.rgbOf(theme.born)));
+      gl.uniform3fv(u.uYoung, unit(render.rgbOf(theme.young)));
+      gl.uniform3fv(u.uOld, unit(render.rgbOf(theme.old)));
     }
 
     function drawGl(scene, camera) {
@@ -1777,51 +1946,55 @@ void main() {
       attribute(stars, "aSeed", buffers.starSeeds, 1);
       gl.drawArrays(gl.POINTS, 0, STARS);
 
-      // rocks and lights
+      const pass = (which) => {
+        gl.uniform1f(nodes.uniforms.uPass, which);
+        attribute(nodes, "aPlace", buffers.places, 3);
+        attribute(nodes, "aSeed", buffers.seeds, 1);
+        attribute(nodes, "aShade", buffers.shade, 1, gl.UNSIGNED_BYTE);
+        gl.drawArrays(gl.POINTS, 0, count);
+      };
+
+      // the lights: solid, and they hide what lies behind them
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(true);
       cameraUniforms(nodes, camera, theme);
       const u = nodes.uniforms;
       gl.uniform1f(u.uNode, camera.node);
-      gl.uniform1f(u.uAgeCap, AGE_CAP);
-      gl.uniform1f(u.uOldAge, render.OLD);
-      gl.uniform3fv(u.uBorn, colour(theme.born));
-      gl.uniform3fv(u.uYoung, colour(theme.young));
-      gl.uniform3fv(u.uOld, colour(theme.old));
+      gl.uniform1f(u.uRockSeen, ROCK);
       gl.uniform3fv(u.uRock, colour(theme.rock));
-      gl.uniform1f(u.uGlow, 0);
-      attribute(nodes, "aPlace", buffers.places, 3);
-      attribute(nodes, "aSeed", buffers.seeds, 1);
-      attribute(nodes, "aShade", buffers.shade, 1, gl.UNSIGNED_BYTE);
-      gl.drawArrays(gl.POINTS, 0, count);
+      ages(u, theme);
+      pass(LIGHTS);
 
-      // the links, behind what is nearer
-      if (state.linked) {
-        gl.depthMask(false);
-        cameraUniforms(lines, camera, theme);
-        gl.uniform3fv(lines.uniforms.uLink, colour(theme.link));
-        gl.uniform1f(lines.uniforms.uBehind, (0.75 * camera.node) / (3 * RADIUS));
-        attribute(lines, "aPlace", buffers.lines, 3);
-        gl.drawArrays(gl.LINES, 0, state.lineEnds);
-      }
-
-      // the glow of the lights, added on top
+      // links and signals, then the rocks: both are seen through, and hide nothing
       gl.depthMask(false);
       gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      if (state.linked) {
+        const signals = Boolean(scene.signals);
+        if (signals && state.signalled !== world.version) signal(world);
+        cameraUniforms(lines, camera, theme);
+        ages(lines.uniforms, theme);
+        gl.uniform3fv(lines.uniforms.uLink, colour(theme.link));
+        gl.uniform1f(lines.uniforms.uSignals, signals ? 1 : 0);
+        gl.uniform1f(lines.uniforms.uBehind, (0.75 * camera.node) / (3 * RADIUS));
+        attribute(lines, "aPlace", buffers.lines, 3);
+        attribute(lines, "aOwn", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 0);
+        attribute(lines, "aOther", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 1);
+        gl.drawArrays(gl.LINES, 0, state.lineEnds);
+      }
       gl.useProgram(nodes.made);
-      gl.uniform1f(u.uGlow, 1);
-      attribute(nodes, "aPlace", buffers.places, 3);
-      attribute(nodes, "aSeed", buffers.seeds, 1);
-      attribute(nodes, "aShade", buffers.shade, 1, gl.UNSIGNED_BYTE);
-      gl.drawArrays(gl.POINTS, 0, count);
+      pass(ROCKS);
+
+      // the glow of the lights, added on top
+      gl.blendFunc(gl.ONE, gl.ONE);
+      pass(GLOW);
       gl.disable(gl.BLEND);
       gl.depthMask(true);
     }
 
-    // Without WebGL: the nodes one by one, far ones first. Large worlds: every alive node
-    // and a part of the rocks.
+    // Without WebGL: the signals first, then the nodes one by one, far ones first. Large
+    // worlds: every alive node and a part of the rocks.
     function drawPlain(scene, camera) {
       const theme = scene.theme;
       const world = scene.world;
@@ -1829,30 +2002,51 @@ void main() {
       const colours = render.shadeColours(theme);
       const rock = render.rgbOf(theme.rock);
       const space = render.rgbOf(theme.space);
+      const isAlive = (i) => world.shade[i] >= 1 && world.shade[i] <= AGE_CAP;
+      plain.globalAlpha = 1;
       plain.fillStyle = theme.space;
       plain.fillRect(0, 0, canvas.width, canvas.height);
+      if (scene.signals && count <= PLAIN_LINES_UP_TO) {
+        plain.lineWidth = 1;
+        for (let i = 0; i < count; i++) {
+          if (!isAlive(i)) continue;
+          const from = seen(camera, i);
+          plain.strokeStyle = "rgb(" + colours[world.shade[i]].join(",") + ")";
+          plain.globalAlpha = 0.5 * (0.12 + 0.88 * nearOf(camera, from[2]) ** 1.5);
+          plain.beginPath();
+          for (const other of graph.neighbours(world.width, world.height, i)) {
+            const to = seen(camera, other);
+            plain.moveTo(Math.round(from[0]) + 0.5, Math.round(from[1]) + 0.5);
+            plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
+          }
+          plain.stroke();
+        }
+      }
       const every = Math.max(1, Math.ceil(count / PLAIN_UP_TO));
       const shown = [];
-      for (let i = 0; i < count; i++) {
-        const shade = world.shade[i];
-        if (shade >= 1 && shade <= AGE_CAP ? true : i % every === 0) shown.push(i);
-      }
+      for (let i = 0; i < count; i++) if (isAlive(i) || i % every === 0) shown.push(i);
       const places = shown.map((i) => seen(camera, i));
       const order = shown.map((_, k) => k).sort((a, b) => places[a][2] - places[b][2]);
       for (const k of order) {
         const [x, y, z, size] = places[k];
-        const shade = world.shade[shown[k]];
-        const near = Math.max(0, Math.min(1, (z + RADIUS) / (2 * RADIUS)));
-        const alive = shade >= 1 && shade <= AGE_CAP;
-        const base = alive ? colours[shade] : rock.map((value) => value * (0.7 + 0.6 * state.seeds[shown[k]]));
-        const light = alive ? 0.55 + 0.45 * near : 0.3 + 0.7 * near;
+        const near = nearOf(camera, z);
+        const alive = isAlive(shown[k]);
         const side = Math.max(1, Math.round(size * (alive ? 1.3 : 0.9)));
-        plain.fillStyle = "rgb(" + base.map((value, c) => Math.round(space[c] + (value - space[c]) * light)).join(",") + ")";
+        if (alive) {
+          const light = 0.3 + 0.7 * near ** 1.5;
+          plain.globalAlpha = 1;
+          plain.fillStyle = "rgb(" + colours[world.shade[shown[k]]].map((value, c) => Math.round(space[c] + (value - space[c]) * light)).join(",") + ")";
+        } else {
+          plain.globalAlpha = ROCK * (0.1 + 0.9 * near * near);
+          plain.fillStyle = "rgb(" + rock.map((value) => Math.round(value * (0.7 + 0.6 * state.seeds[shown[k]]))).join(",") + ")";
+        }
         plain.fillRect(Math.round(x - side / 2), Math.round(y - side / 2), side, side);
       }
+      plain.globalAlpha = 1;
     }
 
-    // scene: {world, yaw, tilt, zoom, theme}. Returns the milliseconds it took.
+    // scene: {world, turn: {across, up, towards}, zoom, theme, signals}. Returns the
+    // milliseconds it took.
     function draw(scene) {
       const begin = performance.now();
       prepare(scene.world);
@@ -1893,7 +2087,7 @@ void main() {
   }
 
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.donut = { create, turnOf, LINKS_UP_TO };
+  root.RetroLife.donut = { create, turnOf, turned, spun, LINKS_UP_TO };
 })(window);
 
 </script>
@@ -1930,6 +2124,12 @@ void main() {
   const MAX_SCALE = 96;      // pixels per cell at the closest zoom of the map
   const TAP = 10;            // a touch that moved less than this many pixels is a tap
   const SPIN = 0.00012;      // the ring turns by itself while the world plays: radians a ms
+  const TURN = 0.007;        // radians the ring turns per pixel a finger moves
+  // ready ways to look at the ring: [round its axis, tipped] (donut.turnOf). Tipped the
+  // negative way, the near rim of the ring lies at the bottom of the picture, as when one
+  // looks down at a doughnut on a table: the brighter, nearer part is where the eye expects it.
+  // Turned so that the glider of the opening map starts on the near side.
+  const RING_VIEWS = { top: [0, 0], side: [0, Math.PI / 2], tilted: [3.9, -0.95] };
   const PREFS = "retro-life";
   const SAVED = "retro-life-world";
 
@@ -1943,7 +2143,8 @@ void main() {
     world: life.createWorld(data.sizes[1], data.sizes[1]),
     camera: { x: 0, y: 0, scale: 8 },   // the map
     fitted: true,                       // the map shows the whole world (until it is moved)
-    orbit: { yaw: 0.6, tilt: 0.95, zoom: 1 },  // the ring
+    orbit: { turn: donut.turnOf(...RING_VIEWS.tilted), zoom: 1 },  // the ring
+    signals: true,       // the ring paints the life signals
     view: "map",
     playing: false,
     speed: FIRST_SPEED,
@@ -1979,7 +2180,7 @@ void main() {
   }
 
   function savePrefs() {
-    store(PREFS, { theme: state.theme, speed: state.speed });
+    store(PREFS, { theme: state.theme, speed: state.speed, signals: state.signals });
   }
 
   let hintTimer = 0;
@@ -2047,9 +2248,22 @@ void main() {
 
   // ---- the camera of the ring
 
+  // What is nearest to the eye follows the finger, and nothing stops the turn: the ring
+  // can be seen from every side, also from the top and from below.
   function turnRing(dx, dy) {
-    state.orbit.yaw -= dx * 0.008;
-    state.orbit.tilt = Math.max(0.1, Math.min(1.5, state.orbit.tilt - dy * 0.006));
+    state.orbit.turn = donut.turned(state.orbit.turn, dx * TURN, dy * TURN);
+    requestDraw();
+  }
+
+  function lookAtRing(key) {
+    if (!RING_VIEWS[key]) throw new Error("no view of the ring " + key);
+    state.orbit.turn = donut.turnOf(...RING_VIEWS[key]);
+    requestDraw();
+  }
+
+  function setSignals(on) {
+    state.signals = Boolean(on);
+    $("signals").setAttribute("aria-pressed", String(state.signals));
     requestDraw();
   }
 
@@ -2065,7 +2279,7 @@ void main() {
   }
 
   function ringScene() {
-    return { world: state.world, yaw: state.orbit.yaw, tilt: state.orbit.tilt, zoom: state.orbit.zoom, theme: renderer.theme() };
+    return { world: state.world, turn: state.orbit.turn, zoom: state.orbit.zoom, theme: renderer.theme(), signals: state.signals };
   }
 
   function requestDraw() {
@@ -2095,7 +2309,7 @@ void main() {
       if (rate && done < steps) state.owed = 0;  // cannot keep up: nothing is piled up
       if (done) state.dirty = true;
       if (state.view === "donut" && !state.held) {
-        state.orbit.yaw += elapsed * SPIN;
+        state.orbit.turn = donut.spun(state.orbit.turn, elapsed * SPIN);
         state.dirty = true;
       }
       again = true;
@@ -2297,7 +2511,7 @@ void main() {
       if (!hinted.has("donut")) {
         hinted.add("donut");
         hint(ring.webgl
-          ? "Every cell is a node: a rock while dead, a light while alive. Drag to turn."
+          ? "Every cell is a node: a rock while dead, a light while alive. Drag to turn it any way."
           : "Every cell is a node. This browser draws it the plain way (no WebGL).", 4600);
       }
     }
@@ -2593,6 +2807,10 @@ void main() {
   // ---- sheets
 
   function closeSheets() {
+    // a button of a sheet does not keep the keys once its sheet is gone (Space would go
+    // to the hidden button instead of starting the world)
+    const focused = document.activeElement;
+    if (focused && focused.closest && focused.closest(".sheet")) focused.blur();
     $("settings").hidden = true;
     $("formations").hidden = true;
     $("shade").hidden = true;
@@ -2677,6 +2895,10 @@ void main() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", render.THEMES[key].bg);
     for (const element of $("theme-list").children) element.setAttribute("aria-pressed", String(element.dataset.theme === key));
+    // the colours of the cells, where the page explains them
+    for (const element of document.querySelectorAll("[data-colour]")) {
+      element.style.background = render.THEMES[key][element.dataset.colour];
+    }
     drawThumbs();
     requestDraw();
   }
@@ -2733,6 +2955,17 @@ void main() {
   $("clear").addEventListener("click", () => {
     clearWorld();
     closeSheets();
+  });
+  $("ring-views").addEventListener("click", (event) => {
+    const element = event.target.closest("button");
+    if (!element) return;
+    lookAtRing(element.dataset.ring);
+    if (state.view !== "donut") setView("donut");
+    closeSheets();
+  });
+  $("signals").addEventListener("click", () => {
+    setSignals(!state.signals);
+    savePrefs();
   });
   $("save").addEventListener("click", saveWorld);
   $("load").addEventListener("click", () => {
@@ -2804,6 +3037,7 @@ void main() {
   const prefs = readStored(PREFS) || {};
   setTheme(prefs.theme || "yoru");
   setSpeed(Number.isInteger(prefs.speed) ? prefs.speed : FIRST_SPEED);
+  setSignals(prefs.signals !== false);
   renderer.resize();
   ring.resize();
   showStamping();
@@ -2852,7 +3086,8 @@ void main() {
       return { x: box.left + point.x, y: box.top + point.y, near: point.near };
     },
     camera: () => ({ ...state.camera }),
-    orbit: () => ({ ...state.orbit }),
+    // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
+    orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
     setCamera(x, y, scale) {
       state.camera = { x, y, scale };
       clampCamera();
@@ -2860,9 +3095,10 @@ void main() {
       drawNow();
     },
     setOrbit(yaw, tilt, zoom) {
-      state.orbit = { yaw, tilt, zoom };
+      state.orbit = { turn: donut.turnOf(yaw, tilt), zoom };
       drawNow();
     },
+    lookAtRing, setSignals,
     loadMap, loadText, worldText, resizeWorld, play, pause, goBack, reset, setView, chooseFormation, setTheme, setSpeed, fit,
   };
 })();
