@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#010703">
+<title>Retro Life</title>
+<style>
+/* Retro Life. The colours of the page come from the theme (body[data-theme]); the colours
+   of the world on the canvas are the same themes in render.js (THEMES). */
+:root {
+  --bg: #010703; --panel: #031208; --ink: #3dff78; --dim: #1c8a41; --accent: #d9ffe6;
+  --hot: #ff6a4d; --edge: #0f5a2a; --glow: 0 0 7px rgba(61, 255, 120, 0.55);
+  --font: "Courier New", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  color-scheme: dark;
+}
+body[data-theme="amber"] {
+  --bg: #080400; --panel: #150c01; --ink: #ffb000; --dim: #96600a; --accent: #ffe2a0;
+  --hot: #ff5a3c; --edge: #5e3a00; --glow: 0 0 7px rgba(255, 176, 0, 0.55);
+}
+body[data-theme="arcade"] {
+  --bg: #05041a; --panel: #0c0a2c; --ink: #00e5ff; --dim: #5b47d6; --accent: #ffe600;
+  --hot: #ff2bd6; --edge: #2b2470; --glow: 0 0 7px rgba(0, 229, 255, 0.6);
+}
+body[data-theme="handheld"] {
+  --bg: #aab58a; --panel: #c4cfa1; --ink: #1f2a14; --dim: #4d5a3c; --accent: #0b1205;
+  --hot: #8a2410; --edge: #6f7a57; --glow: none;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
+body {
+  background: var(--bg); color: var(--ink); font: 13px/1.35 var(--font);
+  text-transform: uppercase; letter-spacing: 0.05em; text-shadow: var(--glow);
+  -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+}
+#app {
+  display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+button {
+  font: inherit; letter-spacing: inherit; text-transform: inherit; text-shadow: inherit;
+  color: var(--ink); background: var(--panel); border: 2px solid var(--dim); border-radius: 0;
+  min-height: 40px; padding: 4px 10px; cursor: pointer; touch-action: manipulation;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+button:hover { border-color: var(--ink); }
+button:active, button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); text-shadow: none; }
+button:focus-visible, canvas:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button:disabled { opacity: 0.35; cursor: default; }
+button svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+
+/* ---- top: the name, the three screens, the menu */
+#top { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-bottom: 2px solid var(--edge); }
+.brand { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; }
+.brand b { color: var(--accent); }
+#screens { display: flex; align-items: center; gap: 4px; margin: 0 auto; }
+#screens .arrow { color: var(--dim); }
+.screen-tab { min-width: 64px; font-weight: 700; }
+#menu-button { flex: none; }
+
+#hud {
+  display: flex; gap: 14px; padding: 3px 8px; font-size: 12px; white-space: nowrap; overflow: hidden;
+  color: var(--dim); border-bottom: 1px solid var(--edge);
+}
+#hud b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+#hud-rate { margin-left: auto; }
+body:not([data-screen="map"]) .map-only, body[data-screen="map"] .graph-only { display: none; }
+
+/* ---- the stage: the world, or the picture of one cell */
+#stage { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg); }
+#view, #glow, #crt { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#view { touch-action: none; cursor: crosshair; outline-offset: -3px; }
+body[data-tool="move"] #view { cursor: grab; }
+body[data-tool="probe"] #view { cursor: help; }
+#glow { pointer-events: none; mix-blend-mode: screen; filter: blur(5px) brightness(1.35); opacity: 0.85; }
+#crt {
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, 0.2) 2px 3px),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.42) 100%);
+}
+body[data-crt="off"] #crt, body[data-crt="off"] #glow, body[data-theme="handheld"] #glow { display: none; }
+body[data-theme="handheld"] #crt {
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 2px, rgba(40, 60, 20, 0.07) 2px 3px);
+}
+body[data-screen="wolfram"] #view, body[data-screen="wolfram"] #glow { visibility: hidden; }
+
+#hint {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); max-width: calc(100% - 16px);
+  padding: 5px 10px; background: var(--panel); border: 1px solid var(--dim); color: var(--accent);
+  font-size: 12px; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.25s;
+}
+#hint.on { opacity: 1; }
+#stamp-bar {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px; background: var(--panel); border: 2px solid var(--dim); max-width: calc(100% - 12px);
+}
+#stamp-name { color: var(--accent); padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#stamp-bar button { min-height: 34px; }
+
+/* ---- the bar: play, and what a touch does */
+#bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; padding: 6px 8px; border-top: 2px solid var(--edge); }
+#bar .group { display: flex; align-items: center; gap: 4px; }
+#bar button { min-width: 44px; min-height: 44px; }
+#bar .tool, #fit { flex-direction: column; gap: 2px; font-size: 10px; padding: 3px 6px; min-width: 52px; }
+#play.wide { min-width: 64px; }
+#play .icon-pause, #play[aria-pressed="true"] .icon-play { display: none; }
+#play[aria-pressed="true"] .icon-pause { display: block; }
+.speed { display: flex; align-items: center; gap: 2px; margin-left: 6px; }
+.speed button { min-width: 38px; font-size: 18px; font-weight: 700; }
+#speed { display: inline-block; min-width: 58px; text-align: center; color: var(--accent); font-variant-numeric: tabular-nums; }
+body[data-screen="wolfram"] #bar .tools { display: none; }
+
+/* ---- sheets: formations and the menu */
+#shade { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 20; }
+.sheet {
+  position: fixed; z-index: 21; top: 0; right: 0; bottom: 0; width: min(400px, 100%); overflow-y: auto;
+  background: var(--bg); border-left: 2px solid var(--ink); padding: 0 12px 20px; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet > header {
+  position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg); padding: 10px 0 8px; border-bottom: 2px solid var(--edge); z-index: 1;
+}
+.sheet h2 { margin: 0; font-size: 16px; letter-spacing: 0.14em; }
+.sheet h3 { margin: 16px 0 6px; font-size: 13px; color: var(--accent); letter-spacing: 0.12em; }
+.sheet h3::before { content: "> "; color: var(--dim); }
+.sheet-note { margin: 6px 0; color: var(--dim); text-transform: none; letter-spacing: 0; text-shadow: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.rows { display: grid; gap: 6px; }
+.rows button { justify-content: flex-start; text-align: left; flex-wrap: wrap; gap: 2px 10px; padding: 6px 10px; }
+.rows button small, .formation small { color: var(--dim); text-transform: none; letter-spacing: 0; text-shadow: none; flex-basis: 100%; }
+.rows button:active small, .rows button[aria-pressed="true"] small { color: var(--bg); }
+.rows button .side { margin-left: auto; color: var(--accent); }
+.rows button:active .side { color: var(--bg); }
+#formation-list h3 { grid-column: 1 / -1; }
+#formation-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+.formation { flex-direction: column; padding: 6px 4px; gap: 4px; font-size: 11px; text-align: center; }
+.formation canvas { width: 64px; height: 64px; image-rendering: pixelated; border: 1px solid var(--edge); }
+textarea {
+  width: 100%; font: 12px/1.3 var(--font); color: var(--ink); background: var(--panel); border: 2px solid var(--dim);
+  border-radius: 0; padding: 6px; resize: vertical; text-transform: none; letter-spacing: 0;
+  user-select: text; -webkit-user-select: text;
+}
+.about p { text-transform: none; letter-spacing: 0; text-shadow: none; color: var(--ink); margin: 8px 0; font-size: 13px; line-height: 1.45; }
+.about p.keys { color: var(--dim); }
+code { font: inherit; color: var(--accent); }
+
+/* ---- WOLFRAM: one cell */
+#wolfram {
+  position: absolute; inset: 0; overflow-y: auto; display: grid; gap: 10px; padding: 8px;
+  grid-template-columns: minmax(0, 1fr); align-content: start; background: var(--bg);
+  -webkit-overflow-scrolling: touch;
+}
+.wolfram-picture { width: 100%; max-width: min(100%, 72vh); margin: 0 auto; }
+.wolfram-side { min-width: 0; }
+#cell-title { color: var(--accent); font-weight: 700; }
+#cell-fate { color: var(--ink); margin-top: 2px; }
+.cell-tools { display: flex; gap: 10px; margin: 8px 0; align-items: flex-start; }
+#patch { width: 126px; height: 126px; flex: none; border: 2px solid var(--dim); image-rendering: pixelated; cursor: pointer; touch-action: manipulation; }
+.switches { display: grid; gap: 6px; min-width: 0; }
+.switches button { justify-content: flex-start; min-height: 36px; font-size: 12px; }
+.legend { margin: 0; color: var(--dim); text-transform: none; letter-spacing: 0; text-shadow: none; font-size: 12px; }
+.made-word { color: var(--hot); font-weight: 700; }
+#relation-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; text-transform: none; letter-spacing: 0; text-shadow: none; font-size: 12px; }
+#relation-list li { display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 8px; padding: 3px 4px; border-left: 3px solid transparent; cursor: default; }
+#relation-list li code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#relation-list li span { color: var(--dim); }
+#relation-list li.fixed code { color: var(--dim); }
+#relation-list li.made { border-left-color: var(--hot); }
+#relation-list li.made code { color: var(--hot); }
+#relation-list li.on { background: var(--panel); border-left-color: var(--accent); }
+#relation-list li.on span { color: var(--ink); }
+#relation-list li.group { display: block; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; padding-top: 8px; border: 0; }
+
+svg.cell-picture { display: block; width: 100%; height: auto; aspect-ratio: 1; background: var(--panel); border: 2px solid var(--edge); overflow: hidden; text-shadow: none; }
+.cell-picture .rel { color: var(--ink); }
+.cell-picture .rel.plain { opacity: 0.9; }
+.cell-picture .rel.fixed { opacity: 0.3; }
+.cell-picture .rel.removed { color: var(--dim); }
+.cell-picture .rel.made, .cell-picture .rel.made.removed { color: var(--hot); }
+.cell-picture .line, .cell-picture .ring, .cell-picture .stalk { fill: none; stroke: currentColor; stroke-width: 1.2; }
+.cell-picture .head { fill: currentColor; stroke: none; }
+.cell-picture .loop { fill: var(--panel); stroke: currentColor; stroke-width: 1.2; }
+.cell-picture text { fill: currentColor; text-anchor: middle; dominant-baseline: central; font-family: var(--font); font-weight: 700; pointer-events: none; }
+.cell-picture .made :is(.line, .ring, .stalk, .loop) { stroke-width: 2.4; }
+.cell-picture .hit { fill: none; stroke: transparent; stroke-width: 10; pointer-events: stroke; }
+.cell-picture .node .hit { fill: transparent; stroke: none; pointer-events: all; }
+.cell-picture .hull { fill: var(--ink); fill-opacity: 0.05; stroke: none; pointer-events: none; }
+.cell-picture.project .hull { fill-opacity: 0.09; }
+.cell-picture .disk { fill: var(--bg); stroke: var(--ink); stroke-width: 1.5; }
+.cell-picture .node.alive .disk { fill: var(--ink); }
+.cell-picture .node.chosen .disk { stroke: var(--accent); stroke-width: 2.5; }
+.cell-picture .node:not(.chosen) { cursor: pointer; outline: none; }
+.cell-picture .node:not(.chosen):is(:hover, :focus-visible) .disk { stroke: var(--accent); stroke-width: 3; }
+.cell-picture .label { fill: var(--accent); font-weight: 700; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+.cell-picture.lit .rel:not(.on), .cell-picture.lit .hull:not(.on) { opacity: 0.12; }
+.cell-picture .rel.on { color: var(--accent); opacity: 1; }
+.cell-picture .rel.on :is(.line, .ring, .stalk, .loop) { stroke-width: 2.6; }
+
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+  #wolfram { grid-template-columns: minmax(0, 1fr) minmax(320px, 460px); align-items: start; }
+  .wolfram-picture { max-width: min(100%, calc(100vh - 190px)); }
+}
+@media (max-width: 560px) {
+  body { font-size: 12px; }
+  .brand { display: none; }
+  #top { gap: 6px; padding: 5px 6px; }
+  #screens { margin: 0; flex: 1; }
+  .screen-tab { min-width: 0; flex: 1; padding: 4px 4px; }
+  #menu-button span { display: none; }
+  #hud { gap: 9px; font-size: 11px; padding: 3px 6px; }
+  #bar { gap: 5px; padding: 5px 4px; }
+  #bar .group { gap: 3px; }
+  #bar .tool, #fit { min-width: 0; flex: 1; padding: 3px 2px; }
+  #bar .tools { width: 100%; }
+  .sheet { top: auto; left: 0; width: 100%; max-height: 82dvh; border-left: 0; border-top: 2px solid var(--ink); }
+  .cell-tools { flex-wrap: wrap; }
+}
+@media (max-height: 460px) {
+  /* a phone held sideways: keep the world as high as possible */
+  #top { padding: 3px 6px; }
+  #hud { display: none; }
+  #bar { padding: 3px 6px; flex-wrap: nowrap; }
+  #bar button { min-height: 38px; }
+  #bar .tool span, #fit span { display: none; }
+  button { min-height: 34px; }
+}
+
+</style>
+</head>
+<body data-theme="phosphor" data-screen="map" data-tool="draw" data-crt="on">
+<div id="app">
+  <header id="top">
+    <h1 class="brand">RETRO<b>LIFE</b></h1>
+    <nav id="screens" aria-label="The three screens">
+      <button type="button" class="screen-tab" data-screen="map" aria-pressed="true" title="The Game of Life map (key 1)">MAP</button>
+      <span class="arrow" aria-hidden="true">&#9656;</span>
+      <button type="button" class="screen-tab" data-screen="graph" aria-pressed="false" title="The same world as a hypergraph: every cell a node (key 2)">GRAPH</button>
+      <span class="arrow" aria-hidden="true">&#9656;</span>
+      <button type="button" class="screen-tab" data-screen="wolfram" aria-pressed="false" title="One cell, drawn the way the Wolfram Physics Project draws a hypergraph (key 3)">WOLFRAM</button>
+    </nav>
+    <button type="button" id="menu-button" aria-haspopup="dialog" title="Maps, world, look, help (key M)">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v2H2zM2 7h12v2H2zM2 11h12v2H2z"/></svg><span>MENU</span>
+    </button>
+  </header>
+
+  <div id="hud">
+    <span title="Generations played">GEN <b id="hud-generation">0</b></span>
+    <span title="Alive cells">ALIVE <b id="hud-alive">0</b></span>
+    <span class="map-only" title="The side of the world, in cells. It wraps round at its borders.">WORLD <b id="hud-world"></b></span>
+    <span class="graph-only" title="Every cell is a node of the hypergraph">NODES <b id="hud-nodes"></b></span>
+    <span class="graph-only" title="20 relations per node: 1 neighbourhood, 9 of its round, 1 alive or dead, 1 ready, 8 lines">RELATIONS <b id="hud-relations"></b></span>
+    <span class="graph-only" title="Relations the last generation exchanged: one per cell that was born or died">CHANGED <b id="hud-changed">0</b></span>
+    <span id="hud-rate" title="Generations per second, measured"></span>
+  </div>
+
+  <main id="stage">
+    <canvas id="glow" aria-hidden="true"></canvas>
+    <canvas id="view" tabindex="0" aria-label="The world. Draw with one finger or the mouse, zoom with two fingers or the wheel."></canvas>
+
+    <section id="wolfram" hidden aria-label="One cell as a hypergraph">
+      <div class="wolfram-picture">
+        <svg id="cell-svg" role="img" aria-label="The relations of the chosen cell, drawn the way the Wolfram Physics Project draws a hypergraph"></svg>
+      </div>
+      <div class="wolfram-side">
+        <div class="cell-head">
+          <div id="cell-title"></div>
+          <div id="cell-fate"></div>
+        </div>
+        <div class="cell-tools">
+          <canvas id="patch" width="126" height="126" title="The cells round the chosen one. Tap a cell to choose it." aria-label="The cells round the chosen one"></canvas>
+          <div class="switches">
+            <button type="button" id="style-toggle" title="How relations are drawn: as the Wolfram project draws them (every loop a circle of its own, every arrow), or tidied (loops counted, what never changes faint)"></button>
+            <button type="button" id="placing-toggle" title="Where the nine nodes are put: by forces (the Wolfram project's method) or on a wheel"></button>
+            <p class="legend">Arrow: a relation runs through its nodes in order. Small circle: a node stands twice in a row (a loop). Ring: a relation of one node, <code>{c}</code> = alive. Shaded: a relation of three or more nodes. <span class="made-word">Marked</span>: changed by the last generation.</p>
+          </div>
+        </div>
+        <ol id="relation-list" aria-label="The 36 relations of the picture"></ol>
+      </div>
+    </section>
+
+    <div id="crt" aria-hidden="true"></div>
+
+    <div id="stamp-bar" hidden>
+      <span id="stamp-name"></span>
+      <button type="button" id="stamp-turn" title="Turn a quarter (key R)">TURN</button>
+      <button type="button" id="stamp-flip" title="Mirror (key F)">FLIP</button>
+      <button type="button" id="stamp-pick" title="Choose another formation">LIST</button>
+    </div>
+    <div id="hint" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer id="bar">
+    <div class="group transport">
+      <button type="button" id="reset" title="Back to the start (key Home)" aria-label="Back to the start">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h2v12H2zM9 8l5-6v12zM4 8l5-6v12z"/></svg>
+      </button>
+      <button type="button" id="back" title="One generation back (key ,)" aria-label="One generation back">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h2v12H3zM13 2v12L5 8z"/></svg>
+      </button>
+      <button type="button" id="play" class="wide" title="Start and stop (Space)" aria-label="Start" aria-pressed="false">
+        <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h4v12H3zM9 2h4v12H9z"/></svg>
+      </button>
+      <button type="button" id="step" title="One generation (key .)" aria-label="One generation">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2h2v12h-2zM3 2l8 6-8 6z"/></svg>
+      </button>
+      <div class="speed" title="Generations per second">
+        <button type="button" id="slower" aria-label="Slower" title="Slower (key -)">&minus;</button>
+        <output id="speed">10/s</output>
+        <button type="button" id="faster" aria-label="Faster" title="Faster (key +)">+</button>
+      </div>
+    </div>
+    <div class="group tools" role="group" aria-label="What a touch does">
+      <button type="button" class="tool" data-tool="draw" aria-pressed="true" title="Draw: set and unset cells (key D)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 1l4 4-9 9H2v-4zM3 11v2h2z"/></svg><span>DRAW</span>
+      </button>
+      <button type="button" class="tool" data-tool="move" aria-pressed="false" title="Move: drag the world (key V). Two fingers and the wheel always move and zoom.">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0l3 3H9v4h4V5l3 3-3 3V9H9v4h2l-3 3-3-3h2V9H3v2L0 8l3-3v2h4V3H5z"/></svg><span>MOVE</span>
+      </button>
+      <button type="button" class="tool" data-tool="stamp" aria-pressed="false" title="Stamp: insert a formation (key S)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 1h4v4H6zM11 6h4v4h-4zM1 11h4v4H1zM6 11h4v4H6zM11 11h4v4h-4z"/></svg><span>STAMP</span>
+      </button>
+      <button type="button" class="tool" data-tool="probe" aria-pressed="false" title="Probe: tap a cell to see its relations on the screen WOLFRAM (key P)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1a6 6 0 0 1 4.9 9.5l3.8 3.8-1.4 1.4-3.8-3.8A6 6 0 1 1 7 1zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg><span>PROBE</span>
+      </button>
+      <button type="button" id="fit" title="Show the whole world (key 0)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v2H3v3H1zM10 1h5v5h-2V3h-3zM1 10h2v3h3v2H1zM13 10h2v5h-5v-2h3z"/></svg><span>FIT</span>
+      </button>
+    </div>
+  </footer>
+
+  <div id="shade" hidden></div>
+
+  <aside id="formations" class="sheet" hidden role="dialog" aria-label="Formations">
+    <header><h2>FORMATIONS</h2><button type="button" class="close" aria-label="Close">X</button></header>
+    <p class="sheet-note">Pick one, then tap the map to place it. It stays on your finger until you pick another tool.</p>
+    <div id="formation-list"></div>
+  </aside>
+
+  <aside id="menu" class="sheet" hidden role="dialog" aria-label="Menu">
+    <header><h2>MENU</h2><button type="button" class="close" aria-label="Close">X</button></header>
+    <section>
+      <h3>MAPS</h3>
+      <div id="map-list" class="rows"></div>
+    </section>
+    <section>
+      <h3>WORLD</h3>
+      <p class="sheet-note">A new size keeps what lives round the middle. The world wraps round: what leaves on one side comes back on the other.</p>
+      <div id="size-list" class="chips"></div>
+      <div class="chips">
+        <button type="button" id="random">RANDOM</button>
+        <button type="button" id="clear">CLEAR</button>
+      </div>
+    </section>
+    <section>
+      <h3>LOOK</h3>
+      <div id="theme-list" class="chips"></div>
+      <div class="chips"><button type="button" id="crt-toggle" aria-pressed="true">SCREEN LINES AND GLOW</button></div>
+    </section>
+    <section>
+      <h3>KEEP</h3>
+      <div class="chips">
+        <button type="button" id="save">SAVE WORLD</button>
+        <button type="button" id="load">LOAD SAVED</button>
+      </div>
+      <p class="sheet-note">Saved in this browser only.</p>
+    </section>
+    <section>
+      <h3>PATTERN TEXT</h3>
+      <p class="sheet-note">Paste a pattern in RLE, the usual text form of Life patterns (as on the LifeWiki), or copy the world out.</p>
+      <textarea id="rle" rows="4" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="bo$2bo$3o!"></textarea>
+      <div class="chips">
+        <button type="button" id="rle-load">LOAD TEXT</button>
+        <button type="button" id="rle-copy">WORLD TO TEXT</button>
+      </div>
+    </section>
+    <section class="about">
+      <h3>WHAT THIS IS</h3>
+      <p><b>MAP</b> is Conway's Game of Life: a cell is born with exactly 3 alive neighbours, stays alive with 2 or 3, and dies otherwise. Colours: just born, young, old, and a fading trail where a cell died.</p>
+      <p><b>GRAPH</b> shows the same world as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node. Each node carries 20 relations: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive (<code>{c}</code>, drawn as a ring) or dead (<code>{c,c,c,c,c}</code>), one that says it is ready, and eight lines to its neighbours. Zoom in to see them.</p>
+      <p><b>WOLFRAM</b> draws one cell the way the project draws a hypergraph. Choose the cell with PROBE.</p>
+      <p>How the two belong together: a Wolfram model of 17 rewriting rules plays Life on exactly this hypergraph, cell for cell. This game turns that round. It computes with the ordinary rule, which is far faster, and writes down the hypergraph that the 17 rules would hold at that moment. Tests hold the two equal, relation for relation, between every two generations. What you do not see here are the ten small steps in which the rules work out one generation.</p>
+      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · 1 2 3 screens · D V S P tools · R F turn/mirror · 0 fit · M menu</p>
+    </section>
+  </aside>
+</div>
+
+<script id="game-data" type="application/json">{"sizes":[32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"gun-and-eater","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"places":{"wheel":[[0.0,0.0],[0.0,-1.0],[0.7071,-0.7071],[1.0,-0.0],[0.7071,0.7071],[0.0,1.0],[-0.7071,0.7071],[-1.0,0.0],[-0.7071,-0.7071]],"forces":[[-0.0012,-0.0005],[0.7038,1.145],[1.1708,0.5039],[1.1864,-0.3242],[0.4297,-0.4568],[-0.4287,0.4645],[-1.1865,0.3218],[-1.171,-0.5067],[-0.7033,-1.147]]}}</script>
+<script>
+// The Game of Life of the game: a world that wraps round at its borders, played by the
+// ordinary rule (born with 3 alive neighbours, staying alive with 2 or 3).
+//
+// No drawing and no page in here: this file runs in the browser and, for the tests, in
+// Node (tests/harness.cjs), where every function is held against the Python reference
+// (retro_game.reference, retro_game.patterns, wolframs_game_of_life.life).
+//
+// A world: `cells` (1 alive, 0 dead, row by row), and for the colours `shade` per cell:
+//   0                          dead, and not lately alive
+//   1 .. AGE_CAP               alive for that many generations in a row (1: just born)
+//   AGE_CAP+1 .. AGE_CAP+FADE  dead for 1 .. FADE generations after having been alive
+// For going back it keeps the cells of the last generations packed to bits (`history`);
+// after a step back the shades are worked out from those kept generations.
+(function (root) {
+  "use strict";
+
+  const AGE_CAP = 32;
+  const FADE = 8;
+  const HISTORY_BYTES = 24e6;  // what the kept generations may take together
+  const HISTORY_MIN = 64;      // generations kept at least (more than AGE_CAP)
+  const HISTORY_MAX = 2000;
+
+  function createWorld(width, height) {
+    if (!(width >= 3 && height >= 3)) throw new Error("a world that wraps round needs at least 3 rows and columns");
+    const count = width * height;
+    return {
+      width,
+      height,
+      cells: new Uint8Array(count),
+      next: new Uint8Array(count),
+      shade: new Uint8Array(count),
+      generation: 0,
+      population: 0,
+      born: 0,   // cells born and died in the last step
+      died: 0,
+      history: [],
+      historyLimit: Math.max(HISTORY_MIN, Math.min(HISTORY_MAX, Math.floor(HISTORY_BYTES / Math.ceil(count / 8)))),
+      start: new Uint8Array(Math.ceil(count / 8)),  // the world at generation 0, packed
+      version: 0,  // goes up with every change, so that a picture knows when to draw
+    };
+  }
+
+  // 8 cells per byte, the first cell in the highest bit (as numpy.packbits does)
+  function pack(cells) {
+    const bits = new Uint8Array(Math.ceil(cells.length / 8));
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i]) bits[i >> 3] |= 128 >> (i & 7);
+    }
+    return bits;
+  }
+
+  function unpack(bits, cells) {
+    for (let i = 0; i < cells.length; i++) cells[i] = (bits[i >> 3] >> (7 - (i & 7))) & 1;
+    return cells;
+  }
+
+  function count(cells) {
+    let total = 0;
+    for (let i = 0; i < cells.length; i++) total += cells[i];
+    return total;
+  }
+
+  // A world set up anew: generation 0, every alive cell counts as just born, no past.
+  function restart(world) {
+    const { cells, shade } = world;
+    for (let i = 0; i < cells.length; i++) shade[i] = cells[i] ? 1 : 0;
+    world.generation = 0;
+    world.population = count(cells);
+    world.born = 0;
+    world.died = 0;
+    world.history = [];
+    world.start = pack(cells);
+    world.version++;
+  }
+
+  function setCells(world, cells) {
+    if (cells.length !== world.cells.length) throw new Error("the cells do not fit the world");
+    for (let i = 0; i < cells.length; i++) world.cells[i] = cells[i] ? 1 : 0;
+    restart(world);
+  }
+
+  function clear(world) {
+    world.cells.fill(0);
+    restart(world);
+  }
+
+  // A cell set by hand. An alive one counts as just born, a dead one leaves no trail. At
+  // generation 0 the edit belongs to the start that `reset` goes back to.
+  function setCell(world, index, value) {
+    value = value ? 1 : 0;
+    if (world.cells[index] === value) return false;
+    world.cells[index] = value;
+    world.shade[index] = value;
+    world.population += value ? 1 : -1;
+    if (world.generation === 0) {
+      if (value) world.start[index >> 3] |= 128 >> (index & 7);
+      else world.start[index >> 3] &= ~(128 >> (index & 7));
+    }
+    world.version++;
+    return true;
+  }
+
+  function reset(world) {
+    unpack(world.start, world.cells);
+    restart(world);
+  }
+
+  // One generation.
+  function step(world) {
+    const { width: w, height: h, cells, next, shade } = world;
+    world.history.push(pack(cells));
+    if (world.history.length > world.historyLimit) world.history.shift();
+    const cap = AGE_CAP;
+    const last = AGE_CAP + FADE;
+    let population = 0;
+    let born = 0;
+    let died = 0;
+    for (let y = 0; y < h; y++) {
+      const up = (y === 0 ? h - 1 : y - 1) * w;
+      const mid = y * w;
+      const down = (y === h - 1 ? 0 : y + 1) * w;
+      for (let x = 0; x < w; x++) {
+        const l = x === 0 ? w - 1 : x - 1;
+        const r = x === w - 1 ? 0 : x + 1;
+        const n = cells[up + l] + cells[up + x] + cells[up + r] + cells[mid + l] + cells[mid + r] +
+          cells[down + l] + cells[down + x] + cells[down + r];
+        const i = mid + x;
+        const was = cells[i];
+        const s = shade[i];
+        if (n === 3 || (n === 2 && was)) {
+          next[i] = 1;
+          population++;
+          if (was) {
+            if (s < cap) shade[i] = s + 1;
+          } else {
+            shade[i] = 1;
+            born++;
+          }
+        } else {
+          next[i] = 0;
+          if (was) {
+            shade[i] = cap + 1;
+            died++;
+          } else if (s) {
+            shade[i] = s < last ? s + 1 : 0;
+          }
+        }
+      }
+    }
+    world.cells = next;
+    world.next = cells;
+    world.generation++;
+    world.population = population;
+    world.born = born;
+    world.died = died;
+    world.version++;
+  }
+
+  // The shades of the world as it is, from the kept generations alone (see the top).
+  function shadeFromHistory(world) {
+    const { cells, shade, history } = world;
+    const total = cells.length;
+    const same = new Uint8Array(total);  // earlier generations in a row with today's state
+    const open = new Uint8Array(total).fill(1);
+    for (let k = history.length - 1, seen = 0; k >= 0 && seen < AGE_CAP; k--, seen++) {
+      const frame = history[k];
+      let still = 0;
+      for (let i = 0; i < total; i++) {
+        if (!open[i]) continue;
+        if (((frame[i >> 3] >> (7 - (i & 7))) & 1) === cells[i]) {
+          same[i]++;
+          still++;
+        } else {
+          open[i] = 0;
+        }
+      }
+      if (!still) break;
+    }
+    for (let i = 0; i < total; i++) {
+      if (cells[i]) shade[i] = Math.min(same[i] + 1, AGE_CAP);
+      else shade[i] = !open[i] && same[i] + 1 <= FADE ? AGE_CAP + same[i] + 1 : 0;
+    }
+  }
+
+  // One generation back, as far as generations are kept. Says whether it went back.
+  function back(world) {
+    if (!world.history.length) return false;
+    const before = world.cells.slice();
+    unpack(world.history.pop(), world.cells);
+    shadeFromHistory(world);
+    let born = 0;
+    let died = 0;
+    for (let i = 0; i < before.length; i++) {
+      if (before[i] !== world.cells[i]) {
+        if (before[i]) born++; else died++;
+      }
+    }
+    world.generation = Math.max(0, world.generation - 1);
+    world.population = count(world.cells);
+    world.born = born;  // what the step that was taken back had made
+    world.died = died;
+    world.version++;
+    return true;
+  }
+
+  function canGoBack(world) {
+    return world.history.length > 0;
+  }
+
+  // ---- shapes: {width, height, cells}
+
+  function shapeOf(width, height, cells) {
+    return { width, height, cells };
+  }
+
+  // A shape mirrored left to right (if `flip`) and then turned `turns` quarter turns
+  // clockwise.
+  function transform(shape, turns, flip) {
+    let { width, height, cells } = shape;
+    if (flip) {
+      const mirrored = new Uint8Array(cells.length);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) mirrored[y * width + x] = cells[y * width + width - 1 - x];
+      }
+      cells = mirrored;
+    }
+    turns = ((turns % 4) + 4) % 4;
+    for (let t = 0; t < turns; t++) {
+      const turnedCells = new Uint8Array(cells.length);
+      // clockwise: the new row r, column c was the old row height-1-c, column r
+      for (let r = 0; r < width; r++) {
+        for (let c = 0; c < height; c++) turnedCells[r * height + c] = cells[(height - 1 - c) * width + r];
+      }
+      cells = turnedCells;
+      [width, height] = [height, width];
+    }
+    return shapeOf(width, height, cells);
+  }
+
+  // Sets the alive cells of a shape, its top left corner at (top, left); what leaves the
+  // world on one side comes back on the other. Dead cells of the shape change nothing.
+  function stamp(world, shape, top, left) {
+    const { width: w, height: h } = world;
+    let changed = false;
+    for (let y = 0; y < shape.height; y++) {
+      for (let x = 0; x < shape.width; x++) {
+        if (!shape.cells[y * shape.width + x]) continue;
+        const row = (((top + y) % h) + h) % h;
+        const column = (((left + x) % w) + w) % w;
+        if (setCell(world, row * w + column, 1)) changed = true;
+      }
+    }
+    return changed;
+  }
+
+  // The usual text form of Life patterns: b dead, o alive, $ end of row, a number repeats,
+  // ! the end. Lines beginning with # and a header "x = .., y = .." are allowed.
+  function parseRle(text) {
+    let width = 0;
+    let height = 0;
+    let body = "";
+    for (let line of String(text).split(/\r?\n/)) {
+      line = line.trim();
+      if (!line || line[0] === "#") continue;
+      const header = /^x\s*=\s*(\d+)\s*,\s*y\s*=\s*(\d+)/.exec(line);
+      if (header) {
+        width = Number(header[1]);
+        height = Number(header[2]);
+        continue;
+      }
+      body += line;
+    }
+    const rows = [[]];
+    let digits = "";
+    for (const mark of body) {
+      if (mark >= "0" && mark <= "9") {
+        digits += mark;
+        continue;
+      }
+      const times = digits ? Number(digits) : 1;
+      digits = "";
+      if (mark === "b" || mark === "o") {
+        const row = rows[rows.length - 1];
+        for (let k = 0; k < times; k++) row.push(mark === "o" ? 1 : 0);
+      } else if (mark === "$") {
+        for (let k = 0; k < times; k++) rows.push([]);
+      } else if (mark === "!") {
+        break;
+      } else if (!/\s/.test(mark)) {
+        throw new Error("not a mark of RLE: " + mark);
+      }
+    }
+    while (rows.length > 1 && !rows[rows.length - 1].length) rows.pop();
+    height = Math.max(height, rows.length);
+    for (const row of rows) width = Math.max(width, row.length);
+    if (!width) throw new Error("an RLE text needs at least one cell");
+    const cells = new Uint8Array(width * height);
+    rows.forEach((row, y) => row.forEach((cell, x) => { cells[y * width + x] = cell; }));
+    return shapeOf(width, height, cells);
+  }
+
+  // A shape as RLE without a header: dead cells at the end of a row and empty rows at the
+  // end are left out.
+  function toRle(shape) {
+    const { width, height, cells } = shape;
+    const parts = [];
+    const put = (times, mark) => { if (times) parts.push((times > 1 ? times : "") + mark); };
+    let pendingRows = 0;
+    for (let y = 0; y < height; y++) {
+      let lastAlive = -1;
+      for (let x = width - 1; x >= 0; x--) {
+        if (cells[y * width + x]) { lastAlive = x; break; }
+      }
+      if (lastAlive < 0) {
+        pendingRows++;
+        continue;
+      }
+      put(pendingRows, "$");
+      pendingRows = 1;
+      let x = 0;
+      while (x <= lastAlive) {
+        let run = x;
+        while (run <= lastAlive && cells[y * width + run] === cells[y * width + x]) run++;
+        put(run - x, cells[y * width + x] ? "o" : "b");
+        x = run;
+      }
+    }
+    return parts.join("") + "!";
+  }
+
+  // The smallest box round the alive cells, or null in an empty world.
+  function bounds(shape) {
+    const { width, height, cells } = shape;
+    let top = height, left = width, bottom = -1, right = -1;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (!cells[y * width + x]) continue;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+        if (x < left) left = x;
+        if (x > right) right = x;
+      }
+    }
+    return bottom < 0 ? null : { top, left, bottom, right };
+  }
+
+  // The alive part of a shape, cut out.
+  function trimmed(shape) {
+    const box = bounds(shape);
+    if (!box) return shapeOf(1, 1, new Uint8Array(1));
+    const width = box.right - box.left + 1;
+    const height = box.bottom - box.top + 1;
+    const cells = new Uint8Array(width * height);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) cells[y * width + x] = shape.cells[(box.top + y) * shape.width + box.left + x];
+    }
+    return shapeOf(width, height, cells);
+  }
+
+  // A small random number maker with a seed (mulberry32), so that a soup can be repeated.
+  function randomMaker(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function randomize(world, share, seed) {
+    const random = randomMaker(seed);
+    for (let i = 0; i < world.cells.length; i++) world.cells[i] = random() < share ? 1 : 0;
+    restart(world);
+  }
+
+  // A world of another size with the same cells round its middle (cut off where the new
+  // world is smaller), set up anew.
+  function resized(world, width, height) {
+    const result = createWorld(width, height);
+    const dy = Math.floor((height - world.height) / 2);
+    const dx = Math.floor((width - world.width) / 2);
+    for (let y = 0; y < world.height; y++) {
+      const row = y + dy;
+      if (row < 0 || row >= height) continue;
+      for (let x = 0; x < world.width; x++) {
+        const column = x + dx;
+        if (column < 0 || column >= width) continue;
+        result.cells[row * width + column] = world.cells[y * world.width + x];
+      }
+    }
+    restart(result);
+    return result;
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.life = {
+    AGE_CAP, FADE, createWorld, setCells, clear, setCell, reset, step, back, canGoBack,
+    pack, unpack, transform, stamp, parseRle, toRle, bounds, trimmed, randomize, randomMaker, resized,
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+// From a Life map to the hypergraph of the Wolfram model: what the screens GRAPH and
+// WOLFRAM show.
+//
+// The game computes with the ordinary rule of Life and generates the hypergraph from the
+// map. Between two generations the hypergraph of the 17-rule model is exactly its start
+// hypergraph for the cells as they are (20 relations per cell), so it can be written down
+// from the map. This file writes it down; the tests hold it, relation for relation,
+// against retro_game.mapping and through it against the real rewriting engine.
+//
+// A node is a cell: cell (row, column) is node 1 + row * columns + column. A relation is
+// a list of nodes; what it means is told by its size and by which places hold the same node:
+//
+//   {c}              cell c is alive
+//   {c,c,c,c,c}      cell c is dead
+//   {c,c,c,c,c,c}    cell c is ready to send its state
+//   {c,x,y}          in the round of cell c, y comes after x (c, n1 .. n8, c)
+//   {c,n1,..,n8}     cell c and its eight neighbours, clockwise from the one above
+//   {s,r,r,r}        the line from cell s to cell r is empty
+//
+// No drawing and no page in here (it also runs in Node, tests/harness.cjs).
+(function (root) {
+  "use strict";
+
+  const FIRST_NODE = 1;
+  const RELATIONS_PER_CELL = 20;
+  // the eight neighbours, clockwise from the one above: [row, column] offsets
+  const DIRECTIONS = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+  const FIXED_KINDS = new Set(["round", "neighbourhood"]);  // never change while a world plays
+  const NEIGHBOUR_STATE = "neighbour's state";
+
+  // The cells (0-based) round a cell, in the order of DIRECTIONS; the world wraps round.
+  function neighbours(width, height, index) {
+    const row = Math.floor(index / width);
+    const column = index % width;
+    return DIRECTIONS.map(([dr, dc]) => ((row + dr + height) % height) * width + (column + dc + width) % width);
+  }
+
+  const repeated = (node, times) => new Array(times).fill(node);
+  const alive = (node) => [node];
+  const dead = (node) => repeated(node, 5);
+  const ready = (node) => repeated(node, 6);
+  const emptyLine = (sender, receiver) => [sender, receiver, receiver, receiver];
+  const mark = (cells, node) => (cells[node - FIRST_NODE] ? alive(node) : dead(node));
+
+  function roundOf(node, around) {
+    const order = [node, ...around, node];
+    const round = [];
+    for (let i = 0; i + 1 < order.length; i++) round.push([node, order[i], order[i + 1]]);
+    return round;
+  }
+
+  // The 20 relations of one cell, in the order of the model's start hypergraph.
+  function relationsOfCell(cells, width, height, index) {
+    const node = FIRST_NODE + index;
+    const around = neighbours(width, height, index).map((n) => n + FIRST_NODE);
+    return [
+      [node, ...around],
+      ...roundOf(node, around),
+      mark(cells, node),
+      ready(node),
+      ...around.map((n) => emptyLine(node, n)),
+    ];
+  }
+
+  // The hypergraph of the whole world. For tests and small worlds: 20 lists per cell.
+  function relationsOfWorld(cells, width, height) {
+    const relations = [];
+    for (let index = 0; index < width * height; index++) {
+      for (const relation of relationsOfCell(cells, width, height, index)) relations.push(relation);
+    }
+    return relations;
+  }
+
+  function relationCount(width, height) {
+    return RELATIONS_PER_CELL * width * height;
+  }
+
+  // A relation in the notation of the Wolfram project.
+  function text(relation) {
+    return "{" + relation.join(",") + "}";
+  }
+
+  // What a relation says, in words. `columns` turns a node into (row, column).
+  function describe(relation, columns) {
+    const cell = (node) => {
+      const at = node - FIRST_NODE;
+      return "cell " + node + " (row " + (Math.floor(at / columns) + 1) + ", column " + (at % columns + 1) + ")";
+    };
+    const size = relation.length;
+    const first = relation[0];
+    const last = relation[size - 1];
+    const loop = relation.every((node) => node === first);
+    if (size === 1) return cell(first) + " is alive";
+    if (size === 5 && loop) return cell(first) + " is dead";
+    if (size === 6 && loop) return cell(first) + " is ready to send its state";
+    if (size === 3) {
+      const a = relation[1] === first ? "home" : "neighbour " + relation[1];
+      const b = last === first ? "home" : "neighbour " + last;
+      return "in the round of cell " + first + ", " + b + " comes after " + a;
+    }
+    if (size === 9) return cell(first) + " and its eight neighbours, clockwise from the one above";
+    if (size === 4 && first !== last && relation[1] === last && relation[2] === last) {
+      return "the line from cell " + first + " to cell " + last + " is empty";
+    }
+    throw new Error("a relation of no kind that exists between two generations: " + text(relation));
+  }
+
+  // The kind of a relation seen from the node `cell`.
+  function kindOf(relation, cell) {
+    const size = relation.length;
+    if (size === 1) return "alive";
+    if (size === 5) return "dead";
+    if (size === 6) return "ready";
+    if (size === 3) return "round";
+    if (size === 9) return "neighbourhood";
+    return relation[0] === cell ? "line out" : "line in";
+  }
+
+  // One cell for its picture: the cell and its eight neighbours (clockwise from the one
+  // above), and 36 relations in the order of the table: the cell's state, its ready mark,
+  // its eight lines out, the eight lines in, the states of its eight neighbours, its round
+  // (nine relations) and its neighbourhood.
+  function cellScope(cells, width, height, index) {
+    const node = FIRST_NODE + index;
+    const around = neighbours(width, height, index).map((n) => n + FIRST_NODE);
+    const entry = (relation, kind) => {
+      kind = kind || kindOf(relation, node);
+      return { nodes: relation, text: text(relation), meaning: describe(relation, width), kind, fixed: FIXED_KINDS.has(kind) };
+    };
+    const relations = [entry(mark(cells, node)), entry(ready(node))];
+    for (const n of around) relations.push(entry(emptyLine(node, n)));
+    for (const n of around) relations.push(entry(emptyLine(n, node)));
+    for (const n of around) relations.push(entry(mark(cells, n), NEIGHBOUR_STATE));
+    for (const relation of roundOf(node, around)) relations.push(entry(relation));
+    relations.push(entry([node, ...around]));
+    const where = (n) => {
+      const at = n - FIRST_NODE;
+      return { node: n, cell: at, row: Math.floor(at / width) + 1, column: at % width + 1, alive: cells[at] ? 1 : 0 };
+    };
+    const nodes = [node, ...around].map(where);
+    return {
+      ...where(node),
+      nodes,
+      aliveNeighbours: nodes.slice(1).reduce((sum, n) => sum + n.alive, 0),
+      relations,
+    };
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.graph = {
+    FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
+    neighbours, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
+    alive, dead, ready, emptyLine,
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+// The picture of one chosen cell (the screen WOLFRAM): a few relations on a few nodes,
+// drawn the way the Wolfram Physics Project draws a hypergraph (a relation is a line of
+// arrows through its places, in their order), with what the last generation made marked
+// in colour.
+//
+// Taken from experiments/wolframs-game-of-life (web/cell.js, 2026-11-20) and kept as it is
+// there but for two things: the room for loops round a node is given out over all relations
+// a view names (also `view.alternatives`, relations that may come: a cell's mark is a ring
+// when alive and loops when dead, and the picture must not jump when it changes), and the
+// names of the page. It knows nothing about Life: no sizes of relations, no kinds, no
+// directions. It gets a view (nodes with their places, the relations, states) and draws
+// any list of relations on any nodes by the same few rules:
+//
+//   1. a relation of one place: a ring round its node;
+//   2. all places the same node: one small circle on a short stalk next to the node, with
+//      the number of loops in it (places - 1) when more than one; every size of such a
+//      relation gets a stalk direction of its own, in the gaps between the node's arrows,
+//      given out smallest size first;
+//   3. otherwise the places are cut into runs (neighbouring places holding the same node):
+//      an arrow from run to run, arrows along the same two nodes side by side in lanes; a
+//      run longer than one is a small circle on the arrow next to it;
+//   4. three or more different nodes: a faint filled shape over them, under everything;
+//   5. relations that never change ("fixed") are faint, and an arrow of theirs between two
+//      nodes in one direction is drawn once however many of them run there;
+//   6. made by the last step: red; removed by the next step: dotted grey; both: red dashed;
+//   7. the nodes on top, with their numbers.
+//
+// The style "project" draws as the project does: every loop a circle of its own through its
+// node (each one larger than the one before), every arrow, nothing faint. Rules 1, 4, 6, 7
+// stay. The colours are CSS (app.css, `.cell-picture`); this file sets classes only.
+(function (root) {
+  "use strict";
+
+  // shares of the unit of the places (the radius of the wheel, or the mean link)
+  const NODE = 0.045;
+  const CHOSEN = 1.35;   // the first node (the chosen cell) is drawn this much larger
+  const SMALL = 0.055;   // a small circle: loops
+  const HEAD = 0.09;     // an arrowhead
+  const LANE = 0.2;      // the distance of two arrows side by side, at their middle
+  const STALK = 0.1;     // between a node and the small circle of its loops: past the arrowheads
+  const GROWTH = 0.22;   // project style: each further loop on a node this much larger
+  const TEXT = 0.058;    // the numbers in small circles
+  const LABEL = 0.068;   // the numbers of the nodes
+  const MARGIN = 0.42;   // room round the outermost nodes, for loops and numbers
+
+  function escapeText(text) {
+    return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  }
+
+  const f = (value) => value.toFixed(1);
+
+  // [[node, how many places in a row], ...]
+  function runsOf(nodes) {
+    const runs = [];
+    for (const node of nodes) {
+      const last = runs[runs.length - 1];
+      if (last && last[0] === node) last[1] += 1; else runs.push([node, 1]);
+    }
+    return runs;
+  }
+
+  // the corners of the smallest convex shape round the points (monotone chain)
+  function hull(points) {
+    const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (list) => {
+      const out = [];
+      for (const p of list) {
+        while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+        out.push(p);
+      }
+      out.pop();
+      return out;
+    };
+    return half(sorted).concat(half(sorted.slice().reverse()));
+  }
+
+  // The angles (radians, 0 = right, clockwise on the screen) at which node k has room for
+  // loops: one per size of relation whose places all hold k, smallest size first,
+  // placed in the gaps between the node's arrows from the top on,
+  // clockwise. Also the direction of the widest gap, and of the gap for its number.
+  function roomsOf(view, where) {
+    const count = view.nodes.length;
+    const number = new Map(view.nodes.map((n, k) => [n.node, k]));
+    const towards = Array.from({ length: count }, () => new Set());
+    const sizes = Array.from({ length: count }, () => []);
+    const all = view.relations.map((relation) => relation.nodes).concat(view.alternatives || []);
+    for (const named of all) {
+      const nodes = named.map((n) => number.get(n));
+      const runs = runsOf(nodes);
+      if (runs.length === 1 && nodes.length > 1) {
+        const k = runs[0][0];
+        if (!sizes[k].includes(nodes.length)) sizes[k].push(nodes.length);
+      }
+      for (let i = 0; i + 1 < runs.length; i++) {
+        towards[runs[i][0]].add(runs[i + 1][0]);
+        towards[runs[i + 1][0]].add(runs[i][0]);
+      }
+    }
+    // smallest first, whatever the order they were named in: the rooms then stay where
+    // they are when a relation is exchanged for its alternative
+    for (const list of sizes) list.sort((a, b) => a - b);
+    const TOP = -Math.PI / 2;
+    const turn = (angle) => ((angle - TOP) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    return where.map((p, k) => {
+      const angles = Array.from(towards[k], (o) => turn(Math.atan2(where[o][1] - p[1], where[o][0] - p[0])))
+        .sort((a, b) => a - b);
+      // gaps as [start, width], from the top clockwise
+      let gaps = [];
+      if (angles.length === 0) {
+        gaps = [[0, 2 * Math.PI]];
+      } else {
+        for (let i = 0; i < angles.length; i++) {
+          const next = i + 1 < angles.length ? angles[i + 1] : angles[0] + 2 * Math.PI;
+          if (next - angles[i] > 1e-6) gaps.push([angles[i], next - angles[i]]);
+        }
+        if (gaps.length === 0) gaps = [[angles[0], 2 * Math.PI]];
+      }
+      const widest = gaps.reduce((a, b) => (b[1] > a[1] + 1e-9 ? b : a));
+      const per = gaps.map(() => []);
+      sizes[k].forEach((size, i) => per[i % gaps.length].push(size));
+      const rooms = new Map();
+      per.forEach((list, g) => list.forEach((size, i) => {
+        rooms.set(size, TOP + gaps[g][0] + gaps[g][1] * (i + 1) / (list.length + 1));
+      }));
+      // the node's number goes into the last gap (the one before the top), or the widest
+      const last = gaps[gaps.length - 1];
+      const label = per[gaps.length - 1].length === 0 || gaps.length === 1 ? last : widest;
+      return {
+        rooms,
+        widest: TOP + widest[0] + widest[1] / 2,
+        label: TOP + label[0] + label[1] * (per[gaps.indexOf(label)].length ? 0.8 : 0.5),
+      };
+    });
+  }
+
+  // From the places (units) to the pixels of a square of `size`.
+  function frameOf(places, size) {
+    const xs = places.map((p) => p[0]);
+    const ys = places.map((p) => p[1]);
+    const low = [Math.min(...xs), Math.min(...ys)];
+    const high = [Math.max(...xs), Math.max(...ys)];
+    const span = Math.max(high[0] - low[0], high[1] - low[1], 1e-9) + 2 * MARGIN;
+    const scale = size / span;
+    const middle = [(low[0] + high[0]) / 2, (low[1] + high[1]) / 2];
+    return {
+      scale,
+      at: (p) => [size / 2 + (p[0] - middle[0]) * scale, size / 2 + (p[1] - middle[1]) * scale],
+    };
+  }
+
+  function arrowMarks(start, bend, end, endRadius, head) {
+    let hx = end[0] - bend[0];
+    let hy = end[1] - bend[1];
+    const length = Math.hypot(hx, hy) || 1;
+    hx /= length;
+    hy /= length;
+    const tip = [end[0] - hx * endRadius, end[1] - hy * endRadius];
+    const left = [tip[0] - hx * head - hy * head * 0.3, tip[1] - hy * head + hx * head * 0.3];
+    const right = [tip[0] - hx * head + hy * head * 0.3, tip[1] - hy * head - hx * head * 0.3];
+    const d = "M" + f(start[0]) + "," + f(start[1]) + " Q" + f(bend[0]) + "," + f(bend[1]) + " " + f(tip[0]) + "," + f(tip[1]);
+    return '<path class="hit" d="' + d + '"/><path class="line" d="' + d + '"/>' +
+      '<polygon class="head" points="' + f(tip[0]) + "," + f(tip[1]) + " " + f(left[0]) + "," + f(left[1]) + " " +
+      f(right[0]) + "," + f(right[1]) + '"/>';
+  }
+
+  function onCurve(start, bend, end, t) {
+    const a = (1 - t) * (1 - t);
+    const b = 2 * (1 - t) * t;
+    const c = t * t;
+    return [a * start[0] + b * bend[0] + c * end[0], a * start[1] + b * bend[1] + c * end[1]];
+  }
+
+  function loopMark(at, radius, loops, textSize) {
+    const text = loops > 1
+      ? '<text x="' + f(at[0]) + '" y="' + f(at[1]) + '" font-size="' + f(textSize) + '">' + loops + "</text>"
+      : "";
+    return '<circle class="loop" cx="' + f(at[0]) + '" cy="' + f(at[1]) + '" r="' + f(radius) + '"/>' + text;
+  }
+
+  // How each relation of a state is drawn: "fixed", "made", "removed", "made removed" or
+  // "plain". Made and removed are counted, so of two equal relations only as many are
+  // marked as the step made or removes.
+  function classesOf(view, state, project) {
+    const made = new Map();
+    const removed = new Map();
+    for (const r of state.made) made.set(r, (made.get(r) || 0) + 1);
+    for (const r of state.removed || []) removed.set(r, (removed.get(r) || 0) + 1);
+    return state.relations.map((r) => {
+      if (view.relations[r].fixed) return project ? "plain" : "fixed";
+      const isMade = (made.get(r) || 0) > 0;
+      const isRemoved = (removed.get(r) || 0) > 0;
+      if (isMade) made.set(r, made.get(r) - 1);
+      if (isRemoved) removed.set(r, removed.get(r) - 1);
+      if (isMade && isRemoved) return "made removed";
+      if (isMade) return "made";
+      return isRemoved ? "removed" : "plain";
+    });
+  }
+
+  // Draws state number `at` of `view` into `svg`. options: style ("counted" or "project"),
+  // placing (a key of view.places). The SVG gets one <g class="rel" data-relation="i"> per
+  // relation drawn (i: its number in view.relations) and one <g class="node" data-node="k">
+  // per node (k: its number in view.nodes).
+  function draw(svg, view, at, options) {
+    const project = options.style === "project";
+    const size = Math.max(160, Math.round(svg.clientWidth || svg.parentNode.clientWidth || 400));
+    const places = view.places[options.placing] || view.places.wheel;
+    const frame = frameOf(places, size);
+    const unit = frame.scale;
+    const where = places.map(frame.at);
+    const rooms = roomsOf(view, where);
+    const number = new Map(view.nodes.map((n, k) => [n.node, k]));
+    const radiusOf = (k) => NODE * unit * (k === 0 ? CHOSEN : 1);
+    const small = SMALL * unit;
+    const head = HEAD * unit;
+    const state = view.states[at];
+    const classes = classesOf(view, state, project);
+
+    const shapes = [];
+    const marks = [];
+    const tops = [];  // the marks on a node (rules 1 and 2) go over the arrows
+    const lanes = new Map();
+    const fixedSeen = new Set();
+    const loopsAt = new Map();  // project style: loops drawn on a node so far
+
+    const laneBend = (a, b, start, end) => {
+      const key = Math.min(a, b) + "-" + Math.max(a, b);
+      const lane = lanes.get(key) || 0;
+      lanes.set(key, lane + 1);
+      const low = where[Math.min(a, b)];
+      const high = where[Math.max(a, b)];
+      const along = [high[0] - low[0], high[1] - low[1]];
+      const length = Math.hypot(along[0], along[1]) || 1;
+      const shift = LANE * unit * Math.ceil(lane / 2) * (lane % 2 ? 1 : -1);
+      return [(start[0] + end[0]) / 2 - along[1] / length * shift, (start[1] + end[1]) / 2 + along[0] / length * shift];
+    };
+
+    state.relations.forEach((r, i) => {
+      const relation = view.relations[r];
+      const nodes = relation.nodes.map((n) => number.get(n));
+      const runs = runsOf(nodes);
+      const kind = classes[i];
+      const parts = [];
+      const distinct = Array.from(new Set(nodes));
+      if (distinct.length >= 3) {
+        const corners = hull(distinct.map((k) => where[k]));
+        if (corners.length >= 3) {
+          shapes.push('<polygon class="hull" data-relation="' + r + '" points="' +
+            corners.map((p) => f(p[0]) + "," + f(p[1])).join(" ") + '"/>');
+        }
+      }
+      let onNode = false;
+      if (nodes.length === 1) {
+        // round the node, outside the arrowheads that end at it
+        const p = where[nodes[0]];
+        const radius = radiusOf(nodes[0]) + head + 0.015 * unit;
+        parts.push('<circle class="hit" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(radius) + '"/>' +
+          '<circle class="ring" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(radius) + '"/>');
+        onNode = true;
+      } else if (project) {
+        for (let j = 0; j + 1 < nodes.length; j++) {
+          const a = nodes[j];
+          const b = nodes[j + 1];
+          if (a === b) {
+            const k = loopsAt.get(a) || 0;
+            loopsAt.set(a, k + 1);
+            const radius = small * (1 + GROWTH * k);
+            const angle = rooms[a].widest;
+            const c = [where[a][0] + Math.cos(angle) * radius, where[a][1] + Math.sin(angle) * radius];
+            parts.push('<circle class="hit" cx="' + f(c[0]) + '" cy="' + f(c[1]) + '" r="' + f(radius) + '"/>' +
+              '<circle class="line" cx="' + f(c[0]) + '" cy="' + f(c[1]) + '" r="' + f(radius) + '"/>');
+          } else {
+            const bend = laneBend(a, b, where[a], where[b]);
+            parts.push(arrowMarks(where[a], bend, where[b], radiusOf(b), head));
+          }
+        }
+      } else if (runs.length === 1) {
+        const k = nodes[0];
+        const angle = rooms[k].rooms.get(nodes.length);
+        const direction = [Math.cos(angle), Math.sin(angle)];
+        const from = radiusOf(k);
+        const reach = from + STALK * unit + small;
+        const p = where[k];
+        const c = [p[0] + direction[0] * reach, p[1] + direction[1] * reach];
+        parts.push('<path class="stalk" d="M' + f(p[0] + direction[0] * from) + "," + f(p[1] + direction[1] * from) +
+          " L" + f(p[0] + direction[0] * (reach - small)) + "," + f(p[1] + direction[1] * (reach - small)) + '"/>');
+        parts.push(loopMark(c, small, nodes.length - 1, TEXT * unit));
+        onNode = true;
+      } else {
+        for (let j = 0; j + 1 < runs.length; j++) {
+          const [a, aCount] = runs[j];
+          const [b, bCount] = runs[j + 1];
+          if (relation.fixed && !project && aCount === 1 && bCount === 1) {
+            if (fixedSeen.has(a + ">" + b)) continue;
+            fixedSeen.add(a + ">" + b);
+          }
+          const start = where[a];
+          const end = where[b];
+          const bend = laneBend(a, b, start, end);
+          parts.push(arrowMarks(start, bend, end, radiusOf(b), head));
+          if (aCount > 1 && j === 0) parts.push(loopMark(onCurve(start, bend, end, 0.4), small, aCount - 1, TEXT * unit));
+          if (bCount > 1) parts.push(loopMark(onCurve(start, bend, end, 0.62), small, bCount - 1, TEXT * unit));
+        }
+      }
+      (onNode ? tops : marks).push('<g class="rel ' + kind + '" data-relation="' + r + '"><title>' +
+        escapeText(relation.text + ": " + relation.meaning) + "</title>" + parts.join("") + "</g>");
+    });
+
+    // the nodes on top, with their numbers
+    const middle = where[0];
+    const nodes = view.nodes.map((n, k) => {
+      const p = where[k];
+      const radius = radiusOf(k);
+      const title = "node " + n.node + ": the cell in row " + n.row + ", column " + n.column +
+        (k === 0 ? " (the chosen cell)" : " · tap to choose it");
+      const button = k === 0 ? "" : ' role="button" tabindex="0" aria-label="' + escapeText(title) + '"';
+      return '<g class="node' + (k === 0 ? " chosen" : "") + (n.alive ? " alive" : "") + '" data-node="' + k + '"' + button + "><title>" +
+        escapeText(title) + '</title><circle class="hit" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' +
+        f(Math.max(radius * 2, 12)) + '"/><circle class="disk" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' +
+        f(radius) + '"/></g>';
+    });
+    const labels = view.nodes.map((n, k) => {
+      const p = where[k];
+      const away = Math.hypot(p[0] - middle[0], p[1] - middle[1]);
+      const angle = k === 0 || away < 1e-6 ? rooms[k].label : Math.atan2(p[1] - middle[1], p[0] - middle[0]);
+      const reach = radiusOf(k) + LABEL * unit * 1.1;
+      return '<text class="label" x="' + f(p[0] + Math.cos(angle) * reach) + '" y="' + f(p[1] + Math.sin(angle) * reach) +
+        '" font-size="' + f(LABEL * unit) + '">' + n.node + "</text>";
+    });
+
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.classList.add("cell-picture");
+    svg.classList.toggle("project", project);
+    svg.classList.remove("empty");
+    svg.innerHTML = '<g class="hulls">' + shapes.join("") + '</g><g class="rels">' + marks.join("") + tops.join("") +
+      '</g><g class="nodes">' + nodes.join("") + '</g><g class="labels">' + labels.join("") + "</g>";
+    svg.dataset.relations = String(state.relations.length);
+    svg.dataset.nodes = String(view.nodes.length);
+    svg.dataset.made = String(state.made.length);
+    svg.dataset.removed = String((state.removed || []).length);
+  }
+
+  // A faint wheel of `count` nodes, nothing chosen yet: what the box shows before a node is
+  // clicked.
+  function empty(svg, count) {
+    const size = Math.max(160, Math.round(svg.clientWidth || svg.parentNode.clientWidth || 400));
+    const places = [[0, 0]];
+    for (let k = 0; k + 1 < count; k++) {
+      const angle = 2 * Math.PI * k / (count - 1);
+      places.push([Math.sin(angle), -Math.cos(angle)]);
+    }
+    const frame = frameOf(places, size);
+    const where = places.map(frame.at);
+    const radius = NODE * frame.scale * 1.2;
+    const spokes = where.slice(1).map((p) => "M" + f(where[0][0]) + "," + f(where[0][1]) + " L" + f(p[0]) + "," + f(p[1])).join(" ");
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.classList.add("cell-picture", "empty");
+    svg.innerHTML = '<path class="spokes" d="' + spokes + '"/>' + where.map((p) =>
+      '<circle class="disk" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(radius) + '"/>').join("");
+    svg.dataset.relations = "0";
+    svg.dataset.nodes = "0";
+  }
+
+  // Lights the marks of relation `r` (its number in view.relations; -1: none) and pales
+  // the rest.
+  function light(svg, r) {
+    svg.classList.toggle("lit", r >= 0);
+    for (const element of svg.querySelectorAll(".on")) element.classList.remove("on");
+    if (r >= 0) {
+      for (const element of svg.querySelectorAll('[data-relation="' + r + '"]')) element.classList.add("on");
+    }
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.cellPicture = { draw, empty, light };
+})(window);
+
+</script>
+<script>
+// Drawing of the two big screens on one canvas: MAP (the Life world as coloured squares)
+// and GRAPH (the same world as its hypergraph: every cell a node), and the blend between
+// them. Also the colours of the themes.
+//
+// What GRAPH draws, and from which zoom on (s: pixels per cell):
+//   every node at the place of its cell (a help for the eye, no part of the model);
+//   s >= 9   the links that never change (the neighbourhood and the round of every cell
+//            run along the same pairs of nodes: one line per pair), as lines through the
+//            rows, the columns and both diagonals; at the border they run on for half a
+//            cell, because the world wraps round;
+//   s >= 14  an alive node carries a ring: the relation {c}. A dead node is hollow;
+//   s >= 44  the other relations of a node: its eight lines out as arrows with a small
+//            circle (the relation {s,r,r,r}: r stands three times, two loops), and small
+//            circles on stalks for its loops ({c,c,c,c,c} dead: 4 loops, {c,c,c,c,c,c}
+//            ready: 5 loops); from s >= 90 with the numbers of loops written in.
+// Below s = 5 nodes cannot be told apart and the world is drawn as on the map.
+//
+// Drawing stays cheap: the world is one small image (a pixel per cell, filled from a
+// table of colours only when the world changed), things of one colour are one path, and
+// only what is on the screen is looked at.
+(function (root) {
+  "use strict";
+
+  const { AGE_CAP, FADE } = root.RetroLife.life;
+  const OLD = 12;          // generations after which a cell has the colour of the old
+  const GLOW_SHRINK = 3;   // the glow is drawn this much smaller and blurred by CSS
+  const LINKS_FROM = 9;
+  const RINGS_FROM = 14;
+  const DETAIL_FROM = 44;
+  const NUMBERS_FROM = 90;
+  const NODES_FROM = 5;
+
+  // born: a cell in its first generation; young -> old: by age; trail: lately died
+  const THEMES = {
+    phosphor: {
+      title: "Phosphor", glow: true,
+      bg: "#010703", field: "#031208", grid: "#010703", border: "#1f9c4b",
+      born: "#f4fff4", young: "#3dff78", old: "#0d8f38", trail: "#0b4d22",
+      link: "#0f5a2a", nodeDead: "#1c8a41", accent: "#d9ffe6", ghost: "#f4fff4",
+    },
+    amber: {
+      title: "Amber", glow: true,
+      bg: "#080400", field: "#150c01", grid: "#080400", border: "#a86a00",
+      born: "#fff6dc", young: "#ffb000", old: "#a85f00", trail: "#4f2c00",
+      link: "#5e3a00", nodeDead: "#96600a", accent: "#ffe2a0", ghost: "#fff6dc",
+    },
+    arcade: {
+      title: "Arcade", glow: true,
+      bg: "#05041a", field: "#0c0a2c", grid: "#05041a", border: "#5b47d6",
+      born: "#ffffff", young: "#00e5ff", old: "#ff2bd6", trail: "#3a2296",
+      link: "#2b2470", nodeDead: "#5b47d6", accent: "#ffe600", ghost: "#ffe600",
+    },
+    handheld: {
+      title: "Handheld", glow: false,
+      bg: "#aab58a", field: "#c4cfa1", grid: "#c4cfa1", border: "#4d5a3c",
+      born: "#000000", young: "#1f2a14", old: "#4d5a3c", trail: "#a3ae84",
+      link: "#9aa57b", nodeDead: "#6f7a57", accent: "#0b1205", ghost: "#2a3a1a",
+    },
+  };
+
+  function rgbOf(hex) {
+    const value = parseInt(hex.slice(1), 16);
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+  }
+
+  function mix(a, b, t) {
+    return [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * t));
+  }
+
+  const css = (rgb) => "rgb(" + rgb.join(",") + ")";
+
+  // The colour of every shade, as [r, g, b]; shade 0 (dead) has none.
+  function shadeColours(theme) {
+    const born = rgbOf(theme.born);
+    const young = rgbOf(theme.young);
+    const old = rgbOf(theme.old);
+    const trail = rgbOf(theme.trail);
+    const field = rgbOf(theme.field);
+    const colours = [null, born];
+    for (let age = 2; age <= AGE_CAP; age++) colours.push(mix(young, old, Math.min(1, (age - 2) / (OLD - 2))));
+    for (let since = 1; since <= FADE; since++) colours.push(mix(trail, field, (since - 1) / FADE));
+    return colours;
+  }
+
+  function createRenderer(view, glow) {
+    const ctx = view.getContext("2d");
+    const glowCtx = glow.getContext("2d");
+    const state = {
+      theme: THEMES.phosphor,
+      table: null,     // shade -> the pixel of the image
+      image: null,     // the world, a pixel per cell
+      imageCtx: null,
+      imageData: null,
+      pixels: null,
+      drawn: null,     // which world and which version of it the image shows
+      width: 1,
+      height: 1,
+      dpr: 1,
+    };
+
+    function setTheme(key) {
+      state.theme = THEMES[key] || THEMES.phosphor;
+      const colours = shadeColours(state.theme);
+      state.table = new Uint32Array(colours.length);
+      const little = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
+      colours.forEach((rgb, shade) => {
+        if (!rgb) return;
+        state.table[shade] = little
+          ? ((255 << 24) | (rgb[2] << 16) | (rgb[1] << 8) | rgb[0]) >>> 0
+          : ((rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 255) >>> 0;
+      });
+      state.drawn = null;
+    }
+
+    function resize() {
+      const width = Math.max(1, Math.round(view.clientWidth));
+      const height = Math.max(1, Math.round(view.clientHeight));
+      const dpr = Math.min(root.devicePixelRatio || 1, 2);
+      if (view.width !== Math.round(width * dpr) || view.height !== Math.round(height * dpr)) {
+        view.width = Math.round(width * dpr);
+        view.height = Math.round(height * dpr);
+        glow.width = Math.max(1, Math.ceil(width / GLOW_SHRINK));
+        glow.height = Math.max(1, Math.ceil(height / GLOW_SHRINK));
+      }
+      state.width = width;
+      state.height = height;
+      state.dpr = dpr;
+    }
+
+    function updateImage(world) {
+      const key = world.version;
+      if (state.drawn && state.drawn.world === world && state.drawn.version === key) return;
+      if (!state.image || state.image.width !== world.width || state.image.height !== world.height) {
+        state.image = document.createElement("canvas");
+        state.image.width = world.width;
+        state.image.height = world.height;
+        state.imageCtx = state.image.getContext("2d");
+        state.imageData = state.imageCtx.createImageData(world.width, world.height);
+        state.pixels = new Uint32Array(state.imageData.data.buffer);
+      }
+      const { shade } = world;
+      const { pixels, table } = state;
+      for (let i = 0; i < shade.length; i++) pixels[i] = table[shade[i]];
+      state.imageCtx.putImageData(state.imageData, 0, 0);
+      state.drawn = { world, version: key };
+    }
+
+    // where the world lies on the canvas: the corner of cell (0, 0) and the cells in view
+    function frameOf(scene) {
+      const { world, camera } = scene;
+      const s = camera.scale;
+      const ox = state.width / 2 - camera.x * s;
+      const oy = state.height / 2 - camera.y * s;
+      return {
+        s, ox, oy,
+        c0: Math.max(0, Math.floor(-ox / s)),
+        c1: Math.min(world.width - 1, Math.floor((state.width - ox) / s)),
+        r0: Math.max(0, Math.floor(-oy / s)),
+        r1: Math.min(world.height - 1, Math.floor((state.height - oy) / s)),
+      };
+    }
+
+    function drawImage(c, scene, frame) {
+      const { world } = scene;
+      c.imageSmoothingEnabled = false;
+      c.drawImage(state.image, frame.ox, frame.oy, world.width * frame.s, world.height * frame.s);
+    }
+
+    function drawMap(c, scene, frame, alpha, glowOnly) {
+      const { world } = scene;
+      const { s, ox, oy, c0, c1, r0, r1 } = frame;
+      const theme = state.theme;
+      c.globalAlpha = alpha;
+      if (!glowOnly) {
+        c.fillStyle = theme.field;
+        c.fillRect(ox, oy, world.width * s, world.height * s);
+      }
+      drawImage(c, scene, frame);
+      if (glowOnly || s < 5 || c1 < c0 || r1 < r0) return;
+      // the gaps between the squares
+      c.beginPath();
+      const top = oy + r0 * s;
+      const bottom = oy + (r1 + 1) * s;
+      const left = ox + c0 * s;
+      const right = ox + (c1 + 1) * s;
+      for (let column = c0; column <= c1 + 1; column++) {
+        const x = ox + column * s;
+        c.moveTo(x, top);
+        c.lineTo(x, bottom);
+      }
+      for (let row = r0; row <= r1 + 1; row++) {
+        const y = oy + row * s;
+        c.moveTo(left, y);
+        c.lineTo(right, y);
+      }
+      c.strokeStyle = theme.grid;
+      c.lineWidth = Math.max(1, s * 0.09);
+      c.stroke();
+    }
+
+    function drawLinks(c, scene, frame) {
+      const { world } = scene;
+      const { s, ox, oy, c0, c1, r0, r1 } = frame;
+      const w = world.width;
+      const h = world.height;
+      const X = (column) => ox + column * s;
+      const Y = (row) => oy + row * s;
+      c.beginPath();
+      for (let row = r0; row <= r1; row++) {
+        c.moveTo(X(0), Y(row + 0.5));
+        c.lineTo(X(w), Y(row + 0.5));
+      }
+      for (let column = c0; column <= c1; column++) {
+        c.moveTo(X(column + 0.5), Y(0));
+        c.lineTo(X(column + 0.5), Y(h));
+      }
+      // the diagonals that cross the part in view: column - row = k and column + row = k
+      for (let k = c0 - r1; k <= c1 - r0; k++) {
+        c.moveTo(X(Math.max(0, k)), Y(Math.max(0, -k)));
+        c.lineTo(X(Math.min(w, h + k)), Y(Math.min(h, w - k)));
+      }
+      for (let k = c0 + r0; k <= c1 + r1; k++) {
+        c.moveTo(X(Math.max(0, k + 1 - h)), Y(Math.min(h, k + 1)));
+        c.lineTo(X(Math.min(w, k + 1)), Y(Math.max(0, k + 1 - w)));
+      }
+      c.strokeStyle = state.theme.link;
+      c.lineWidth = Math.max(1, s / 22);
+      c.stroke();
+    }
+
+    // The relations a node carries besides its state, drawn the way the Wolfram project
+    // draws them: lines out as arrows, loops as small circles.
+    function drawDetail(c, scene, frame) {
+      const { world } = scene;
+      const { s, ox, oy, c0, c1, r0, r1 } = frame;
+      const theme = state.theme;
+      const { DIRECTIONS } = root.RetroLife.graph;
+      const node = 0.13 * s;
+      const head = 0.07 * s;
+      const lane = 0.045 * s;
+      const small = Math.max(1.6, 0.042 * s);
+      const lines = new Path2D();
+      const heads = new Path2D();
+      const circles = new Path2D();
+      const texts = [];
+      const numbers = s >= NUMBERS_FROM;
+      const loopAt = (x, y, angle, loops) => {
+        const reach = 0.3 * s;
+        const cx = x + Math.cos(angle) * reach;
+        const cy = y + Math.sin(angle) * reach;
+        lines.moveTo(x + Math.cos(angle) * node, y + Math.sin(angle) * node);
+        lines.lineTo(cx - Math.cos(angle) * small * 1.6, cy - Math.sin(angle) * small * 1.6);
+        circles.moveTo(cx + small * 1.6, cy);
+        circles.arc(cx, cy, small * 1.6, 0, 2 * Math.PI);
+        if (numbers) texts.push([cx, cy, loops]);
+      };
+      for (let row = r0; row <= r1; row++) {
+        for (let column = c0; column <= c1; column++) {
+          const x = ox + (column + 0.5) * s;
+          const y = oy + (row + 0.5) * s;
+          for (const [dr, dc] of DIRECTIONS) {
+            const length = Math.hypot(dr, dc);
+            const ux = dc / length;
+            const uy = dr / length;
+            const nx = -uy * lane;
+            const ny = ux * lane;
+            const reach = length * s;
+            const fromX = x + ux * node + nx;
+            const fromY = y + uy * node + ny;
+            const tipX = x + ux * (reach - node) + nx;
+            const tipY = y + uy * (reach - node) + ny;
+            lines.moveTo(fromX, fromY);
+            lines.lineTo(tipX - ux * head, tipY - uy * head);
+            heads.moveTo(tipX, tipY);
+            heads.lineTo(tipX - ux * head - uy * head * 0.45, tipY - uy * head + ux * head * 0.45);
+            heads.lineTo(tipX - ux * head + uy * head * 0.45, tipY - uy * head - ux * head * 0.45);
+            heads.closePath();
+            // the receiver stands three times in {s,r,r,r}: two loops, near the head
+            const at = 0.68;
+            const cx = x + ux * reach * at + nx;
+            const cy = y + uy * reach * at + ny;
+            circles.moveTo(cx + small, cy);
+            circles.arc(cx, cy, small, 0, 2 * Math.PI);
+            if (numbers && s >= NUMBERS_FROM * 1.4) texts.push([cx, cy, 2]);
+          }
+          const index = row * world.width + column;
+          if (!world.cells[index]) loopAt(x, y, -Math.PI * 0.625, 4);  // dead: {c,c,c,c,c}
+          loopAt(x, y, -Math.PI * 0.375, 5);                           // ready: {c,c,c,c,c,c}
+        }
+      }
+      c.strokeStyle = theme.nodeDead;
+      c.fillStyle = theme.nodeDead;
+      c.lineWidth = Math.max(1, s / 60);
+      c.stroke(lines);
+      c.fill(heads);
+      c.fillStyle = theme.field;
+      c.fill(circles);
+      c.stroke(circles);
+      if (texts.length) {
+        c.fillStyle = theme.accent;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.font = "bold " + Math.round(small * 2.1) + "px monospace";
+        for (const [x, y, loops] of texts) c.fillText(String(loops), x, y + small * 0.1);
+      }
+    }
+
+    function drawGraph(c, scene, frame, alpha, glowOnly) {
+      const { world } = scene;
+      const { s, ox, oy, c0, c1, r0, r1 } = frame;
+      const theme = state.theme;
+      c.globalAlpha = alpha;
+      if (!glowOnly) {
+        c.fillStyle = theme.field;
+        c.fillRect(ox, oy, world.width * s, world.height * s);
+      }
+      if (s < NODES_FROM) {
+        drawImage(c, scene, frame);
+        return;
+      }
+      if (c1 < c0 || r1 < r0) return;
+      if (!glowOnly && s >= LINKS_FROM) drawLinks(c, scene, frame);
+      if (!glowOnly && s >= DETAIL_FROM) drawDetail(c, scene, frame);
+      const round = s >= LINKS_FROM;
+      const detail = s >= DETAIL_FROM;
+      const radius = detail ? 0.13 * s : 0.3 * s;
+      const deadRadius = detail ? 0.13 * s : Math.max(1, 0.15 * s);
+      const dead = new Path2D();
+      const trail = new Path2D();
+      const rings = new Path2D();
+      const alive = [new Path2D(), new Path2D(), new Path2D()];  // born, young, old
+      const showDead = !glowOnly && s >= 7;
+      const { shade } = world;
+      const dot = (path, x, y, r) => {
+        if (round) {
+          path.moveTo(x + r, y);
+          path.arc(x, y, r, 0, 2 * Math.PI);
+        } else {
+          path.rect(x - r, y - r, 2 * r, 2 * r);
+        }
+      };
+      for (let row = r0; row <= r1; row++) {
+        const y = oy + (row + 0.5) * s;
+        const base = row * world.width;
+        for (let column = c0; column <= c1; column++) {
+          const value = shade[base + column];
+          const x = ox + (column + 0.5) * s;
+          if (value >= 1 && value <= AGE_CAP) {
+            dot(alive[value === 1 ? 0 : value < OLD ? 1 : 2], x, y, radius);
+            if (s >= RINGS_FROM) {
+              const ring = detail ? 0.2 * s : 0.42 * s;
+              rings.moveTo(x + ring, y);
+              rings.arc(x, y, ring, 0, 2 * Math.PI);
+            }
+          } else if (showDead) {
+            dot(dead, x, y, deadRadius);
+            if (value) dot(trail, x, y, deadRadius * 0.9);
+          }
+        }
+      }
+      const colours = shadeColours(theme);
+      if (showDead) {
+        if (s >= RINGS_FROM) {
+          c.fillStyle = theme.field;
+          c.fill(dead);
+          c.fillStyle = css(colours[AGE_CAP + 1]);
+          c.fill(trail);
+          c.strokeStyle = theme.nodeDead;
+          c.lineWidth = Math.max(1, s / 28);
+          c.stroke(dead);
+        } else {
+          c.fillStyle = theme.nodeDead;
+          c.fill(dead);
+        }
+      }
+      c.fillStyle = theme.born;
+      c.fill(alive[0]);
+      c.fillStyle = theme.young;
+      c.fill(alive[1]);
+      c.fillStyle = theme.old;
+      c.fill(alive[2]);
+      if (!glowOnly && s >= RINGS_FROM) {
+        c.strokeStyle = theme.accent;
+        c.lineWidth = Math.max(1, s / 26);
+        c.stroke(rings);
+      }
+    }
+
+    function drawOverlay(c, scene, frame) {
+      const { world, selection, ghost, effects, mix: t } = scene;
+      const { s, ox, oy } = frame;
+      const theme = state.theme;
+      c.globalAlpha = 1;
+      c.strokeStyle = theme.border;
+      c.lineWidth = 1.5;
+      c.strokeRect(ox - 1, oy - 1, world.width * s + 2, world.height * s + 2);
+      if (ghost && ghost.shape) {
+        const { shape, top, left } = ghost;
+        const path = new Path2D();
+        for (let y = 0; y < shape.height; y++) {
+          for (let x = 0; x < shape.width; x++) {
+            if (!shape.cells[y * shape.width + x]) continue;
+            const row = (((top + y) % world.height) + world.height) % world.height;
+            const column = (((left + x) % world.width) + world.width) % world.width;
+            if (t > 0.5 && s >= LINKS_FROM) {
+              const cx = ox + (column + 0.5) * s;
+              const cy = oy + (row + 0.5) * s;
+              path.moveTo(cx + 0.3 * s, cy);
+              path.arc(cx, cy, 0.3 * s, 0, 2 * Math.PI);
+            } else {
+              path.rect(ox + column * s, oy + row * s, Math.max(1, s), Math.max(1, s));
+            }
+          }
+        }
+        c.globalAlpha = 0.6;
+        c.fillStyle = theme.ghost;
+        c.fill(path);
+        c.globalAlpha = 1;
+      }
+      if (selection >= 0 && selection < world.cells.length) {
+        const row = Math.floor(selection / world.width);
+        const column = selection % world.width;
+        const x = ox + column * s;
+        const y = oy + row * s;
+        c.strokeStyle = theme.accent;
+        c.lineWidth = 2;
+        const pad = Math.max(2, s * 0.08);
+        c.strokeRect(x - pad, y - pad, s + 2 * pad, s + 2 * pad);
+        c.setLineDash([4, 4]);
+        c.lineWidth = 1;
+        c.strokeRect(x - s, y - s, 3 * s, 3 * s);  // the cell and its eight neighbours
+        c.setLineDash([]);
+      }
+      for (const effect of effects || []) {
+        const progress = (scene.now - effect.start) / effect.lasts;
+        if (progress < 0 || progress >= 1) continue;
+        const grow = progress * Math.max(12, 1.5 * s);
+        c.globalAlpha = 1 - progress;
+        c.strokeStyle = theme.accent;
+        c.lineWidth = 2;
+        c.strokeRect(ox + effect.left * s - grow, oy + effect.top * s - grow,
+          effect.width * s + 2 * grow, effect.height * s + 2 * grow);
+      }
+      c.globalAlpha = 1;
+    }
+
+    function paint(c, scene, ratio, glowOnly) {
+      c.setTransform(ratio, 0, 0, ratio, 0, 0);
+      c.globalAlpha = 1;
+      if (glowOnly) {
+        c.clearRect(0, 0, state.width, state.height);
+      } else {
+        c.fillStyle = state.theme.bg;
+        c.fillRect(0, 0, state.width, state.height);
+      }
+      const frame = frameOf(scene);
+      const t = scene.mix;
+      if (t < 1) drawMap(c, scene, frame, 1 - t, glowOnly);
+      if (t > 0) drawGraph(c, scene, frame, t, glowOnly);
+      if (!glowOnly) drawOverlay(c, scene, frame);
+    }
+
+    // scene: {world, camera: {x, y, scale}, mix (0 map .. 1 graph), selection, ghost,
+    // effects, glow, now}. Returns the milliseconds it took.
+    function draw(scene) {
+      const begin = performance.now();
+      updateImage(scene.world);
+      paint(ctx, scene, state.dpr, false);
+      if (scene.glow && state.theme.glow) {
+        paint(glowCtx, scene, 1 / GLOW_SHRINK, true);
+        glow.dataset.on = "1";
+      } else if (glow.dataset.on === "1") {
+        glowCtx.setTransform(1, 0, 0, 1, 0, 0);
+        glowCtx.clearRect(0, 0, glow.width, glow.height);
+        glow.dataset.on = "0";
+      }
+      return performance.now() - begin;
+    }
+
+    // the cell under a point of the canvas (CSS pixels from its corner), or null
+    function cellAt(scene, px, py) {
+      const frame = frameOf(scene);
+      const column = Math.floor((px - frame.ox) / frame.s);
+      const row = Math.floor((py - frame.oy) / frame.s);
+      const inside = column >= 0 && row >= 0 && column < scene.world.width && row < scene.world.height;
+      return { column, row, inside, index: inside ? row * scene.world.width + column : -1 };
+    }
+
+    // the middle of a cell on the canvas (CSS pixels from its corner)
+    function pointOf(scene, index) {
+      const frame = frameOf(scene);
+      const row = Math.floor(index / scene.world.width);
+      const column = index % scene.world.width;
+      return { x: frame.ox + (column + 0.5) * frame.s, y: frame.oy + (row + 0.5) * frame.s };
+    }
+
+    setTheme("phosphor");
+    return {
+      setTheme, resize, draw, cellAt, pointOf,
+      size: () => ({ width: state.width, height: state.height }),
+      theme: () => state.theme,
+    };
+  }
+
+  // A shape as a small picture (the lists of formations).
+  function drawShape(canvas, shape, theme) {
+    const size = canvas.width;
+    const c = canvas.getContext("2d");
+    c.fillStyle = theme.field;
+    c.fillRect(0, 0, size, size);
+    const unit = Math.max(1, Math.floor((size - 4) / Math.max(shape.width, shape.height, 5)));
+    const left = Math.floor((size - shape.width * unit) / 2);
+    const top = Math.floor((size - shape.height * unit) / 2);
+    c.fillStyle = theme.young;
+    const gap = unit >= 4 ? 1 : 0;
+    for (let y = 0; y < shape.height; y++) {
+      for (let x = 0; x < shape.width; x++) {
+        if (shape.cells[y * shape.width + x]) c.fillRect(left + x * unit, top + y * unit, unit - gap, unit - gap);
+      }
+    }
+  }
+
+  // The cells round a chosen cell (`reach` cells to every side; the world wraps round) as
+  // a small map, the chosen cell and its eight neighbours framed.
+  function drawPatch(canvas, world, index, reach, theme) {
+    const c = canvas.getContext("2d");
+    const across = 2 * reach + 1;
+    const unit = Math.floor(canvas.width / across);
+    const colours = shadeColours(theme);
+    const row = Math.floor(index / world.width);
+    const column = index % world.width;
+    c.fillStyle = theme.bg;
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    for (let dy = -reach; dy <= reach; dy++) {
+      for (let dx = -reach; dx <= reach; dx++) {
+        const r = (((row + dy) % world.height) + world.height) % world.height;
+        const col = (((column + dx) % world.width) + world.width) % world.width;
+        const value = world.shade[r * world.width + col];
+        c.fillStyle = value ? css(colours[value]) : theme.field;
+        c.fillRect((dx + reach) * unit, (dy + reach) * unit, unit - 1, unit - 1);
+      }
+    }
+    c.strokeStyle = theme.accent;
+    c.lineWidth = 2;
+    c.strokeRect(reach * unit - 1, reach * unit - 1, unit + 1, unit + 1);
+    c.setLineDash([3, 3]);
+    c.lineWidth = 1;
+    c.strokeRect((reach - 1) * unit - 0.5, (reach - 1) * unit - 0.5, 3 * unit, 3 * unit);
+    c.setLineDash([]);
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.render = {
+    THEMES, OLD, NODES_FROM, LINKS_FROM, RINGS_FROM, DETAIL_FROM, NUMBERS_FROM,
+    createRenderer, drawShape, drawPatch, shadeColours,
+  };
+})(window);
+
+</script>
+<script>
+// Retro Life, the page: what a touch does, the play loop, the three screens, the menu.
+//
+// The world and its rule are in life.js, the hypergraph in hypergraph.js, the drawing in
+// render.js and cellpicture.js. Nothing about Life or the model is decided in this file:
+// it asks those, and it gets its formations and maps as data (#game-data, written by
+// retro_game.page from retro_game.patterns).
+//
+// Drawing happens only when something changed (`requestDraw`); a loop of frames runs only
+// while the world plays, a screen blends into the next or a stamp flashes.
+(function () {
+  "use strict";
+
+  const { life, graph, render, cellPicture } = window.RetroLife;
+  const data = JSON.parse(document.getElementById("game-data").textContent);
+  const $ = (id) => document.getElementById(id);
+
+  const SPEEDS = [1, 2, 5, 10, 20, 30, 60, 120, 240, 0];  // generations a second; 0: as fast as it goes
+  const FRAME_BUDGET = 12;   // ms a frame may spend on computing generations
+  const SCREENS = ["map", "graph", "wolfram"];
+  const BLEND = 280;         // ms from MAP to GRAPH
+  const MAX_SCALE = 150;     // pixels per cell at the closest zoom
+  const TAP = 10;            // a touch that moved less than this many pixels is a tap
+  const PATCH_REACH = 4;     // cells to every side on the small map of the screen WOLFRAM
+  const PREFS = "retro-life";
+  const SAVED = "retro-life-world";
+
+  const view = $("view");
+  const svg = $("cell-svg");
+  const patch = $("patch");
+  const renderer = render.createRenderer(view, $("glow"));
+  const formations = data.formations.map((entry) => ({ ...entry, shape: life.parseRle(entry.rle) }));
+
+  const state = {
+    world: life.createWorld(data.sizes[1], data.sizes[1]),
+    camera: { x: 0, y: 0, scale: 8 },
+    fitted: true,        // the camera shows the whole world (until the person moves it)
+    screen: "map",
+    mix: 0,              // 0: MAP, 1: GRAPH, between: blending
+    blend: null,         // {from, to, start}
+    tool: "draw",
+    playing: false,
+    speed: 3,
+    owed: 0,             // generations the play owes (fractions carried over)
+    last: 0,             // time of the last frame
+    selection: -1,       // the chosen cell
+    stamp: null,         // {entry, turns, flip, shape}
+    ghost: null,         // {shape, top, left}: where the stamp would land
+    effects: [],
+    theme: "phosphor",
+    crt: true,
+    style: "project",    // WOLFRAM: "project" or "counted"
+    placing: "forces",   // WOLFRAM: "forces" or "wheel"
+    dirty: true,
+    scheduled: 0,
+    seed: (Date.now() ^ 0x5eed) >>> 0,
+  };
+
+  // ---- small things
+
+  function readStored(key) {
+    try {
+      return JSON.parse(localStorage.getItem(key) || "null");
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function store(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function savePrefs() {
+    store(PREFS, { theme: state.theme, crt: state.crt, speed: state.speed, style: state.style, placing: state.placing });
+  }
+
+  let hintTimer = 0;
+  function hint(text, lasts) {
+    const box = $("hint");
+    box.textContent = text;
+    box.classList.add("on");
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => box.classList.remove("on"), lasts || 2600);
+  }
+
+  const number = (value) => value.toLocaleString("en-US");
+
+  function setText(id, text) {
+    const element = $(id);
+    if (element.textContent !== text) element.textContent = text;
+  }
+
+  // ---- the camera
+
+  function fitScale() {
+    const { width, height } = renderer.size();
+    return Math.min(width / state.world.width, height / state.world.height) * 0.95;
+  }
+
+  function fit() {
+    state.camera = { x: state.world.width / 2, y: state.world.height / 2, scale: fitScale() };
+    state.fitted = true;
+    requestDraw();
+  }
+
+  function clampCamera() {
+    const camera = state.camera;
+    camera.scale = Math.max(fitScale() * 0.5, Math.min(MAX_SCALE, camera.scale));
+    camera.x = Math.max(0, Math.min(state.world.width, camera.x));
+    camera.y = Math.max(0, Math.min(state.world.height, camera.y));
+  }
+
+  // zoom so that the point (px, py) of the canvas stays on the same cell
+  function zoomAt(px, py, factor) {
+    const { width, height } = renderer.size();
+    const camera = state.camera;
+    const wx = camera.x + (px - width / 2) / camera.scale;
+    const wy = camera.y + (py - height / 2) / camera.scale;
+    camera.scale *= factor;
+    clampCamera();
+    camera.x = wx - (px - width / 2) / camera.scale;
+    camera.y = wy - (py - height / 2) / camera.scale;
+    clampCamera();
+    state.fitted = false;
+    requestDraw();
+  }
+
+  function panBy(dx, dy) {
+    state.camera.x -= dx / state.camera.scale;
+    state.camera.y -= dy / state.camera.scale;
+    clampCamera();
+    state.fitted = false;
+    requestDraw();
+  }
+
+  // ---- drawing
+
+  function scene(now) {
+    const marked = state.tool === "probe" || state.screen !== "map";
+    return {
+      world: state.world,
+      camera: state.camera,
+      mix: state.mix,
+      selection: marked ? state.selection : -1,
+      ghost: state.ghost,
+      effects: state.effects,
+      glow: state.crt,
+      now: now || performance.now(),
+    };
+  }
+
+  function requestDraw() {
+    state.dirty = true;
+    if (!state.scheduled) state.scheduled = requestAnimationFrame(frame);
+  }
+
+  let counted = 0;       // generations played since the rate was last worked out
+  let countedSince = 0;
+  let shownRate = "";
+
+  function frame(now) {
+    state.scheduled = 0;
+    let again = false;
+    if (state.playing) {
+      const rate = SPEEDS[state.speed];
+      const elapsed = Math.min(250, now - state.last);
+      state.last = now;
+      let steps = Infinity;
+      if (rate) {
+        state.owed += (elapsed * rate) / 1000;
+        steps = Math.floor(state.owed);
+        state.owed -= steps;
+      }
+      const begin = performance.now();
+      let done = 0;
+      while (done < steps && (done === 0 || performance.now() - begin < FRAME_BUDGET)) {
+        life.step(state.world);
+        done++;
+      }
+      if (rate && done < steps) state.owed = 0;  // cannot keep up: nothing is piled up
+      if (done) state.dirty = true;
+      counted += done;
+      if (now - countedSince >= 500) {
+        shownRate = Math.round((counted * 1000) / (now - countedSince)) + "/s";
+        counted = 0;
+        countedSince = now;
+        state.dirty = true;
+      }
+      again = true;
+    }
+    if (state.blend) {
+      const t = Math.min(1, (now - state.blend.start) / BLEND);
+      const eased = t * t * (3 - 2 * t);
+      state.mix = state.blend.from + (state.blend.to - state.blend.from) * eased;
+      if (t >= 1) state.blend = null; else again = true;
+      state.dirty = true;
+    }
+    if (state.effects.length) {
+      state.effects = state.effects.filter((effect) => now - effect.start < effect.lasts);
+      state.dirty = true;
+      again = again || state.effects.length > 0;
+    }
+    if (state.dirty) drawNow(now);
+    if (again && !state.scheduled) state.scheduled = requestAnimationFrame(frame);
+  }
+
+  function drawNow(now) {
+    state.dirty = false;
+    const world = state.world;
+    if (state.screen === "wolfram") {
+      updateWolfram();
+    } else {
+      document.body.dataset.drawMs = renderer.draw(scene(now)).toFixed(2);
+    }
+    setText("hud-generation", number(world.generation));
+    setText("hud-alive", number(world.population));
+    setText("hud-world", world.width + " x " + world.height);
+    setText("hud-nodes", number(world.width * world.height));
+    setText("hud-relations", number(graph.relationCount(world.width, world.height)));
+    setText("hud-changed", number(world.born + world.died));
+    setText("hud-rate", state.playing ? shownRate : "");
+    $("back").disabled = !life.canGoBack(world);
+    $("reset").disabled = world.generation === 0;
+    document.body.dataset.generation = String(world.generation);
+    document.body.dataset.population = String(world.population);
+  }
+
+  // ---- play
+
+  function showPlaying() {
+    $("play").setAttribute("aria-pressed", String(state.playing));
+    $("play").setAttribute("aria-label", state.playing ? "Stop" : "Start");
+    document.body.dataset.playing = state.playing ? "1" : "0";
+  }
+
+  function play() {
+    if (state.playing) return;
+    state.playing = true;
+    state.last = performance.now();
+    state.owed = 1;  // the first generation at once
+    counted = 0;
+    countedSince = state.last;
+    shownRate = "";
+    showPlaying();
+    requestDraw();
+  }
+
+  function pause() {
+    if (!state.playing) return;
+    state.playing = false;
+    showPlaying();
+    requestDraw();
+  }
+
+  function stepOnce() {
+    pause();
+    life.step(state.world);
+    requestDraw();
+  }
+
+  function goBack() {
+    pause();
+    if (!life.back(state.world)) hint("No earlier generation is kept");
+    requestDraw();
+  }
+
+  function reset() {
+    pause();
+    life.reset(state.world);
+    requestDraw();
+  }
+
+  function setSpeed(index) {
+    state.speed = Math.max(0, Math.min(SPEEDS.length - 1, index));
+    const rate = SPEEDS[state.speed];
+    $("speed").textContent = rate ? rate + "/s" : "max";
+    $("slower").disabled = state.speed === 0;
+    $("faster").disabled = state.speed === SPEEDS.length - 1;
+    state.owed = 0;
+    savePrefs();
+  }
+
+  // ---- worlds
+
+  // A cell worth looking at: the alive cell nearest to the middle, or the middle cell.
+  function interestingCell() {
+    const { width, height, cells } = state.world;
+    let best = Math.floor(height / 2) * width + Math.floor(width / 2);
+    let nearest = Infinity;
+    for (let i = 0; i < cells.length; i++) {
+      if (!cells[i]) continue;
+      const distance = Math.abs((i % width) - width / 2) + Math.abs(Math.floor(i / width) - height / 2);
+      if (distance < nearest) {
+        nearest = distance;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function newWorld(world) {
+    state.world = world;
+    state.selection = interestingCell();
+    state.ghost = null;
+    state.effects = [];
+    for (const button of $("size-list").children) {
+      button.setAttribute("aria-pressed", String(Number(button.dataset.side) === world.width && world.width === world.height));
+    }
+    fit();
+  }
+
+  function loadMap(key, quietly) {
+    const entry = data.maps.find((candidate) => candidate.key === key);
+    if (!entry) throw new Error("no map " + key);
+    pause();
+    const world = life.createWorld(entry.side, entry.side);
+    if (entry.soup) {
+      state.seed = (state.seed + 0x9e3779b9) >>> 0;
+      life.randomize(world, data.soupShare, state.seed);
+    } else {
+      life.stamp(world, life.parseRle(entry.rle), entry.top, entry.left);
+    }
+    newWorld(world);
+    if (!quietly) hint(entry.title + ": " + entry.note, 5200);
+  }
+
+  function resizeWorld(side) {
+    pause();
+    newWorld(life.resized(state.world, side, side));
+  }
+
+  function randomWorld() {
+    pause();
+    state.seed = (state.seed + 0x9e3779b9) >>> 0;
+    life.randomize(state.world, data.soupShare, state.seed);
+    state.selection = interestingCell();
+    requestDraw();
+  }
+
+  function clearWorld() {
+    pause();
+    life.clear(state.world);
+    requestDraw();
+  }
+
+  // A pattern text into the world: into the middle of this world if it fits, or of the
+  // smallest world it fits.
+  function loadText(text) {
+    const shape = life.trimmed(life.parseRle(text));
+    const needs = Math.max(shape.width, shape.height) + 2;
+    const current = Math.min(state.world.width, state.world.height);
+    const side = needs <= current ? current : data.sizes.find((candidate) => candidate >= needs);
+    if (!side) throw new Error("the pattern is " + shape.width + " x " + shape.height + " cells, larger than the largest world");
+    pause();
+    const world = life.createWorld(side, side);
+    life.stamp(world, shape, Math.floor((world.height - shape.height) / 2), Math.floor((world.width - shape.width) / 2));
+    newWorld(world);
+    return shape;
+  }
+
+  function worldText() {
+    const shape = life.trimmed(state.world);
+    return "x = " + shape.width + ", y = " + shape.height + ", rule = B3/S23\n" + life.toRle(shape);
+  }
+
+  function saveWorld() {
+    const { width, height, cells } = state.world;
+    const kept = store(SAVED, { width, height, rle: life.toRle({ width, height, cells }) });
+    hint(kept ? "World saved in this browser" : "This browser does not let the page save");
+  }
+
+  function loadSaved() {
+    const saved = readStored(SAVED);
+    if (!saved || !saved.rle) {
+      hint("Nothing saved yet");
+      return false;
+    }
+    pause();
+    const world = life.createWorld(saved.width, saved.height);
+    if (saved.rle !== "!") life.stamp(world, life.parseRle(saved.rle), 0, 0);
+    newWorld(world);
+    hint("Saved world loaded");
+    return true;
+  }
+
+  // ---- screens
+
+  const hinted = new Set();
+
+  function setScreen(name) {
+    if (!SCREENS.includes(name)) return;
+    state.screen = name;
+    document.body.dataset.screen = name;
+    for (const tab of document.querySelectorAll(".screen-tab")) {
+      tab.setAttribute("aria-pressed", String(tab.dataset.screen === name));
+    }
+    $("wolfram").hidden = name !== "wolfram";
+    const target = name === "map" ? 0 : 1;
+    if (name === "wolfram") {
+      state.mix = target;  // nothing to blend behind the picture of a cell
+      state.blend = null;
+      lastPicture = "";
+    } else if (state.mix !== target) {
+      state.blend = { from: state.mix, to: target, start: performance.now() };
+    }
+    if (name === "graph" && !hinted.has("graph")) {
+      hinted.add("graph");
+      hint(state.camera.scale < render.LINKS_FROM
+        ? "Every cell is a node. Zoom in to see its relations."
+        : "Every cell is a node, a ring means alive. Zoom in for more relations.", 4200);
+    }
+    if (name === "wolfram" && !hinted.has("wolfram")) {
+      hinted.add("wolfram");
+      hint("One cell and its 36 relations. PROBE on the map chooses another.", 4200);
+    }
+    requestDraw();
+  }
+
+  function select(index) {
+    state.selection = index;
+    lastPicture = "";
+    requestDraw();
+  }
+
+  // ---- tools
+
+  function setTool(name) {
+    state.tool = name;
+    document.body.dataset.tool = name;
+    for (const button of document.querySelectorAll(".tool")) {
+      button.setAttribute("aria-pressed", String(button.dataset.tool === name));
+    }
+    $("stamp-bar").hidden = name !== "stamp" || !state.stamp;
+    if (name !== "stamp") state.ghost = null;
+    requestDraw();
+  }
+
+  function shapeOfStamp() {
+    const { entry, turns, flip } = state.stamp;
+    state.stamp.shape = life.transform(entry.shape, turns, flip);
+    if (state.ghost) {
+      // keep the middle of the ghost where it is
+      state.ghost = { shape: state.stamp.shape, top: state.ghost.top, left: state.ghost.left };
+    }
+    requestDraw();
+  }
+
+  function chooseFormation(key) {
+    const entry = formations.find((candidate) => candidate.key === key);
+    if (!entry) throw new Error("no formation " + key);
+    state.stamp = { entry, turns: 0, flip: false, shape: entry.shape };
+    $("stamp-name").textContent = entry.title;
+    for (const button of $("formation-list").querySelectorAll(".formation")) {
+      button.setAttribute("aria-pressed", String(button.dataset.key === key));
+    }
+    setTool("stamp");
+    if (state.screen === "wolfram") setScreen("map");
+  }
+
+  function turnStamp() {
+    if (!state.stamp) return;
+    state.stamp.turns = (state.stamp.turns + 1) % 4;
+    shapeOfStamp();
+  }
+
+  function flipStamp() {
+    if (!state.stamp) return;
+    state.stamp.flip = !state.stamp.flip;
+    shapeOfStamp();
+  }
+
+  function ghostAt(cell) {
+    const shape = state.stamp.shape;
+    state.ghost = { shape, top: cell.row - Math.floor(shape.height / 2), left: cell.column - Math.floor(shape.width / 2) };
+    requestDraw();
+  }
+
+  function placeStamp() {
+    const ghost = state.ghost;
+    if (!ghost) return;
+    life.stamp(state.world, ghost.shape, ghost.top, ghost.left);
+    state.effects.push({ top: ghost.top, left: ghost.left, width: ghost.shape.width, height: ghost.shape.height, start: performance.now(), lasts: 380 });
+    requestDraw();
+  }
+
+  // ---- touches and the mouse on the world
+
+  const pointers = new Map();  // pointer id -> {x, y} on the canvas
+  let gesture = null;
+
+  function pointOf(event) {
+    const box = view.getBoundingClientRect();
+    return { x: event.clientX - box.left, y: event.clientY - box.top };
+  }
+
+  const cellUnder = (point) => renderer.cellAt(scene(), point.x, point.y);
+
+  // every cell on the straight way from one cell to another
+  function lineOfCells(from, to, each) {
+    let column = from.column;
+    let row = from.row;
+    const dx = Math.abs(to.column - column);
+    const dy = Math.abs(to.row - row);
+    const sx = column < to.column ? 1 : -1;
+    const sy = row < to.row ? 1 : -1;
+    let error = dx - dy;
+    for (;;) {
+      each(column, row);
+      if (column === to.column && row === to.row) return;
+      const twice = 2 * error;
+      if (twice > -dy) { error -= dy; column += sx; }
+      if (twice < dx) { error += dx; row += sy; }
+    }
+  }
+
+  function paint(stroke, cell) {
+    const { width, height } = state.world;
+    lineOfCells(stroke.last, cell, (column, row) => {
+      if (column < 0 || row < 0 || column >= width || row >= height) return;
+      const index = row * width + column;
+      if (life.setCell(state.world, index, stroke.value)) stroke.changed.push(index);
+    });
+    stroke.last = cell;
+    requestDraw();
+  }
+
+  function cancelGesture() {
+    if (gesture && gesture.kind === "draw") {
+      // a second finger came down: this was the start of a zoom, not a drawing
+      for (const index of gesture.changed) life.setCell(state.world, index, !gesture.value);
+    }
+    if (gesture && gesture.kind === "stamp") state.ghost = null;
+    gesture = null;
+    requestDraw();
+  }
+
+  function startPinch() {
+    const [a, b] = Array.from(pointers.values());
+    gesture = {
+      kind: "pinch",
+      distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
+      middle: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+      camera: { ...state.camera },
+    };
+  }
+
+  function movePinch() {
+    const [a, b] = Array.from(pointers.values());
+    const { width, height } = renderer.size();
+    const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+    const middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const from = gesture.camera;
+    // the cell that was between the fingers stays between them
+    const wx = from.x + (gesture.middle.x - width / 2) / from.scale;
+    const wy = from.y + (gesture.middle.y - height / 2) / from.scale;
+    state.camera.scale = from.scale * (distance / gesture.distance);
+    clampCamera();
+    state.camera.x = wx - (middle.x - width / 2) / state.camera.scale;
+    state.camera.y = wy - (middle.y - height / 2) / state.camera.scale;
+    clampCamera();
+    state.fitted = false;
+    requestDraw();
+  }
+
+  view.addEventListener("pointerdown", (event) => {
+    if (state.screen === "wolfram") return;
+    view.setPointerCapture(event.pointerId);
+    const point = pointOf(event);
+    pointers.set(event.pointerId, point);
+    if (pointers.size === 2) {
+      cancelGesture();
+      startPinch();
+      return;
+    }
+    if (pointers.size > 2) return;
+    const cell = cellUnder(point);
+    if (event.button === 1 || event.button === 2 || state.tool === "move") {
+      gesture = { kind: "pan", last: point };
+    } else if (state.tool === "draw") {
+      if (!cell.inside) {
+        gesture = { kind: "pan", last: point };  // beside the world there is nothing to draw on
+        return;
+      }
+      gesture = { kind: "draw", value: state.world.cells[cell.index] ? 0 : 1, last: cell, changed: [] };
+      paint(gesture, cell);
+    } else if (state.tool === "stamp" && state.stamp) {
+      gesture = { kind: "stamp" };
+      ghostAt(cell);
+    } else if (state.tool === "probe") {
+      gesture = { kind: "probe", start: point };
+    }
+  });
+
+  view.addEventListener("pointermove", (event) => {
+    const point = pointOf(event);
+    if (!pointers.has(event.pointerId)) {
+      // a mouse moving without a button: the stamp follows it
+      if (state.tool === "stamp" && state.stamp && event.pointerType === "mouse") ghostAt(cellUnder(point));
+      return;
+    }
+    pointers.set(event.pointerId, point);
+    if (!gesture) return;
+    if (gesture.kind === "pinch") {
+      if (pointers.size >= 2) movePinch();
+    } else if (gesture.kind === "pan") {
+      panBy(point.x - gesture.last.x, point.y - gesture.last.y);
+      gesture.last = point;
+    } else if (gesture.kind === "draw") {
+      paint(gesture, cellUnder(point));
+    } else if (gesture.kind === "stamp") {
+      ghostAt(cellUnder(point));
+    }
+  });
+
+  function endPointer(event, cancelled) {
+    if (!pointers.has(event.pointerId)) return;
+    const point = pointOf(event);
+    pointers.delete(event.pointerId);
+    if (!gesture) return;
+    if (gesture.kind === "pinch") {
+      if (pointers.size < 2) gesture = pointers.size ? { kind: "rest" } : null;  // the finger left over does nothing
+      return;
+    }
+    if (!cancelled && gesture.kind === "stamp") {
+      placeStamp();
+      if (event.pointerType !== "mouse") state.ghost = null;
+    } else if (!cancelled && gesture.kind === "probe") {
+      const cell = cellUnder(point);
+      if (cell.inside && Math.hypot(point.x - gesture.start.x, point.y - gesture.start.y) < TAP) {
+        select(cell.index);
+        setScreen("wolfram");
+      }
+    } else if (cancelled) {
+      cancelGesture();
+    }
+    gesture = null;
+    requestDraw();
+  }
+
+  view.addEventListener("pointerup", (event) => endPointer(event, false));
+  view.addEventListener("pointercancel", (event) => endPointer(event, true));
+  view.addEventListener("pointerleave", (event) => {
+    if (!pointers.has(event.pointerId) && state.ghost && event.pointerType === "mouse") {
+      state.ghost = null;
+      requestDraw();
+    }
+  });
+  view.addEventListener("contextmenu", (event) => event.preventDefault());
+  view.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const point = pointOf(event);
+    const unit = event.deltaMode === 1 ? 30 : 1;  // lines or pixels
+    zoomAt(point.x, point.y, Math.exp(-event.deltaY * unit * (event.ctrlKey ? 0.01 : 0.0016)));
+  }, { passive: false });
+
+  // ---- WOLFRAM: the picture of one cell
+
+  const GROUPS = [
+    [0, "The cell"],
+    [2, "Its eight lines out"],
+    [10, "The eight lines in"],
+    [18, "Its neighbours' states"],
+    [26, "Never change: its round and its neighbourhood"],
+  ];
+  let lastPicture = "";
+  let lastScope = null;
+  let sticky = -1;  // the relation kept lit by a tap
+
+  function fateOf(scope) {
+    const around = scope.aliveNeighbours;
+    let next;
+    if (scope.alive) next = around === 2 || around === 3 ? "stays alive" : "dies";
+    else next = around === 3 ? "is born" : "stays dead";
+    return (scope.alive ? "Alive" : "Dead") + " · " + around + " of 8 neighbours alive · next: " + next;
+  }
+
+  function lightRelation(index) {
+    cellPicture.light(svg, index);
+    for (const row of $("relation-list").querySelectorAll("li.on")) row.classList.remove("on");
+    if (index >= 0) {
+      const row = $("relation-list").querySelector('li[data-relation="' + index + '"]');
+      if (row) row.classList.add("on");
+    }
+  }
+
+  function updateWolfram() {
+    const world = state.world;
+    if (state.selection < 0 || state.selection >= world.cells.length) state.selection = interestingCell();
+    const scope = graph.cellScope(world.cells, world.width, world.height, state.selection);
+    // made by the last generation: the state of a cell that was just born or just died
+    const fresh = (node) => {
+      const shade = world.shade[node.cell];
+      return world.generation > 0 && (shade === 1 || shade === life.AGE_CAP + 1);
+    };
+    const made = [];
+    scope.nodes.forEach((node, k) => {
+      if (fresh(node)) made.push(k === 0 ? 0 : 17 + k);
+    });
+    const key = [world.width, world.height, state.selection, state.style, state.placing, svg.clientWidth,
+      scope.nodes.map((node) => node.alive).join(""), made.join(",")].join("|");
+    render.drawPatch(patch, world, state.selection, PATCH_REACH, renderer.theme());
+    if (key === lastPicture) return;
+    lastPicture = key;
+    lastScope = scope;
+    const picture = {
+      nodes: scope.nodes,
+      places: data.places,
+      relations: scope.relations,
+      // what a state can be exchanged for: the rooms round a node stay where they are
+      alternatives: scope.nodes.flatMap((node) => [graph.alive(node.node), graph.dead(node.node)]),
+      states: [{ relations: scope.relations.map((_, i) => i), made, removed: [] }],
+    };
+    cellPicture.draw(svg, picture, 0, { style: state.style, placing: state.placing });
+    svg.dataset.cell = String(scope.cell);
+    setText("cell-title", "Cell row " + scope.row + " · column " + scope.column + " · node " + scope.node);
+    setText("cell-fate", fateOf(scope));
+    const rows = [];
+    scope.relations.forEach((relation, i) => {
+      const group = GROUPS.find(([first]) => first === i);
+      if (group) rows.push('<li class="group">' + group[1] + "</li>");
+      rows.push('<li data-relation="' + i + '" class="' + (relation.fixed ? "fixed" : "") + (made.includes(i) ? " made" : "") +
+        '"><code>' + relation.text + "</code><span>" + relation.meaning + "</span></li>");
+    });
+    $("relation-list").innerHTML = rows.join("");
+    sticky = -1;
+  }
+
+  function showSwitches() {
+    $("style-toggle").textContent = "Drawn: " + (state.style === "project" ? "as the project draws" : "tidied, loops counted");
+    $("placing-toggle").textContent = "Nodes: " + (state.placing === "forces" ? "by forces" : "on a wheel");
+  }
+
+  $("style-toggle").addEventListener("click", () => {
+    state.style = state.style === "project" ? "counted" : "project";
+    showSwitches();
+    savePrefs();
+    requestDraw();
+  });
+  $("placing-toggle").addEventListener("click", () => {
+    state.placing = state.placing === "forces" ? "wheel" : "forces";
+    showSwitches();
+    savePrefs();
+    requestDraw();
+  });
+
+  function chooseNode(target) {
+    const node = target.closest && target.closest(".node");
+    if (!node || !lastScope) return false;
+    const k = Number(node.dataset.node);
+    if (k > 0) select(lastScope.nodes[k].cell);
+    return k > 0;
+  }
+
+  svg.addEventListener("click", (event) => {
+    if (chooseNode(event.target)) return;
+    const relation = event.target.closest(".rel");
+    sticky = relation && Number(relation.dataset.relation) !== sticky ? Number(relation.dataset.relation) : -1;
+    lightRelation(sticky);
+  });
+  svg.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (chooseNode(event.target)) event.preventDefault();
+    }
+  });
+  svg.addEventListener("pointerover", (event) => {
+    if (event.pointerType !== "mouse") return;
+    const relation = event.target.closest(".rel");
+    lightRelation(relation ? Number(relation.dataset.relation) : sticky);
+  });
+  svg.addEventListener("pointerleave", () => lightRelation(sticky));
+  $("relation-list").addEventListener("pointerover", (event) => {
+    if (event.pointerType !== "mouse") return;
+    const row = event.target.closest("li[data-relation]");
+    lightRelation(row ? Number(row.dataset.relation) : sticky);
+  });
+  $("relation-list").addEventListener("pointerleave", () => lightRelation(sticky));
+  $("relation-list").addEventListener("click", (event) => {
+    const row = event.target.closest("li[data-relation]");
+    sticky = row && Number(row.dataset.relation) !== sticky ? Number(row.dataset.relation) : -1;
+    lightRelation(sticky);
+  });
+  patch.addEventListener("click", (event) => {
+    const box = patch.getBoundingClientRect();
+    const across = 2 * PATCH_REACH + 1;
+    const dx = Math.floor(((event.clientX - box.left) / box.width) * across) - PATCH_REACH;
+    const dy = Math.floor(((event.clientY - box.top) / box.height) * across) - PATCH_REACH;
+    const { width, height } = state.world;
+    const row = (((Math.floor(state.selection / width) + dy) % height) + height) % height;
+    const column = ((((state.selection % width) + dx) % width) + width) % width;
+    select(row * width + column);
+  });
+
+  // ---- sheets
+
+  function closeSheets() {
+    $("menu").hidden = true;
+    $("formations").hidden = true;
+    $("shade").hidden = true;
+  }
+
+  function openSheet(id) {
+    closeSheets();
+    $(id).hidden = false;
+    $("shade").hidden = false;
+    $(id).scrollTop = 0;
+  }
+
+  function button(className, html) {
+    const element = document.createElement("button");
+    element.type = "button";
+    element.className = className;
+    element.innerHTML = html;
+    return element;
+  }
+
+  function buildLists() {
+    const list = $("formation-list");
+    let group = "";
+    for (const entry of formations) {
+      if (entry.group !== group) {
+        group = entry.group;
+        const heading = document.createElement("h3");
+        heading.textContent = group;
+        list.appendChild(heading);
+      }
+      const element = button("formation", '<canvas width="64" height="64"></canvas><span></span>');
+      element.dataset.key = entry.key;
+      element.title = entry.note || entry.title;
+      element.querySelector("span").textContent = entry.title;
+      element.setAttribute("aria-pressed", "false");
+      list.appendChild(element);
+    }
+    for (const entry of data.maps) {
+      const element = button("map", '<span class="title"></span><span class="side"></span><small></small>');
+      element.dataset.key = entry.key;
+      element.querySelector(".title").textContent = entry.title;
+      element.querySelector(".side").textContent = entry.side + " x " + entry.side;
+      element.querySelector("small").textContent = entry.note;
+      $("map-list").appendChild(element);
+    }
+    for (const side of data.sizes) {
+      const element = button("size", side + " x " + side);
+      element.dataset.side = String(side);
+      element.setAttribute("aria-pressed", "false");
+      $("size-list").appendChild(element);
+    }
+    for (const [key, theme] of Object.entries(render.THEMES)) {
+      const element = button("theme", theme.title);
+      element.dataset.theme = key;
+      element.setAttribute("aria-pressed", "false");
+      $("theme-list").appendChild(element);
+    }
+  }
+
+  function drawThumbs() {
+    for (const element of $("formation-list").querySelectorAll(".formation")) {
+      const entry = formations.find((candidate) => candidate.key === element.dataset.key);
+      render.drawShape(element.querySelector("canvas"), entry.shape, renderer.theme());
+    }
+  }
+
+  function setTheme(key) {
+    if (!render.THEMES[key]) key = "phosphor";
+    state.theme = key;
+    document.body.dataset.theme = key;
+    renderer.setTheme(key);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", render.THEMES[key].bg);
+    for (const element of $("theme-list").children) element.setAttribute("aria-pressed", String(element.dataset.theme === key));
+    drawThumbs();
+    lastPicture = "";
+    requestDraw();
+  }
+
+  function setCrt(on) {
+    state.crt = on;
+    document.body.dataset.crt = on ? "on" : "off";
+    $("crt-toggle").setAttribute("aria-pressed", String(on));
+    requestDraw();
+  }
+
+  // ---- buttons and keys
+
+  $("play").addEventListener("click", () => (state.playing ? pause() : play()));
+  $("step").addEventListener("click", stepOnce);
+  $("back").addEventListener("click", goBack);
+  $("reset").addEventListener("click", reset);
+  $("slower").addEventListener("click", () => setSpeed(state.speed - 1));
+  $("faster").addEventListener("click", () => setSpeed(state.speed + 1));
+  $("fit").addEventListener("click", fit);
+  $("menu-button").addEventListener("click", () => openSheet("menu"));
+  $("shade").addEventListener("click", closeSheets);
+  for (const close of document.querySelectorAll(".sheet .close")) close.addEventListener("click", closeSheets);
+  for (const tab of document.querySelectorAll(".screen-tab")) tab.addEventListener("click", () => setScreen(tab.dataset.screen));
+  for (const tool of document.querySelectorAll(".tool")) {
+    tool.addEventListener("click", () => {
+      if (tool.dataset.tool === "stamp" && (!state.stamp || state.tool === "stamp")) openSheet("formations");
+      else setTool(tool.dataset.tool);
+    });
+  }
+  $("stamp-turn").addEventListener("click", turnStamp);
+  $("stamp-flip").addEventListener("click", flipStamp);
+  $("stamp-pick").addEventListener("click", () => openSheet("formations"));
+  $("formation-list").addEventListener("click", (event) => {
+    const element = event.target.closest(".formation");
+    if (!element) return;
+    chooseFormation(element.dataset.key);
+    closeSheets();
+    hint("Tap the map to place: " + state.stamp.entry.title);
+  });
+  $("map-list").addEventListener("click", (event) => {
+    const element = event.target.closest("button");
+    if (!element) return;
+    closeSheets();
+    loadMap(element.dataset.key);
+    play();
+  });
+  $("size-list").addEventListener("click", (event) => {
+    const element = event.target.closest("button");
+    if (element) resizeWorld(Number(element.dataset.side));
+  });
+  $("theme-list").addEventListener("click", (event) => {
+    const element = event.target.closest("button");
+    if (!element) return;
+    setTheme(element.dataset.theme);
+    savePrefs();
+  });
+  $("crt-toggle").addEventListener("click", () => {
+    setCrt(!state.crt);
+    savePrefs();
+  });
+  $("random").addEventListener("click", () => {
+    randomWorld();
+    closeSheets();
+  });
+  $("clear").addEventListener("click", () => {
+    clearWorld();
+    closeSheets();
+  });
+  $("save").addEventListener("click", saveWorld);
+  $("load").addEventListener("click", () => {
+    if (loadSaved()) closeSheets();
+  });
+  $("rle-load").addEventListener("click", () => {
+    try {
+      const shape = loadText($("rle").value);
+      closeSheets();
+      hint("Loaded a pattern of " + shape.width + " x " + shape.height + " cells");
+    } catch (error) {
+      hint("Not a pattern text: " + error.message, 4200);
+    }
+  });
+  $("rle-copy").addEventListener("click", () => {
+    const text = worldText();
+    $("rle").value = text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => hint("World copied as text"), () => hint("The text is in the box"));
+    } else {
+      hint("The text is in the box");
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.target.closest && event.target.closest("textarea")) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    const onWorld = state.screen !== "wolfram";
+    const moves = { ArrowLeft: [60, 0], ArrowRight: [-60, 0], ArrowUp: [0, 60], ArrowDown: [0, -60] };
+    if (key === "Escape") {
+      if (!$("shade").hidden) closeSheets();
+      else if (state.tool === "stamp") setTool("draw");
+    } else if (key === " ") {
+      if (event.target.closest && event.target.closest("button, .node")) return;  // the button does its own
+      if (state.playing) pause(); else play();
+    } else if (key === "." || key === "n") stepOnce();
+    else if (key === "," || key === "b") goBack();
+    else if (key === "Home") reset();
+    else if (key === "+" || key === "=") setSpeed(state.speed + 1);
+    else if (key === "-" || key === "_") setSpeed(state.speed - 1);
+    else if (key === "1" || key === "2" || key === "3") setScreen(SCREENS[Number(key) - 1]);
+    else if (key === "d") setTool("draw");
+    else if (key === "v") setTool("move");
+    else if (key === "p") setTool("probe");
+    else if (key === "s") {
+      if (state.stamp) setTool("stamp"); else openSheet("formations");
+    } else if (key === "r") turnStamp();
+    else if (key === "f") flipStamp();
+    else if (key === "0") fit();
+    else if (key === "m") {
+      if ($("menu").hidden) openSheet("menu"); else closeSheets();
+    } else if (moves[key] && onWorld) panBy(moves[key][0], moves[key][1]);
+    else return;
+    event.preventDefault();
+  });
+
+  // ---- the size of the window
+
+  function resized() {
+    renderer.resize();
+    if (state.fitted) fit(); else clampCamera();
+    lastPicture = "";
+    requestDraw();
+  }
+
+  if (window.ResizeObserver) new ResizeObserver(resized).observe($("stage"));
+  window.addEventListener("resize", resized);
+
+  // ---- start
+
+  buildLists();
+  const prefs = readStored(PREFS) || {};
+  setTheme(prefs.theme || "phosphor");
+  setCrt(prefs.crt !== false);
+  if (prefs.style === "counted") state.style = "counted";
+  if (prefs.placing === "wheel") state.placing = "wheel";
+  showSwitches();
+  setSpeed(Number.isInteger(prefs.speed) ? prefs.speed : 3);
+  renderer.resize();
+  setTool("draw");
+  showPlaying();
+  loadMap(data.start, true);
+  play();
+  document.body.dataset.ready = "1";
+
+  // For docker/check-page.py and for looking from the console. Nothing in the page uses it.
+  window.retroLife = {
+    data,
+    state,
+    world: () => ({
+      width: state.world.width,
+      height: state.world.height,
+      generation: state.world.generation,
+      population: state.world.population,
+      kept: state.world.history.length,
+      cells: Array.from(state.world.cells),
+      shade: Array.from(state.world.shade),
+    }),
+    relations: () => graph.relationsOfWorld(state.world.cells, state.world.width, state.world.height),
+    scope: () => graph.cellScope(state.world.cells, state.world.width, state.world.height, state.selection),
+    setCells(width, height, cells) {
+      pause();
+      const world = life.createWorld(width, height);
+      life.setCells(world, cells);
+      newWorld(world);
+    },
+    step(generations) {
+      pause();
+      for (let k = 0; k < (generations || 1); k++) life.step(state.world);
+      drawNow();
+    },
+    drawNow: () => {
+      state.dirty = true;
+      drawNow();
+      return Number(document.body.dataset.drawMs);
+    },
+    // the middle of a cell in the window, for clicks and touches
+    pointOf(index) {
+      const box = view.getBoundingClientRect();
+      const point = renderer.pointOf(scene(), index);
+      return { x: box.left + point.x, y: box.top + point.y };
+    },
+    camera: () => ({ ...state.camera }),
+    setCamera(x, y, scale) {
+      state.camera = { x, y, scale };
+      clampCamera();
+      state.fitted = false;
+      drawNow();
+    },
+    loadMap, loadText, worldText, resizeWorld, play, pause, goBack, reset, setScreen, setTool, select,
+    chooseFormation, setTheme, setSpeed, fit,
+  };
+})();
+
+</script>
+</body>
+</html>
