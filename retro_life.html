@@ -264,7 +264,7 @@ textarea {
     </section>
     <section>
       <h3 data-px="RING"></h3>
-      <p class="note">The second screen. A drag turns the ring any way you like; these go straight to a view.</p>
+      <p class="note">The second screen. A drag turns the ring any way you like; these go straight to a view. While the world plays, the ring also turns slowly by itself; Turn by itself switches that off.</p>
       <div id="ring-views" class="chips">
         <button type="button" data-ring="top" title="Look at the ring from the top" data-px="FROM THE TOP"></button>
         <button type="button" data-ring="side" title="Look at the ring from the side" data-px="FROM THE SIDE"></button>
@@ -272,6 +272,7 @@ textarea {
       </div>
       <div class="chips">
         <button type="button" id="signals" aria-pressed="true" title="Paint the lines along which alive nodes send their state" data-px="LIFE SIGNALS"></button>
+        <button type="button" id="spin" aria-pressed="true" title="While the world plays, the ring turns slowly round its own axis" data-px="TURN BY ITSELF"></button>
       </div>
     </section>
     <section>
@@ -2663,6 +2664,7 @@ void main() {
     fitted: true,                       // the map shows the whole world (until it is moved)
     orbit: { turn: donut.turnOf(...RING_VIEWS.tilted), zoom: 1 },  // the ring
     signals: true,       // the ring paints the life signals
+    spin: true,          // the ring turns by itself while the world plays
     followed: null,      // the organism of the third screen: {world, cells, x, y}
     view: "map",
     playing: false,
@@ -2699,7 +2701,7 @@ void main() {
   }
 
   function savePrefs() {
-    store(PREFS, { theme: state.theme, speed: state.speed, signals: state.signals });
+    store(PREFS, { theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin });
   }
 
   let hintTimer = 0;
@@ -2784,6 +2786,12 @@ void main() {
     state.signals = Boolean(on);
     $("signals").setAttribute("aria-pressed", String(state.signals));
     requestDraw();
+  }
+
+  // The ring turns by itself only while the world plays; off, it stays as it was left.
+  function setSpin(on) {
+    state.spin = Boolean(on);
+    $("spin").setAttribute("aria-pressed", String(state.spin));
   }
 
   function zoomRing(factor) {
@@ -2960,7 +2968,7 @@ void main() {
       }
       if (rate && done < steps) state.owed = 0;  // cannot keep up: nothing is piled up
       if (done) state.dirty = true;
-      if (state.view === "donut" && !state.held) {
+      if (state.view === "donut" && state.spin && !state.held) {
         state.orbit.turn = donut.spun(state.orbit.turn, elapsed * SPIN);
         state.dirty = true;
       }
@@ -3654,6 +3662,10 @@ void main() {
     setSignals(!state.signals);
     savePrefs();
   });
+  $("spin").addEventListener("click", () => {
+    setSpin(!state.spin);
+    savePrefs();
+  });
   $("save").addEventListener("click", saveWorld);
   $("load").addEventListener("click", () => {
     if (loadSaved()) closeSheets();
@@ -3726,6 +3738,7 @@ void main() {
   setTheme(prefs.theme || "yoru");
   setSpeed(Number.isInteger(prefs.speed) ? prefs.speed : FIRST_SPEED);
   setSignals(prefs.signals !== false);
+  setSpin(prefs.spin !== false);
   renderer.resize();
   ring.resize();
   picture.resize();
@@ -3799,7 +3812,7 @@ void main() {
       state.orbit = { turn: donut.turnOf(yaw, tilt), zoom };
       drawNow();
     },
-    lookAtRing, setSignals,
+    lookAtRing, setSignals, setSpin,
     loadMap, loadText, worldText, resizeWorld, play, pause, goBack, reset, setView, chooseFormation, setTheme, setSpeed, fit,
   };
 })();
