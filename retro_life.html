@@ -104,7 +104,12 @@ body[data-theme="kuroi"] #lesson-pips li { border-radius: 50%; }
 }
 #lesson-result p { font-size: inherit; }
 #lesson-result.good { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border-color: var(--accent); }
-#lesson-cheer:not([hidden]) { display: flex; align-items: center; gap: 10px; color: var(--accent); transform-origin: 24px 50%; animation: cheer 0.4s steps(4) 1; }
+#lesson-cheer:not([hidden]) { display: flex; width: 100%; flex-wrap: wrap; align-items: center; gap: 8px 10px; color: var(--accent); transform-origin: 24px 50%; animation: cheer 0.4s steps(4) 1; }
+/* the way on, beside the cheer (the user, 2026-11-22: "where it says GREAT there should be
+   also a next button on PC and tablet"); not on a phone, where the arrow of the bar is
+   right under the card */
+#lesson-next { margin-left: auto; min-height: 44px; padding: 4px 14px; gap: 8px; }
+#lesson-next [data-icon] > .px { height: 14px; }
 #cheer-face { width: 48px; height: 45px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; }
 #cheer-word .px { height: 28px; }
 #lesson-cheer .kana { font-size: 13px; font-weight: 700; }
@@ -122,14 +127,40 @@ body[data-theme="kuroi"] #lesson { border-radius: 10px; }
 #lesson-colours { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 13px; }
 #lesson-colours li { gap: 6px; }
 /* A lesson on another screen: the ring and the picture of an organism are drawn beside or
-   under the card, not behind it (fitLesson in app.js says where the card ends). */
+   under the card, not behind it (fitLesson in app.js says which room the card leaves:
+   its distances from the four edges of the stage). */
 body[data-mode="learn"] :is(#donut, #organism, #organism-graph) {
   top: var(--learn-top, 0px); left: var(--learn-left, 0px);
-  width: calc(100% - var(--learn-left, 0px)); height: calc(100% - var(--learn-top, 0px));
+  width: calc(100% - var(--learn-left, 0px) - var(--learn-right, 0px)); height: calc(100% - var(--learn-top, 0px) - var(--learn-bottom, 0px));
 }
-body[data-mode="learn"] #organism-ways { left: calc(var(--learn-left, 0px) + 10px); }
-body[data-mode="learn"] #organism-fate { left: calc(var(--learn-left, 0px) + 12px); }
-body[data-mode="learn"] #stamp-bar { top: calc(var(--learn-top, 0px) + 10px); }
+body[data-mode="learn"] #organism-ways { left: calc(var(--learn-left, 0px) + 10px); bottom: calc(var(--learn-bottom, 0px) + 12px); }
+body[data-mode="learn"] #organism-pick { right: calc(var(--learn-right, 0px) + 10px); bottom: calc(var(--learn-bottom, 0px) + 12px); }
+body[data-mode="learn"] #organism-fate { left: calc(var(--learn-left, 0px) + 12px); bottom: calc(var(--learn-bottom, 0px) + 120px); }
+body[data-mode="learn"] #stamp-bar { top: calc(var(--learn-top, 0px) + 10px); right: calc(var(--learn-right, 0px) + 10px); }
+body[data-mode="learn"] :is(#hint, #organism-note) { left: calc(var(--learn-left, 0px) + (100% - var(--learn-left, 0px) - var(--learn-right, 0px)) / 2); }
+body[data-mode="learn"] #hint { bottom: calc(var(--learn-bottom, 0px) + 12px); }
+body[data-mode="learn"] #organism-note { top: calc(var(--learn-top, 0px) + (100% - var(--learn-top, 0px) - var(--learn-bottom, 0px)) / 2); }
+/* The mouse pointer of the tutorial: a white arrow in pixels (the user, 2026-11-22: "the
+   cursor of the tutorial on the PC view should a white pixel art arrow"). An SVG of 12 x 19
+   pixels, each drawn as 2 x 2, as data in the page (it loads nothing); the pixels, with K
+   the dark rim and W the white:
+     K / KK / KWK / KWWK / KWWWK / KWWWWK / KWWWWWK / KWWWWWWK / KWWWWWWWK / KWWWWWWWWK /
+     KWWWWWWWWWK / KWWWWWWKKKKK / KWWWKWWK / KWWKKWWK / KWK..KWWK / KK...KWWK /
+     K.....KWWK / ......KWWK / .......KK
+   tests/test_page.py holds that it is that arrow and nothing else. */
+body[data-mode="learn"], body[data-mode="learn"] * { cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNCcgaGVpZ2h0PSczOCcgdmlld0JveD0nMCAwIDEyIDE5JyBzaGFwZS1yZW5kZXJpbmc9J2NyaXNwRWRnZXMnPjxwYXRoIGZpbGw9JyMxNTE0MmEnIGQ9J00wIDBoMXYxaC0xek0wIDFoMXYxaC0xek0xIDFoMXYxaC0xek0wIDJoMXYxaC0xek0yIDJoMXYxaC0xek0wIDNoMXYxaC0xek0zIDNoMXYxaC0xek0wIDRoMXYxaC0xek00IDRoMXYxaC0xek0wIDVoMXYxaC0xek01IDVoMXYxaC0xek0wIDZoMXYxaC0xek02IDZoMXYxaC0xek0wIDdoMXYxaC0xek03IDdoMXYxaC0xek0wIDhoMXYxaC0xek04IDhoMXYxaC0xek0wIDloMXYxaC0xek05IDloMXYxaC0xek0wIDEwaDF2MWgtMXpNMTAgMTBoMXYxaC0xek0wIDExaDF2MWgtMXpNNyAxMWgxdjFoLTF6TTggMTFoMXYxaC0xek05IDExaDF2MWgtMXpNMTAgMTFoMXYxaC0xek0xMSAxMWgxdjFoLTF6TTAgMTJoMXYxaC0xek00IDEyaDF2MWgtMXpNNyAxMmgxdjFoLTF6TTAgMTNoMXYxaC0xek0zIDEzaDF2MWgtMXpNNCAxM2gxdjFoLTF6TTcgMTNoMXYxaC0xek0wIDE0aDF2MWgtMXpNMiAxNGgxdjFoLTF6TTUgMTRoMXYxaC0xek04IDE0aDF2MWgtMXpNMCAxNWgxdjFoLTF6TTEgMTVoMXYxaC0xek01IDE1aDF2MWgtMXpNOCAxNWgxdjFoLTF6TTAgMTZoMXYxaC0xek02IDE2aDF2MWgtMXpNOSAxNmgxdjFoLTF6TTYgMTdoMXYxaC0xek05IDE3aDF2MWgtMXpNNyAxOGgxdjFoLTF6TTggMThoMXYxaC0xeicvPjxwYXRoIGZpbGw9JyNmZmZmZmYnIGQ9J00xIDJoMXYxaC0xek0xIDNoMXYxaC0xek0yIDNoMXYxaC0xek0xIDRoMXYxaC0xek0yIDRoMXYxaC0xek0zIDRoMXYxaC0xek0xIDVoMXYxaC0xek0yIDVoMXYxaC0xek0zIDVoMXYxaC0xek00IDVoMXYxaC0xek0xIDZoMXYxaC0xek0yIDZoMXYxaC0xek0zIDZoMXYxaC0xek00IDZoMXYxaC0xek01IDZoMXYxaC0xek0xIDdoMXYxaC0xek0yIDdoMXYxaC0xek0zIDdoMXYxaC0xek00IDdoMXYxaC0xek01IDdoMXYxaC0xek02IDdoMXYxaC0xek0xIDhoMXYxaC0xek0yIDhoMXYxaC0xek0zIDhoMXYxaC0xek00IDhoMXYxaC0xek01IDhoMXYxaC0xek02IDhoMXYxaC0xek03IDhoMXYxaC0xek0xIDloMXYxaC0xek0yIDloMXYxaC0xek0zIDloMXYxaC0xek00IDloMXYxaC0xek01IDloMXYxaC0xek02IDloMXYxaC0xek03IDloMXYxaC0xek04IDloMXYxaC0xek0xIDEwaDF2MWgtMXpNMiAxMGgxdjFoLTF6TTMgMTBoMXYxaC0xek00IDEwaDF2MWgtMXpNNSAxMGgxdjFoLTF6TTYgMTBoMXYxaC0xek03IDEwaDF2MWgtMXpNOCAxMGgxdjFoLTF6TTkgMTBoMXYxaC0xek0xIDExaDF2MWgtMXpNMiAxMWgxdjFoLTF6TTMgMTFoMXYxaC0xek00IDExaDF2MWgtMXpNNSAxMWgxdjFoLTF6TTYgMTFoMXYxaC0xek0xIDEyaDF2MWgtMXpNMiAxMmgxdjFoLTF6TTMgMTJoMXYxaC0xek01IDEyaDF2MWgtMXpNNiAxMmgxdjFoLTF6TTEgMTNoMXYxaC0xek0yIDEzaDF2MWgtMXpNNSAxM2gxdjFoLTF6TTYgMTNoMXYxaC0xek0xIDE0aDF2MWgtMXpNNiAxNGgxdjFoLTF6TTcgMTRoMXYxaC0xek02IDE1aDF2MWgtMXpNNyAxNWgxdjFoLTF6TTcgMTZoMXYxaC0xek04IDE2aDF2MWgtMXpNNyAxN2gxdjFoLTF6TTggMTdoMXYxaC0xeicvPjwvc3ZnPg==") 1 1, default !important; }
+/* the question before leaving the lessons */
+#leave-ask {
+  position: fixed; z-index: 22; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px));
+  display: grid; gap: 12px; padding: 16px 18px 18px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: 0 var(--px) 0 var(--shadow);
+}
+#leave-ask h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; color: var(--accent); }
+#leave-ask h2 .px { height: 21px; }
+#leave-ask p { margin: 0; font-size: 15px; line-height: 1.45; }
+#leave-ask .ways { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+#leave-ask button { min-height: 48px; padding: 6px 20px; }
+body[data-theme="kuroi"] #leave-ask { border-radius: 10px; }
+body[data-theme="kuroi"] #leave-ask h2 .plain { font-size: 18px; letter-spacing: 0.14em; }
 /* the menu in its lesson: all of it to look at, only the maps to use */
 .sheet section[inert] { opacity: 0.4; }
 /* a narrow screen (a phone held upright): without the reminders of the buttons (the words of
@@ -138,6 +169,7 @@ body[data-mode="learn"] #stamp-bar { top: calc(var(--learn-top, 0px) + 10px); }
   .lesson-ways .way { display: none; }
   #cheer-face { width: 32px; height: 30px; }
   #cheer-word .px { height: 21px; }
+  #lesson-next { display: none; }
 }
 /* a low screen (a phone held sideways): the card smaller, without the reminders of the buttons */
 @media (max-height: 480px) {
@@ -150,6 +182,76 @@ body[data-mode="learn"] #stamp-bar { top: calc(var(--learn-top, 0px) + 10px); }
   #lesson-pips li { width: 8px; height: 8px; }
   .lesson-ways .way { display: none; }
   #lesson-again, #lesson-leave { min-height: 40px; }
+  #lesson-next { display: none; }
+}
+/* A tablet, and every screen from there up: larger letters on the card (the user,
+   2026-11-22: "On Tablet the font size is the problem mainly, it should be bigger"). Held
+   upright, the card keeps the whole width; held sideways, it is wider than on a phone. */
+@media (min-width: 700px) and (min-height: 560px) {
+  #lesson { gap: 10px; padding: 14px 16px 15px; }
+  #lesson p, #lesson-result { font-size: 17px; line-height: 1.5; }
+  #lesson-title .px { height: 28px; }
+  #lesson-pips { gap: 5px; }
+  #lesson-pips li { width: 13px; height: 13px; }
+  #lesson-colours { font-size: 16px; }
+  .lesson-ways { font-size: 14px; }
+  #cheer-face { width: 64px; height: 60px; }
+  #cheer-word .px { height: 35px; }
+  #lesson-cheer .kana { font-size: 16px; }
+  #lesson-again, #lesson-leave, #lesson-next { min-height: 48px; padding: 6px 16px; }
+  #leave-ask p { font-size: 17px; }
+}
+@media (min-width: 700px) and (min-height: 560px) and (orientation: landscape) {
+  #lesson { width: min(440px, calc(100% - 20px)); }
+}
+/* A large screen (a desktop, a big tablet held sideways): the card stands at the right,
+   right above the arrow that goes on, and grows with the screen, in larger pixels (the
+   user, 2026-11-22, on a 27 inch monitor: "it is also too much located on the side ... it
+   should be much bigger, more pixel arty"; "move the description of the lesson to the
+   right, where the next button is. Put the description above it on PC"). The world takes
+   the room to its left (fitLesson). */
+@media (min-width: 1100px) and (min-height: 680px) {
+  #lesson {
+    left: auto; top: auto; right: 12px; bottom: 12px; width: clamp(480px, 34vw, 760px); max-height: calc(100% - 24px);
+    gap: 14px; padding: 20px 22px 22px;
+  }
+  body:not([data-theme="kuroi"]) :is(#lesson, #leave-ask) { --px: 4px; }
+  #lesson p, #lesson-result { font-size: clamp(18px, 0.55vw + 11px, 25px); }
+  #lesson-step .px, #lesson-count .px, #lesson button .px, .lesson-ways .way .px { height: 21px; }
+  #lesson-count { min-height: 21px; }
+  #lesson-title .px { height: 35px; }
+  #lesson-pips { gap: 6px; }
+  #lesson-pips li { width: 16px; height: 16px; border-width: 3px; }
+  #lesson-colours { font-size: inherit; }
+  #lesson-colours .swatch { width: 24px; height: 24px; }
+  .lesson-ways { font-size: 17px; gap: 10px 16px; }
+  #cheer-face { width: 80px; height: 75px; }
+  #cheer-word .px { height: 42px; }
+  #lesson-cheer .kana { font-size: 19px; }
+  #lesson-again, #lesson-leave, #lesson-next { min-height: 56px; padding: 6px 20px; }
+  #lesson-next [data-icon] > .px { height: 21px; }
+  body[data-theme="kuroi"] #lesson .plain { font-size: 17px; }
+  body[data-theme="kuroi"] #lesson-title .plain { font-size: 26px; }
+  body[data-theme="kuroi"] #cheer-word .plain { font-size: 30px; }
+  #leave-ask { width: min(600px, calc(100% - 32px)); padding: 22px 24px 24px; gap: 16px; }
+  #leave-ask h2 .px { height: 35px; }
+  #leave-ask p { font-size: 20px; }
+  #leave-ask button { min-height: 56px; padding: 6px 24px; }
+  #leave-ask button .px { height: 21px; }
+}
+/* a very large screen (a 27 inch monitor): larger still */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  #lesson-step .px, #lesson-count .px, #lesson button .px, .lesson-ways .way .px { height: 28px; }
+  #lesson-count { min-height: 28px; }
+  #lesson-title .px { height: 42px; }
+  #lesson-pips li { width: 20px; height: 20px; }
+  #cheer-face { width: 96px; height: 90px; }
+  #cheer-word .px { height: 56px; }
+  #lesson-again, #lesson-leave, #lesson-next { min-height: 64px; }
+  #lesson-next [data-icon] > .px { height: 28px; }
+  #leave-ask h2 .px { height: 42px; }
+  #leave-ask p { font-size: 24px; }
+  #leave-ask button .px { height: 28px; }
 }
 
 /* a button is a block with a hard shadow that it sinks into when pressed */
@@ -519,7 +621,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       </ul>
       <div id="lesson-count"></div>
       <div id="lesson-result">
-        <div id="lesson-cheer" hidden><canvas id="cheer-face" width="16" height="15" aria-hidden="true"></canvas><span id="cheer-word"></span><span class="kana" lang="ja">やった!</span></div>
+        <div id="lesson-cheer" hidden><canvas id="cheer-face" width="16" height="15" aria-hidden="true"></canvas><span id="cheer-word"></span><span class="kana" lang="ja">やった!</span><button type="button" id="lesson-next" class="primary" title="The next lesson (right arrow key)"><span data-px="NEXT"></span><i data-icon="right"></i></button></div>
         <p id="lesson-says" role="status" aria-live="polite"></p>
       </div>
       <div class="lesson-ways">
@@ -558,6 +660,15 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
   </footer>
 
   <div id="shade" hidden></div>
+
+  <div id="leave-ask" hidden role="alertdialog" aria-modal="true" aria-labelledby="leave-ask-title" aria-describedby="leave-ask-text">
+    <h2 id="leave-ask-title"><span data-px="LEAVE THE LESSONS?"></span><span class="kana" lang="ja">やめる?</span></h2>
+    <p id="leave-ask-text">Back to your game. Solved lessons stay open, and next time the lessons start where you stopped.</p>
+    <div class="ways">
+      <button type="button" id="leave-stay" class="primary" title="Stay in the lessons (Esc)" data-px="STAY"></button>
+      <button type="button" id="leave-yes" title="Back to the game" data-px="LEAVE"></button>
+    </div>
+  </div>
 
   <aside id="formations" class="sheet" hidden role="dialog" aria-label="Add a formation">
     <header><h2><span data-px="ADD"></span><span class="kana" lang="ja">ついか</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
@@ -732,7 +843,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
   </aside>
 </div>
 
-<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations.","period":4},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations.","period":4},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations.","period":4},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships.","period":4},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations.","period":10},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":"","period":0},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":"","period":0},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":"","period":0},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":"","period":0},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":"","period":0},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":"","period":0},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself.","period":0},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":"","period":2},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":"","period":2},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":"","period":2},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":"","period":2},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":"","period":3},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":"","period":8},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns.","period":8},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":"","period":15},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations.","period":30},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations.","period":120},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle.","period":0},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations.","period":0},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply.","period":0},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing.","period":0},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion.","period":0},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":"","period":0},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders).","period":0}],"shapes":{"..o/o.o/.oo":"glider","..o/oo./.oo":"glider",".o..o/o..../o...o/oooo.":"lwss","..o./.ooo/oo.o/ooo./.oo.":"lwss","...o../.o...o/o...../o....o/ooooo.":"mwss","...oo./ooo.oo/ooooo./.ooo..":"mwss","...oo../.o....o/o....../o.....o/oooooo.":"hwss","....oo./oooo.oo/oooooo./.oooo..":"hwss",".....o.oo.../....o......o/...oo...o..o/oo.o.....oo./oo.o.....oo./...oo...o..o/....o......o/.....o.oo...":"copperhead","...oo.ooo.../o.o....ooo../o..o....o.oo/o..o....o.oo/o.o....ooo../...oo.ooo...":"copperhead","........o..../....o..o..o../..oo.o.o...o./oo.oo.......o/oo.oo.......o/..oo.o.o...o./....o..o..o../........o....":"copperhead","....ooo.oo.../.o....oo..oo./oo.....o....o/oo.....o....o/.o....oo..oo./....ooo.oo...":"copperhead",".......o...../..ooo.oo...../.ooo.......oo/o...oo....o../o...oo....o../.ooo.......oo/..ooo.oo...../.......o.....":"copperhead","....oo..o.../....oo.o..o./o....o....o./.o....o..o.o/.o....o..o.o/o....o....o./....oo.o..o./....oo..o...":"copperhead",".....ooo..../..o........./ooo...oo..../o.o..oo...oo/o.o..oo...oo/ooo...oo..../..o........./.....ooo....":"copperhead",".......o...../.......o...../...o..o....../.o.oo.ooo..../oo.oo......oo/oo.oo......oo/.o.oo.ooo..../...o..o....../.......o...../.......o.....":"copperhead","......oo...../..ooooo.o..../oo....oo...../.......o...oo/.......o...oo/oo....oo...../..ooooo.o..../......oo.....":"copperhead",".....oo.oo../....o...oooo/....o...oooo/oo..oo....../oo..oo....../....o...oooo/....o...oooo/.....oo.oo..":"copperhead","oo/oo":"block",".o./o.o/o.o/.o.":"beehive","..o./.o.o/o..o/.oo.":"loaf",".o./o.o/.oo":"boat",".o./o.o/.o.":"tub",".oo./o..o/o..o/.oo.":"pond","...o/.ooo/o.../oo..":"eater","o/o/o":"blinker",".o/oo/oo/o.":"toad","..o./o..o/o..o/.o..":"toad","..oo/..oo/oo../oo..":"beacon","..oo/...o/o.../oo..":"beacon","..o./o.o./.o.o/.o..":"clock","..ooo...ooo../............./o....o.o....o/o....o.o....o/o....o.o....o/..ooo...ooo../............./..ooo...ooo../o....o.o....o/o....o.o....o/o....o.o....o/............./..ooo...ooo..":"pulsar","....o.....o..../....o.....o..../....oo...oo..../.............../ooo..oo.oo..ooo/..o.o.o.o.o.o../....oo...oo..../.............../....oo...oo..../..o.o.o.o.o.o../ooo..oo.oo..ooo/.............../....oo...oo..../....o.....o..../....o.....o....":"pulsar","..oo.....oo../...oo...oo.../o..o.o.o.o..o/ooo.oo.oo.ooo/.o.o.o.o.o.o./..ooo...ooo../............./..ooo...ooo../.o.o.o.o.o.o./ooo.oo.oo.ooo/o..o.o.o.o..o/...oo...oo.../..oo.....oo..":"pulsar","...ooo/...ooo/...ooo/ooo.../ooo.../ooo...":"figure-eight",".....o../....o.o./...o...o/..o...o./.o...o../o...o.../.o.o..../..o.....":"figure-eight",".....o../....ooo./...o.ooo/..o...o./.o...o../ooo.o.../.ooo..../..o.....":"figure-eight","....ooo./.......o/...o...o/..o.o..o/o..o.o../o...o.../o......./.ooo....":"figure-eight","......o.../......oo../.....oo.o./....o..ooo/...o.o.o../..o.o.o.../ooo..o..../.o.oo...../..oo....../...o......":"figure-eight","......oo../........../.....o...o/....o....o/...o.o.o../..o.o.o.../o....o..../o...o...../........../..oo......":"figure-eight",".....o../......../...ooo.o/..o.oo../..oo.o../o.ooo.../......../..o.....":"figure-eight","....oo/..o.oo/.o..../....o./oo.o../oo....":"figure-eight","oo.oooooo/oo.oooooo/oo......./oo.....oo/oo.....oo/oo.....oo/.......oo/oooooo.oo/oooooo.oo":"galaxy",".....oooo../.oo.o....o./o...o....o./o....oo..../o..o....oo./o..o...o..o/.oo....o..o/....oo....o/.o....o...o/.o....o.oo./..oooo.....":"galaxy",".......oo..../......oooo.../..o.oo.oo.o../.o..oo......./ooo..oo..oo../ooo..o.oooo../.o..o...o..o./..oooo.o..ooo/..oo..oo..ooo/.......oo..o./..o.oo.oo.o../...oooo....../....oo.......":"galaxy","......o..o.../.....o......./...oo......../o......oo.o../...o...o..o../...ooo.o...o./o...........o/.o...o.ooo.../..o..o...o.../..o.oo......o/........oo.../.......o...../...o..o......":"galaxy","......oo.../.......o.../..ooo..oo../ooo.o...o../o....o.oo../....o.o..../..oo.o....o/..o...o.ooo/..oo..ooo../...o......./...oo......":"galaxy","......oo.../...o......./..o.o..oo../o.o.ooo..o./o..oooooo../...oo.oo.../..oooooo..o/.o..ooo.o.o/..oo..o.o../.......o.../...oo......":"galaxy","..o..o.o./oo.o.ooo./.o......o/oo.....o./........./.o.....oo/o......o./.ooo.o.oo/.o.o..o..":"galaxy",".o.oo.oo./oo.oo..oo/o......../.......oo/oo.....oo/oo......./........o/oo..oo.oo/.oo.oo.o.":"galaxy","..o....o../oo.oooo.oo/..o....o..":"pentadecathlon","ooo/o.o/ooo/ooo/ooo/ooo/o.o/ooo":"pentadecathlon","..o../.o.o./o...o/o...o/o...o/o...o/o...o/o...o/.o.o./..o..":"pentadecathlon","...o.../..ooo../.oo.oo./ooo.ooo/ooo.ooo/ooo.ooo/ooo.ooo/.oo.oo./..ooo../...o...":"pentadecathlon","....oo..../..o....o../.o......o./o........o/o........o/o........o/.o......o./..o....o../....oo....":"pentadecathlon","..o......o../.oo......oo./ooo......ooo/.oo......oo./..o......o..":"pentadecathlon",".oo......oo./o..o....o..o/o..o....o..o/o..o....o..o/.oo......oo.":"pentadecathlon","..o../.ooo./o.o.o/o.o.o/.ooo./..o../...../...../..o../.ooo./o.o.o/o.o.o/.ooo./..o..":"pentadecathlon","..oo......oo../o....o..o....o/o....o..o....o/o....o..o....o/..oo......oo..":"pentadecathlon","..o..o....o..o../ooo..oooooo..ooo/..o..o....o..o..":"pentadecathlon","o..o.oo.o..o/oooo.oo.oooo/o..o.oo.o..o":"pentadecathlon",".o..o.oo.o..o./oo..o....o..oo/.o..o.oo.o..o.":"pentadecathlon","oo...o..o...oo/ooooo....ooooo/oo...o..o...oo":"pentadecathlon",".o..oo....oo..o./o...ooo..ooo...o/.o..oo....oo..o.":"pentadecathlon","....o.o..o.o..../oo.o..o..o..o.oo/....o.o..o.o....":"pentadecathlon","........................o.........../......................o.o.........../............oo......oo............oo/...........o...o....oo............oo/oo........o.....o...oo............../oo........o...o.oo....o.o.........../..........o.....o.......o.........../...........o...o..................../............oo......................":"gosper-gun","........................oo.....oo/........................oo.....oo/................................./...........................oo..../...........................oo..../................................./................................./................................./................................./......oo.oo....................../.....o.....o...................../oo..o......o...................../oo...o...ooo...................../......o........................../................................./................................./................................./...........oo..................../............o..................../.........ooo...................../.........o.......................":"simkin-gun","..o/ooo/.o.":"r-pentomino",".....o./...o.../ooo..oo":"acorn",".....o./.o..ooo/ooo...o":"rabbits","......o./oo....../.o...ooo":"diehard","o.o/o.o/ooo":"pi","....o/ooo.o/....o":"thunderbird","o/o/o/o/o/./o/o/o/o/o/o/o/././././././o/o/o/./././o/o/o/o/o/./o/o/o/o/o/o/o/o":"growth-line"},"book":{"groups":[{"title":"Spaceships","about":"Shapes that travel: after some generations they are themselves again, a little further on."},{"title":"Still lifes","about":"Shapes that never change: every alive cell has 2 or 3 alive neighbours, and no empty place round them has exactly 3."},{"title":"Oscillators","about":"Shapes that change and come back: after some generations they are themselves again, in the same place."},{"title":"Guns","about":"Machines that make spaceships, one after another, for ever."},{"title":"Long lives","about":"Small shapes that change for a long time before the world around them settles."},{"title":"Growers","about":"Shapes that never stop growing."}],"pages":[{"key":"glider","title":"Glider","group":"Spaceships","facts":["5 cells, 3 x 3","Moves 1 cell on a slant every 4 generations (speed c/4)."],"about":"The smallest thing in the Game of Life that travels. Richard Guy found it in 1970, and it turns up again and again when a random world settles. Many machines are built of gliders: guns make them, eaters swallow them, and two that collide can make something new.","pictures":["bo$2bo$3o!","obo$b2o$bo!","2bo$obo$b2o!","o$b2o$2o!"]},{"key":"lwss","title":"Light spaceship","group":"Spaceships","facts":["9 cells, 5 x 4","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"The light spaceship flies straight along a row, not on a slant like the glider, and twice as fast. John Conway found it in 1970, with the middle and the heavy one.","pictures":["bo2bo$o$o3bo$4o!","b2o$2ob2o$b4o$2b2o!","4o$o3bo$o$bo2bo!","2b2o$b4o$2ob2o$b2o!"]},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","facts":["11 cells, 6 x 5","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"One cell longer than the light spaceship, and just as fast.","pictures":["2bo$o3bo$5bo$o4bo$b5o!","3b2o$3ob2o$5o$b3o!","b5o$o4bo$5bo$o3bo$2bo!","b3o$5o$3ob2o$3b2o!"]},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","facts":["13 cells, 7 x 5","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"The longest of the three classic spaceships. A longer one cannot fly alone: it falls apart unless smaller spaceships fly beside it.","pictures":["2b2o$o4bo$6bo$o5bo$b6o!","4b2o$4ob2o$6o$b4o!","b6o$o5bo$6bo$o4bo$2b2o!","b4o$6o$4ob2o$4b2o!"]},{"key":"copperhead","title":"Copperhead","group":"Spaceships","facts":["28 cells, 8 x 12","Moves 1 cell straight every 10 generations (speed c/10)."],"about":"Found in 2016, long after the classic spaceships: it creeps forward slowly, like a snake.","pictures":["b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!"]},{"key":"block","title":"Block","group":"Still lifes","facts":["4 cells, 2 x 2","Stays as it is."],"about":"Four cells in a square. Each has three alive neighbours, so each stays, and no empty place round it has three, so nothing is born. The most common still life: almost every random world leaves blocks behind.","pictures":["2o$2o!"]},{"key":"beehive","title":"Beehive","group":"Still lifes","facts":["6 cells, 4 x 3","Stays as it is."],"about":"Six cells round an empty middle: the second most common still life. The two empty cells in the middle have too many neighbours to be born.","pictures":["b2o$o2bo$b2o!"]},{"key":"loaf","title":"Loaf","group":"Still lifes","facts":["7 cells, 4 x 4","Stays as it is."],"about":"Seven cells, shaped like a loaf of bread. Often left behind when a random world settles.","pictures":["b2o$o2bo$bobo$2bo!"]},{"key":"boat","title":"Boat","group":"Still lifes","facts":["5 cells, 3 x 3","Stays as it is."],"about":"A block with one corner pushed out: the only still life of five cells.","pictures":["2o$obo$bo!"]},{"key":"tub","title":"Tub","group":"Still lifes","facts":["4 cells, 3 x 3","Stays as it is."],"about":"Four cells round an empty middle. The middle has four alive neighbours, one too many to be born.","pictures":["bo$obo$bo!"]},{"key":"pond","title":"Pond","group":"Still lifes","facts":["8 cells, 4 x 4","Stays as it is."],"about":"A ring of cells round an empty middle of four, a larger cousin of the beehive.","pictures":["b2o$o2bo$o2bo$b2o!"]},{"key":"eater","title":"Eater","group":"Still lifes","facts":["7 cells, 4 x 4","Stays as it is."],"about":"Also called the fishhook. It swallows a glider that hits its corner and is whole again a few generations later. Machines use eaters to get rid of gliders they do not need.","pictures":["2o$obo$2bo$2b2o!"]},{"key":"blinker","title":"Blinker","group":"Oscillators","facts":["3 cells, 3 x 1","The same again after 2 generations."],"about":"Three cells in a row: the two ends die, the middle stays, and two cells are born above and below it. One generation later it lies across again. The most common oscillator.","pictures":["3o!","o$o$o!"]},{"key":"toad","title":"Toad","group":"Oscillators","facts":["6 cells, 4 x 2","The same again after 2 generations."],"about":"Two rows of three, one cell apart sideways: it opens and closes every generation.","pictures":["b3o$3o!","2bo$o2bo$o2bo$bo!"]},{"key":"beacon","title":"Beacon","group":"Oscillators","facts":["8 cells, 4 x 4","The same again after 2 generations."],"about":"Two blocks that touch at a corner. The two cells where they touch die and are born again, over and over, like a lighthouse.","pictures":["2o$2o$2b2o$2b2o!","2o$o$3bo$2b2o!"]},{"key":"clock","title":"Clock","group":"Oscillators","facts":["6 cells, 4 x 4","The same again after 2 generations."],"about":"Six cells that flip between two shapes, like a clock that ticks.","pictures":["2bo$obo$bobo$bo!","bo$2b2o$2o$2bo!"]},{"key":"pulsar","title":"Pulsar","group":"Oscillators","facts":["48 cells, 13 x 13","The same again after 3 generations."],"about":"Four quarters, each the mirror image of the next. It pulses: it grows, shrinks and grows again. The most common oscillator that needs three generations to come back.","pictures":["2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","4bo5bo$4bo5bo$4b2o3b2o2$3o2b2ob2o2b3o$2bobobobobobo$4b2o3b2o2$4b2o3b2o$2bobobobobobo$3o2b2ob2o2b3o2$4b2o3b2o$4bo5bo$4bo5bo!","2b2o5b2o$3b2o3b2o$o2bobobobo2bo$3ob2ob2ob3o$bobobobobobo$2b3o3b3o2$2b3o3b3o$bobobobobobo$3ob2ob2ob3o$o2bobobobo2bo$3b2o3b2o$2b2o5b2o!"]},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","facts":["18 cells, 6 x 6","The same again after 8 generations."],"about":"Two squares that touch at a corner. Between them the cells keep changing, in the shape of an eight.","pictures":["3o$3o$3o$3b3o$3b3o$3b3o!"]},{"key":"galaxy","title":"Galaxy","group":"Oscillators","facts":["48 cells, 9 x 9","The same again after 8 generations."],"about":"Found by Jan Kok in 1971. Its four arms seem to spin round its empty middle.","pictures":["6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!"]},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","facts":["12 cells, 10 x 3","The same again after 15 generations."],"about":"A row of ten cells turns into this. Its name says fifteen in Greek, for the generations it takes to come back.","pictures":["2bo4bo$2ob4ob2o$2bo4bo!"]},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","facts":["36 cells, 36 x 9","A new glider every 30 generations."],"about":"The first gun, found by Bill Gosper in 1970. It answered Conway's question whether a shape can grow without end: it sends out gliders for ever. Gosper won the prize Conway had promised for it.","pictures":["24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!"]},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","facts":["36 cells, 33 x 21","A new glider every 120 generations."],"about":"Found by Michael Simkin in 2015: the smallest known gun, counted in cells.","pictures":["2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!"]},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","facts":["5 cells, 3 x 3","Keeps changing for over 1,000 generations."],"about":"Five cells, and it keeps changing for over a thousand generations. On its way it sends out gliders: the first gliders anyone saw came out of it.","pictures":["b2o$2o$bo!"]},{"key":"acorn","title":"Acorn","group":"Long lives","facts":["7 cells, 7 x 3","Keeps changing for over 2,000 generations."],"about":"Seven cells that keep changing for thousands of generations and leave hundreds of cells behind.","pictures":["bo$3bo$2o2b3o!"]},{"key":"rabbits","title":"Rabbits","group":"Long lives","facts":["9 cells, 7 x 3","Keeps changing for over 3,000 generations."],"about":"Nine cells that multiply, like rabbits.","pictures":["o3b3o$3o2bo$bo!"]},{"key":"diehard","title":"Diehard","group":"Long lives","facts":["7 cells, 8 x 3","Keeps changing for over 129 generations."],"about":"Seven cells that live a long time and then vanish: nothing is left.","pictures":["6bo$2o$bo3b3o!"]},{"key":"pi","title":"Pi","group":"Long lives","facts":["7 cells, 3 x 3","Keeps changing for over 170 generations."],"about":"Seven cells in the shape of the Greek letter pi: a small explosion.","pictures":["3o$obo$obo!"]},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","facts":["6 cells, 3 x 5","Keeps changing for over 240 generations."],"about":"A row of three over a column of three. It flashes outwards like a bird spreading its wings.","pictures":["3o2$bo$bo$bo!"]},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","facts":["28 cells, 39 x 1","Grows for ever."],"about":"One row of cells that grows for ever in a world without borders. On the donut, where the world wraps round, it meets itself in the end.","pictures":["8ob5o3b3o6b7ob5o!"]}]},"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"ringGap":3.4,"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1,"ages":false,"view":"map","plain":""},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8,"ages":false,"view":"map","plain":""},{"key":"colours","title":"COLOURS","text":"Until now every cell had the same colour. In the game a cell shows its age: one colour when it is just born, one while it is young, one when it is old (alive for 12 generations or more). The colour only tells you how long a cell has lived. It changes nothing: a cell is alive or dead, and the rule counts every alive neighbour alike. Press Start and watch 14 generations.","rows":[".........",".##......",".##......",".........",".........","....###..",".........",".........","........."],"kind":"watch","done":"The block and the middle of the blinker are old now. The ends of the blinker are born again and again, so they never grow old.","target":-1,"steps":14,"ages":true,"view":"map","plain":"Until now every cell looked the same. In the other looks of the game a cell shows its age by its colour: just born, young, or old (alive for 12 generations or more). The look you chose, Kuroi, has no colours, so here every alive cell stays white. Either way the age changes nothing: a cell is alive or dead. Press Start and watch 14 generations."},{"key":"add","title":"ADD","text":"Now the buttons of the game. The plus adds famous shapes. Press the plus (it blinks), pick a shape, the glider for instance, and tap the map where you want it.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"add","done":"There it is. The shape stays on your finger: tap again for another, or the cross to put it away. Press Start to see what it does, or go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"menu","title":"THE MENU","text":"The wheel opens the menu. Everything else is there: the speed and one generation back, ready maps, the size of the world, three looks, saving, and this tutorial. Press the wheel (it blinks) and pick a map.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"map","done":"A new world. In the game a map replaces your world, here only this lesson's. Stop it whenever you like, and go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"donut","title":"DONUT","text":"The game can show the same world in other ways. You do not need to understand them to play. This is the Donut: the map bent into a ring, because what leaves the map on one side comes back on the other. Every light is an alive cell. Drag to turn it.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"In the game the two arrows go from screen to screen. Here the arrow to the right goes on.","target":-1,"steps":0,"ages":true,"view":"donut","plain":""},{"key":"organism","title":"ORGANISM","text":"And this is the Organism: one group of cells close up. The row at the bottom changes what you see: Normal, Numbers (how many neighbours of each cell are alive), Graph. Try them if you like. None of it is needed to play.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"One more step: the arrow to the right.","target":-1,"steps":0,"ages":true,"view":"organism","plain":""}],"old":12,"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations.","nothing":""},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Press Start and watch what the rule does to a heart. The arrow to the right brings you back to the game.","endRows":["........................","........................","........................","........................","........................","........................",".......###...###........","......#####.#####.......",".....#############......",".....#############......",".....#############......","......###########.......",".......#########........","........#######.........",".........#####..........","..........###...........","...........#............","........................","........................","........................","........................","........................","........................","........................"]}}</script>
+<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations.","period":4},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations.","period":4},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations.","period":4},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships.","period":4},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations.","period":10},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":"","period":0},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":"","period":0},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":"","period":0},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":"","period":0},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":"","period":0},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":"","period":0},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself.","period":0},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":"","period":2},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":"","period":2},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":"","period":2},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":"","period":2},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":"","period":3},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":"","period":8},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns.","period":8},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":"","period":15},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations.","period":30},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations.","period":120},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle.","period":0},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations.","period":0},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply.","period":0},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing.","period":0},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion.","period":0},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":"","period":0},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders).","period":0}],"shapes":{"..o/o.o/.oo":"glider","..o/oo./.oo":"glider",".o..o/o..../o...o/oooo.":"lwss","..o./.ooo/oo.o/ooo./.oo.":"lwss","...o../.o...o/o...../o....o/ooooo.":"mwss","...oo./ooo.oo/ooooo./.ooo..":"mwss","...oo../.o....o/o....../o.....o/oooooo.":"hwss","....oo./oooo.oo/oooooo./.oooo..":"hwss",".....o.oo.../....o......o/...oo...o..o/oo.o.....oo./oo.o.....oo./...oo...o..o/....o......o/.....o.oo...":"copperhead","...oo.ooo.../o.o....ooo../o..o....o.oo/o..o....o.oo/o.o....ooo../...oo.ooo...":"copperhead","........o..../....o..o..o../..oo.o.o...o./oo.oo.......o/oo.oo.......o/..oo.o.o...o./....o..o..o../........o....":"copperhead","....ooo.oo.../.o....oo..oo./oo.....o....o/oo.....o....o/.o....oo..oo./....ooo.oo...":"copperhead",".......o...../..ooo.oo...../.ooo.......oo/o...oo....o../o...oo....o../.ooo.......oo/..ooo.oo...../.......o.....":"copperhead","....oo..o.../....oo.o..o./o....o....o./.o....o..o.o/.o....o..o.o/o....o....o./....oo.o..o./....oo..o...":"copperhead",".....ooo..../..o........./ooo...oo..../o.o..oo...oo/o.o..oo...oo/ooo...oo..../..o........./.....ooo....":"copperhead",".......o...../.......o...../...o..o....../.o.oo.ooo..../oo.oo......oo/oo.oo......oo/.o.oo.ooo..../...o..o....../.......o...../.......o.....":"copperhead","......oo...../..ooooo.o..../oo....oo...../.......o...oo/.......o...oo/oo....oo...../..ooooo.o..../......oo.....":"copperhead",".....oo.oo../....o...oooo/....o...oooo/oo..oo....../oo..oo....../....o...oooo/....o...oooo/.....oo.oo..":"copperhead","oo/oo":"block",".o./o.o/o.o/.o.":"beehive","..o./.o.o/o..o/.oo.":"loaf",".o./o.o/.oo":"boat",".o./o.o/.o.":"tub",".oo./o..o/o..o/.oo.":"pond","...o/.ooo/o.../oo..":"eater","o/o/o":"blinker",".o/oo/oo/o.":"toad","..o./o..o/o..o/.o..":"toad","..oo/..oo/oo../oo..":"beacon","..oo/...o/o.../oo..":"beacon","..o./o.o./.o.o/.o..":"clock","..ooo...ooo../............./o....o.o....o/o....o.o....o/o....o.o....o/..ooo...ooo../............./..ooo...ooo../o....o.o....o/o....o.o....o/o....o.o....o/............./..ooo...ooo..":"pulsar","....o.....o..../....o.....o..../....oo...oo..../.............../ooo..oo.oo..ooo/..o.o.o.o.o.o../....oo...oo..../.............../....oo...oo..../..o.o.o.o.o.o../ooo..oo.oo..ooo/.............../....oo...oo..../....o.....o..../....o.....o....":"pulsar","..oo.....oo../...oo...oo.../o..o.o.o.o..o/ooo.oo.oo.ooo/.o.o.o.o.o.o./..ooo...ooo../............./..ooo...ooo../.o.o.o.o.o.o./ooo.oo.oo.ooo/o..o.o.o.o..o/...oo...oo.../..oo.....oo..":"pulsar","...ooo/...ooo/...ooo/ooo.../ooo.../ooo...":"figure-eight",".....o../....o.o./...o...o/..o...o./.o...o../o...o.../.o.o..../..o.....":"figure-eight",".....o../....ooo./...o.ooo/..o...o./.o...o../ooo.o.../.ooo..../..o.....":"figure-eight","....ooo./.......o/...o...o/..o.o..o/o..o.o../o...o.../o......./.ooo....":"figure-eight","......o.../......oo../.....oo.o./....o..ooo/...o.o.o../..o.o.o.../ooo..o..../.o.oo...../..oo....../...o......":"figure-eight","......oo../........../.....o...o/....o....o/...o.o.o../..o.o.o.../o....o..../o...o...../........../..oo......":"figure-eight",".....o../......../...ooo.o/..o.oo../..oo.o../o.ooo.../......../..o.....":"figure-eight","....oo/..o.oo/.o..../....o./oo.o../oo....":"figure-eight","oo.oooooo/oo.oooooo/oo......./oo.....oo/oo.....oo/oo.....oo/.......oo/oooooo.oo/oooooo.oo":"galaxy",".....oooo../.oo.o....o./o...o....o./o....oo..../o..o....oo./o..o...o..o/.oo....o..o/....oo....o/.o....o...o/.o....o.oo./..oooo.....":"galaxy",".......oo..../......oooo.../..o.oo.oo.o../.o..oo......./ooo..oo..oo../ooo..o.oooo../.o..o...o..o./..oooo.o..ooo/..oo..oo..ooo/.......oo..o./..o.oo.oo.o../...oooo....../....oo.......":"galaxy","......o..o.../.....o......./...oo......../o......oo.o../...o...o..o../...ooo.o...o./o...........o/.o...o.ooo.../..o..o...o.../..o.oo......o/........oo.../.......o...../...o..o......":"galaxy","......oo.../.......o.../..ooo..oo../ooo.o...o../o....o.oo../....o.o..../..oo.o....o/..o...o.ooo/..oo..ooo../...o......./...oo......":"galaxy","......oo.../...o......./..o.o..oo../o.o.ooo..o./o..oooooo../...oo.oo.../..oooooo..o/.o..ooo.o.o/..oo..o.o../.......o.../...oo......":"galaxy","..o..o.o./oo.o.ooo./.o......o/oo.....o./........./.o.....oo/o......o./.ooo.o.oo/.o.o..o..":"galaxy",".o.oo.oo./oo.oo..oo/o......../.......oo/oo.....oo/oo......./........o/oo..oo.oo/.oo.oo.o.":"galaxy","..o....o../oo.oooo.oo/..o....o..":"pentadecathlon","ooo/o.o/ooo/ooo/ooo/ooo/o.o/ooo":"pentadecathlon","..o../.o.o./o...o/o...o/o...o/o...o/o...o/o...o/.o.o./..o..":"pentadecathlon","...o.../..ooo../.oo.oo./ooo.ooo/ooo.ooo/ooo.ooo/ooo.ooo/.oo.oo./..ooo../...o...":"pentadecathlon","....oo..../..o....o../.o......o./o........o/o........o/o........o/.o......o./..o....o../....oo....":"pentadecathlon","..o......o../.oo......oo./ooo......ooo/.oo......oo./..o......o..":"pentadecathlon",".oo......oo./o..o....o..o/o..o....o..o/o..o....o..o/.oo......oo.":"pentadecathlon","..o../.ooo./o.o.o/o.o.o/.ooo./..o../...../...../..o../.ooo./o.o.o/o.o.o/.ooo./..o..":"pentadecathlon","..oo......oo../o....o..o....o/o....o..o....o/o....o..o....o/..oo......oo..":"pentadecathlon","..o..o....o..o../ooo..oooooo..ooo/..o..o....o..o..":"pentadecathlon","o..o.oo.o..o/oooo.oo.oooo/o..o.oo.o..o":"pentadecathlon",".o..o.oo.o..o./oo..o....o..oo/.o..o.oo.o..o.":"pentadecathlon","oo...o..o...oo/ooooo....ooooo/oo...o..o...oo":"pentadecathlon",".o..oo....oo..o./o...ooo..ooo...o/.o..oo....oo..o.":"pentadecathlon","....o.o..o.o..../oo.o..o..o..o.oo/....o.o..o.o....":"pentadecathlon","........................o.........../......................o.o.........../............oo......oo............oo/...........o...o....oo............oo/oo........o.....o...oo............../oo........o...o.oo....o.o.........../..........o.....o.......o.........../...........o...o..................../............oo......................":"gosper-gun","........................oo.....oo/........................oo.....oo/................................./...........................oo..../...........................oo..../................................./................................./................................./................................./......oo.oo....................../.....o.....o...................../oo..o......o...................../oo...o...ooo...................../......o........................../................................./................................./................................./...........oo..................../............o..................../.........ooo...................../.........o.......................":"simkin-gun","..o/ooo/.o.":"r-pentomino",".....o./...o.../ooo..oo":"acorn",".....o./.o..ooo/ooo...o":"rabbits","......o./oo....../.o...ooo":"diehard","o.o/o.o/ooo":"pi","....o/ooo.o/....o":"thunderbird","o/o/o/o/o/./o/o/o/o/o/o/o/././././././o/o/o/./././o/o/o/o/o/./o/o/o/o/o/o/o/o":"growth-line"},"book":{"groups":[{"title":"Spaceships","about":"Shapes that travel: after some generations they are themselves again, a little further on."},{"title":"Still lifes","about":"Shapes that never change: every alive cell has 2 or 3 alive neighbours, and no empty place round them has exactly 3."},{"title":"Oscillators","about":"Shapes that change and come back: after some generations they are themselves again, in the same place."},{"title":"Guns","about":"Machines that make spaceships, one after another, for ever."},{"title":"Long lives","about":"Small shapes that change for a long time before the world around them settles."},{"title":"Growers","about":"Shapes that never stop growing."}],"pages":[{"key":"glider","title":"Glider","group":"Spaceships","facts":["5 cells, 3 x 3","Moves 1 cell on a slant every 4 generations (speed c/4)."],"about":"The smallest thing in the Game of Life that travels. Richard Guy found it in 1970, and it turns up again and again when a random world settles. Many machines are built of gliders: guns make them, eaters swallow them, and two that collide can make something new.","pictures":["bo$2bo$3o!","obo$b2o$bo!","2bo$obo$b2o!","o$b2o$2o!"]},{"key":"lwss","title":"Light spaceship","group":"Spaceships","facts":["9 cells, 5 x 4","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"The light spaceship flies straight along a row, not on a slant like the glider, and twice as fast. John Conway found it in 1970, with the middle and the heavy one.","pictures":["bo2bo$o$o3bo$4o!","b2o$2ob2o$b4o$2b2o!","4o$o3bo$o$bo2bo!","2b2o$b4o$2ob2o$b2o!"]},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","facts":["11 cells, 6 x 5","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"One cell longer than the light spaceship, and just as fast.","pictures":["2bo$o3bo$5bo$o4bo$b5o!","3b2o$3ob2o$5o$b3o!","b5o$o4bo$5bo$o3bo$2bo!","b3o$5o$3ob2o$3b2o!"]},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","facts":["13 cells, 7 x 5","Moves 2 cells straight every 4 generations (speed c/2)."],"about":"The longest of the three classic spaceships. A longer one cannot fly alone: it falls apart unless smaller spaceships fly beside it.","pictures":["2b2o$o4bo$6bo$o5bo$b6o!","4b2o$4ob2o$6o$b4o!","b6o$o5bo$6bo$o4bo$2b2o!","b4o$6o$4ob2o$4b2o!"]},{"key":"copperhead","title":"Copperhead","group":"Spaceships","facts":["28 cells, 8 x 12","Moves 1 cell straight every 10 generations (speed c/10)."],"about":"Found in 2016, long after the classic spaceships: it creeps forward slowly, like a snake.","pictures":["b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!"]},{"key":"block","title":"Block","group":"Still lifes","facts":["4 cells, 2 x 2","Stays as it is."],"about":"Four cells in a square. Each has three alive neighbours, so each stays, and no empty place round it has three, so nothing is born. The most common still life: almost every random world leaves blocks behind.","pictures":["2o$2o!"]},{"key":"beehive","title":"Beehive","group":"Still lifes","facts":["6 cells, 4 x 3","Stays as it is."],"about":"Six cells round an empty middle: the second most common still life. The two empty cells in the middle have too many neighbours to be born.","pictures":["b2o$o2bo$b2o!"]},{"key":"loaf","title":"Loaf","group":"Still lifes","facts":["7 cells, 4 x 4","Stays as it is."],"about":"Seven cells, shaped like a loaf of bread. Often left behind when a random world settles.","pictures":["b2o$o2bo$bobo$2bo!"]},{"key":"boat","title":"Boat","group":"Still lifes","facts":["5 cells, 3 x 3","Stays as it is."],"about":"A block with one corner pushed out: the only still life of five cells.","pictures":["2o$obo$bo!"]},{"key":"tub","title":"Tub","group":"Still lifes","facts":["4 cells, 3 x 3","Stays as it is."],"about":"Four cells round an empty middle. The middle has four alive neighbours, one too many to be born.","pictures":["bo$obo$bo!"]},{"key":"pond","title":"Pond","group":"Still lifes","facts":["8 cells, 4 x 4","Stays as it is."],"about":"A ring of cells round an empty middle of four, a larger cousin of the beehive.","pictures":["b2o$o2bo$o2bo$b2o!"]},{"key":"eater","title":"Eater","group":"Still lifes","facts":["7 cells, 4 x 4","Stays as it is."],"about":"Also called the fishhook. It swallows a glider that hits its corner and is whole again a few generations later. Machines use eaters to get rid of gliders they do not need.","pictures":["2o$obo$2bo$2b2o!"]},{"key":"blinker","title":"Blinker","group":"Oscillators","facts":["3 cells, 3 x 1","The same again after 2 generations."],"about":"Three cells in a row: the two ends die, the middle stays, and two cells are born above and below it. One generation later it lies across again. The most common oscillator.","pictures":["3o!","o$o$o!"]},{"key":"toad","title":"Toad","group":"Oscillators","facts":["6 cells, 4 x 2","The same again after 2 generations."],"about":"Two rows of three, one cell apart sideways: it opens and closes every generation.","pictures":["b3o$3o!","2bo$o2bo$o2bo$bo!"]},{"key":"beacon","title":"Beacon","group":"Oscillators","facts":["8 cells, 4 x 4","The same again after 2 generations."],"about":"Two blocks that touch at a corner. The two cells where they touch die and are born again, over and over, like a lighthouse.","pictures":["2o$2o$2b2o$2b2o!","2o$o$3bo$2b2o!"]},{"key":"clock","title":"Clock","group":"Oscillators","facts":["6 cells, 4 x 4","The same again after 2 generations."],"about":"Six cells that flip between two shapes, like a clock that ticks.","pictures":["2bo$obo$bobo$bo!","bo$2b2o$2o$2bo!"]},{"key":"pulsar","title":"Pulsar","group":"Oscillators","facts":["48 cells, 13 x 13","The same again after 3 generations."],"about":"Four quarters, each the mirror image of the next. It pulses: it grows, shrinks and grows again. The most common oscillator that needs three generations to come back.","pictures":["2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","4bo5bo$4bo5bo$4b2o3b2o2$3o2b2ob2o2b3o$2bobobobobobo$4b2o3b2o2$4b2o3b2o$2bobobobobobo$3o2b2ob2o2b3o2$4b2o3b2o$4bo5bo$4bo5bo!","2b2o5b2o$3b2o3b2o$o2bobobobo2bo$3ob2ob2ob3o$bobobobobobo$2b3o3b3o2$2b3o3b3o$bobobobobobo$3ob2ob2ob3o$o2bobobobo2bo$3b2o3b2o$2b2o5b2o!"]},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","facts":["18 cells, 6 x 6","The same again after 8 generations."],"about":"Two squares that touch at a corner. Between them the cells keep changing, in the shape of an eight.","pictures":["3o$3o$3o$3b3o$3b3o$3b3o!"]},{"key":"galaxy","title":"Galaxy","group":"Oscillators","facts":["48 cells, 9 x 9","The same again after 8 generations."],"about":"Found by Jan Kok in 1971. Its four arms seem to spin round its empty middle.","pictures":["6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!"]},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","facts":["12 cells, 10 x 3","The same again after 15 generations."],"about":"A row of ten cells turns into this. Its name says fifteen in Greek, for the generations it takes to come back.","pictures":["2bo4bo$2ob4ob2o$2bo4bo!"]},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","facts":["36 cells, 36 x 9","A new glider every 30 generations."],"about":"The first gun, found by Bill Gosper in 1970. It answered Conway's question whether a shape can grow without end: it sends out gliders for ever. Gosper won the prize Conway had promised for it.","pictures":["24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!"]},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","facts":["36 cells, 33 x 21","A new glider every 120 generations."],"about":"Found by Michael Simkin in 2015: the smallest known gun, counted in cells.","pictures":["2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!"]},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","facts":["5 cells, 3 x 3","Keeps changing for over 1,000 generations."],"about":"Five cells, and it keeps changing for over a thousand generations. On its way it sends out gliders: the first gliders anyone saw came out of it.","pictures":["b2o$2o$bo!"]},{"key":"acorn","title":"Acorn","group":"Long lives","facts":["7 cells, 7 x 3","Keeps changing for over 2,000 generations."],"about":"Seven cells that keep changing for thousands of generations and leave hundreds of cells behind.","pictures":["bo$3bo$2o2b3o!"]},{"key":"rabbits","title":"Rabbits","group":"Long lives","facts":["9 cells, 7 x 3","Keeps changing for over 3,000 generations."],"about":"Nine cells that multiply, like rabbits.","pictures":["o3b3o$3o2bo$bo!"]},{"key":"diehard","title":"Diehard","group":"Long lives","facts":["7 cells, 8 x 3","Keeps changing for over 129 generations."],"about":"Seven cells that live a long time and then vanish: nothing is left.","pictures":["6bo$2o$bo3b3o!"]},{"key":"pi","title":"Pi","group":"Long lives","facts":["7 cells, 3 x 3","Keeps changing for over 170 generations."],"about":"Seven cells in the shape of the Greek letter pi: a small explosion.","pictures":["3o$obo$obo!"]},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","facts":["6 cells, 3 x 5","Keeps changing for over 240 generations."],"about":"A row of three over a column of three. It flashes outwards like a bird spreading its wings.","pictures":["3o2$bo$bo$bo!"]},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","facts":["28 cells, 39 x 1","Grows for ever."],"about":"One row of cells that grows for ever in a world without borders. On the donut, where the world wraps round, it meets itself in the end.","pictures":["8ob5o3b3o6b7ob5o!"]}]},"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"ringGap":3.4,"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. You cannot change the map yet: grey stripes and a lock mean that you only watch. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1,"ages":false,"view":"map","plain":""},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8,"ages":false,"view":"map","plain":""},{"key":"colours","title":"COLOURS","text":"Until now every cell had the same colour. In the game a cell shows its age: one colour when it is just born, one while it is young, one when it is old (alive for 12 generations or more). The colour only tells you how long a cell has lived. It changes nothing: a cell is alive or dead, and the rule counts every alive neighbour alike. Press Start and watch 14 generations.","rows":[".........",".##......",".##......",".........",".........","....###..",".........",".........","........."],"kind":"watch","done":"The block and the middle of the blinker are old now. The ends of the blinker are born again and again, so they never grow old.","target":-1,"steps":14,"ages":true,"view":"map","plain":"Until now every cell looked the same. In the other looks of the game a cell shows its age by its colour: just born, young, or old (alive for 12 generations or more). The look you chose, Kuroi, has no colours, so here every alive cell stays white. Either way the age changes nothing: a cell is alive or dead. Press Start and watch 14 generations."},{"key":"add","title":"ADD","text":"Now the buttons of the game. The plus adds famous shapes. Press the plus (it blinks), pick a shape, the glider for instance, and tap the map where you want it.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"add","done":"There it is. The shape stays on your finger: tap again for another, or the cross to put it away. Press Start to see what it does, or go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"menu","title":"THE MENU","text":"The wheel opens the menu. Everything else is there: the speed and one generation back, ready maps, the size of the world, three looks, saving, and this tutorial. Press the wheel (it blinks) and pick a map.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"map","done":"A new world. In the game a map replaces your world, here only this lesson's. Stop it whenever you like, and go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"donut","title":"DONUT","text":"The game can show the same world in other ways. You do not need to understand them to play. This is the Donut: the map bent into a ring, because what leaves the map on one side comes back on the other. Every light is an alive cell. Drag to turn it.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"In the game the two arrows go from screen to screen. Here the arrow to the right goes on.","target":-1,"steps":0,"ages":true,"view":"donut","plain":""},{"key":"organism","title":"ORGANISM","text":"And this is the Organism: one group of cells close up. The row at the bottom changes what you see: Normal, Numbers (how many neighbours of each cell are alive), Graph. Try them if you like. None of it is needed to play.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"One more step: the arrow to the right.","target":-1,"steps":0,"ages":true,"view":"organism","plain":""}],"old":12,"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations.","nothing":""},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Press Start and watch what the rule does to a heart. The arrow to the right brings you back to the game.","endRows":["........................","........................","........................","........................","........................","........................",".......###...###........","......#####.#####.......",".....#############......",".....#############......",".....#############......","......###########.......",".......#########........","........#######.........",".........#####..........","..........###...........","...........#............","........................","........................","........................","........................","........................","........................","........................"]}}</script>
 <script>
 // The Game of Life of the game: a world that wraps round at its borders, played by the
 // ordinary rule (born with 3 alive neighbours, staying alive with 2 or 3).
@@ -2116,8 +2227,14 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
   // of a look without faces
   const HEART = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
   const PLAIN_CELL = [".XXXXXX.", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", ".XXXXXX."];
+  // a padlock on a map that cannot be touched now (the tutorial): S its shackle, B its
+  // body, k the keyhole
+  const LOCK = [
+    "...SSSSS...", "..SS...SS..", "..S.....S..", "..S.....S..", "..S.....S..",
+    "BBBBBBBBBBB", "BBBBBBBBBBB", "BBBBkkkBBBB", "BBBBkkkBBBB", "BBBBBkBBBBB", "BBBBBkBBBBB", "BBBBBBBBBBB",
+  ];
 
-  root.RetroLife.pixel = { text, icon, sprite, waves, CELLS, RICE_BALL, GLYPHS, ICONS, HEART, PLAIN_CELL };
+  root.RetroLife.pixel = { text, icon, sprite, waves, CELLS, RICE_BALL, GLYPHS, ICONS, HEART, PLAIN_CELL, LOCK };
 })(window);
 
 </script>
@@ -2264,7 +2381,46 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       c.imageSmoothingEnabled = false;
       c.drawImage(tile, 0, 0, large.width, large.height);
       state.pattern = theme.plain ? null : ctx.createPattern(large, "repeat");
+      // A map that cannot be touched now (the tutorial): the ground greyed out by stripes of
+      // the grey of the rocks, half way to the ground, and a padlock. (The user,
+      // 2026-11-22: "if the screen cannot be touched yet, it should be grayed out or some
+      // signal that you cannot edit now".) Alive cells keep their colours: one watches them.
+      const stripe = css(mix(rgbOf(theme.field), rgbOf(theme.rock), 0.7));
+      const unit = theme.plain ? 1 : 2;
+      const hatch = document.createElement("canvas");
+      hatch.width = hatch.height = 8 * unit;
+      const h = hatch.getContext("2d");
+      h.fillStyle = theme.field;
+      h.fillRect(0, 0, hatch.width, hatch.height);
+      h.fillStyle = stripe;
+      for (let k = 0; k < 8; k++) h.fillRect((7 - k) * unit, k * unit, unit, unit);
+      state.hatch = ctx.createPattern(hatch, "repeat");
+      state.lock = pixel.sprite(pixel.LOCK, { S: theme.border, B: theme.border, k: theme.field }, theme.field);
       state.drawn = null;
+    }
+
+    // The padlock of a locked map, beside the world's top right corner: above it or to its
+    // right where there is room (inside `room`, the part of the canvas the lesson's card
+    // leaves free), else inside the corner.
+    function drawLock(c, frame, width, room) {
+      const free = room || { left: 0, top: 0, right: state.width, bottom: state.height };
+      const k = Math.max(2, Math.min(4, Math.floor(frame.s / 14)));
+      const w = state.lock.width * k;
+      const h = state.lock.height * k;
+      const right = frame.ox + width;
+      let x = right - w;
+      let y = frame.oy - h - 8;
+      if (y < free.top + 4) {
+        if (right + 10 + w <= free.right - 4) {
+          x = right + 10;
+          y = frame.oy;
+        } else {
+          x = right - w - 6;
+          y = frame.oy + 6;
+        }
+      }
+      c.imageSmoothingEnabled = false;
+      c.drawImage(state.lock, Math.round(x), Math.round(y), w, h);
     }
 
     function resize() {
@@ -2433,7 +2589,8 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       c.globalAlpha = 1;
     }
 
-    // scene: {world, camera: {x, y, scale}, ghost, effects, now}. Returns the milliseconds
+    // scene: {world, camera: {x, y, scale}, ghost, effects, now}, and in a lesson `marks`,
+    // `oneColour` and `locked` (the map cannot be touched now). Returns the milliseconds
     // it took.
     function draw(scene) {
       const begin = performance.now();
@@ -2451,10 +2608,10 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       // the world as a card on the waves: a hard shadow, the ground, a frame
       c.fillStyle = theme.shadow;
       c.fillRect(frame.ox + 5, frame.oy + 5, width + 3, height + 3);
-      c.fillStyle = theme.field;
+      c.fillStyle = scene.locked ? state.hatch : theme.field;
       c.fillRect(frame.ox, frame.oy, width, height);
       drawCells(c, scene, frame);
-      c.strokeStyle = theme.border;
+      c.strokeStyle = scene.locked ? theme.rock : theme.border;
       if (theme.plain) {
         c.lineWidth = 1;
         c.strokeRect(frame.ox - 0.5, frame.oy - 0.5, width + 1, height + 1);
@@ -2463,6 +2620,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
         c.strokeRect(frame.ox - 1.5, frame.oy - 1.5, width + 3, height + 3);
       }
       drawOverlay(c, scene, frame);
+      if (scene.locked) drawLock(c, frame, width, scene.room);
       return performance.now() - begin;
     }
 
@@ -4429,6 +4587,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   const FULL_CELLS = 400;     // ... and the cells of the window up to which it does
   const FORCES_NODES = 60000; // nodes up to which the view GRAPH places by forces (about a second of work, once)
   const MAX_SCALE = 96;      // pixels per cell at the closest zoom of the map
+  const LESSON_SCALE = 160;  // ... in a lesson, whose small world may fill a large screen
   const TAP = 10;            // a touch that moved less than this many pixels is a tap
   const SPIN = 0.00012;      // the ring turns by itself while the world plays: radians a ms
   // The sun of the day goes round the ring by itself (the user, 2026-11-22: "make the sun
@@ -4549,7 +4708,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
 
   function clampCamera() {
     const camera = state.camera;
-    camera.scale = Math.max(fitScale() * 0.5, Math.min(MAX_SCALE, camera.scale));
+    camera.scale = Math.max(fitScale() * 0.5, Math.min(state.learn ? LESSON_SCALE : MAX_SCALE, camera.scale));
     camera.x = Math.max(0, Math.min(state.world.width, camera.x));
     camera.y = Math.max(0, Math.min(state.world.height, camera.y));
   }
@@ -5306,6 +5465,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       world: state.world, camera: state.camera, ghost: state.ghost, effects: state.effects, now: now || performance.now(),
       marks: state.learn ? learnMarks() : null,
       oneColour: Boolean(state.learn) && Boolean(lessonNow()) && !lessonNow().ages,
+      locked: mapLocked(),
+      room: state.learn ? state.learn.room : null,
     };
   }
 
@@ -5588,6 +5749,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // smiling face and a bit bigger text, or more visible color"): a rice ball that jumps
   // for joy, a big word, the panel in the colour of the look, and a filled square in the
   // row of lessons. Nothing of it moves after its first moment.
+  //
+  // The seventeenth round (the same day) added, after the tutorial was played on a tablet
+  // and a 27 inch monitor: the card is larger where there is room, and on a large screen
+  // it stands at the right, just above the arrow that goes on (app.css; `fitLesson` puts
+  // the world in the room the card leaves, wherever that is); a NEXT button in the cheer
+  // ("where it says GREAT there should be also a next button"); a question before leaving
+  // ("The Leave button should ask you to confirm"; `askLeave`, for every way out of a
+  // lesson); a map that cannot be touched now is greyed out with a lock (`mapLocked`:
+  // "if the screen cannot be touched yet, it should be grayed out or some signal that you
+  // cannot edit now"); and a white pixel arrow as the mouse pointer (app.css).
 
   const learn = window.RetroLife.learn;
   const CHEERS = ["GREAT!", "NICE!", "YES!", "SUPER!"];  // the word of a solved lesson, by its number
@@ -5595,7 +5766,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   const LEARN_RATE = 2;      // generations a second while a lesson of the rule plays
   const LEARN_FAST = 5;      // ... while a formation, a map or the heart of the end plays: as the game opens
   const LEARN_BLINKS = 5;    // openings of the menu for which its button Learn Game of Life blinks
-  const BLINKERS = ["play", "step", "next", "add", "settings-button", "lesson-again"];
+  const BLINKERS = ["play", "step", "next", "add", "settings-button", "lesson-again", "lesson-next"];
+  // the kinds of lesson in which cells of the map are set (or, "predict", marked) by a tap
+  const TAPPED = ["survive", "born", "predict", "still", "period"];
 
   const lessonNow = () => (state.learn ? data.learn.lessons[state.learn.index] || null : null);
   // what a lesson is about: its kind, or "end" after the last one
@@ -5665,8 +5838,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     state.learn = null;
     delete document.body.dataset.mode;
     delete document.body.dataset.lesson;
-    document.body.style.removeProperty("--learn-top");
-    document.body.style.removeProperty("--learn-left");
+    delete document.body.dataset.locked;
+    for (const side of ["top", "left", "right", "bottom"]) document.body.style.removeProperty("--learn-" + side);
     $("lesson").hidden = true;
     for (const id of ["add", "settings-button", "play", "step"]) $(id).disabled = false;
     for (const id of BLINKERS) $(id).classList.remove("blink");
@@ -5747,13 +5920,45 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     showLesson(one.index + 1);
   }
 
-  // The lesson before; from the first one, back to the game. (From the end: the last lesson.)
+  // The lesson before; from the first one, back to the game (after asking). (From the
+  // end: the last lesson.)
   function lessonBefore() {
     const one = state.learn;
     if (!one) return;
-    if (one.index === 0) return leaveLearning();
+    if (one.index === 0) return askLeave();
     showLesson(one.index - 1);
   }
+
+  // Leaving from a lesson asks first (the user, 2026-11-22: "The Leave button should ask
+  // you to confirm if you wanna leave the tutorial"): LEAVE, Esc, and the arrow to the left
+  // of the first lesson. STAY is the button in focus, so that a second press of Enter or
+  // Space does not leave by mistake. The end leaves without asking: it is finished there.
+  function askLeave() {
+    if (!state.learn) return;
+    if (!lessonNow()) return leaveLearning();
+    pause();
+    closeSheets();
+    if (state.stamp) leaveStamping();
+    $("leave-ask").hidden = false;
+    $("shade").hidden = false;
+    $("leave-stay").focus();
+    showLessonCard();
+  }
+
+  // Whether the cells of the map can be touched now in a lesson: by a tap in a lesson
+  // about tapping, until the check; with a formation on the finger in the lesson of the
+  // plus. Elsewhere the map is locked, and drawn so (render.js: grey stripes, a lock).
+  function mapLocked() {
+    const one = state.learn;
+    if (!one || state.view !== "map") return false;
+    const lesson = lessonNow();
+    if (lesson && lesson.kind === "add") return !state.stamp;
+    return !lesson || !TAPPED.includes(lesson.kind) || one.stepped || one.solved;
+  }
+
+  // The NEXT button of the cheer, where the card has room for it (not on a phone: there
+  // the arrow of the bar is right under the card).
+  const cardNext = () => !$("lesson-cheer").hidden && $("lesson-next").offsetParent !== null;
 
   // A lesson met its goal by what one did: the cheer, and it stays open from now on.
   function cheer(lesson) {
@@ -5779,6 +5984,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const cheerBox = $("lesson-cheer");
     const was = { text: says.textContent, cheer: cheerBox.hidden };
     box.style.minHeight = "";
+    // the cheer with its word (and the button NEXT beside it, where it is shown); the word
+    // stays, hidden, until the lesson is solved
+    if (lesson) setPixels("cheer-word", CHEERS[state.learn.index % CHEERS.length]);
     const tries = [];
     if (lesson) {
       tries.push([lesson.done, true]);
@@ -5812,7 +6020,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const lesson = lessonNow();
     if (!one) return "";
     if (!lesson) return state.playing || one.steps > 0 ? "next" : "play";  // the end
-    if (one.solved) return "next";
+    if (one.solved) return cardNext() ? "lesson-next" : "next";  // (the one beside the cheer, where it is)
     if (one.stepped) return "lesson-again";  // a try that did not meet the goal
     if (lesson.kind === "watch") return lesson.steps > 1 ? (state.playing ? "" : "play") : "step";
     if (lesson.kind === "add") return state.stamp || !$("formations").hidden ? "" : "add";
@@ -5872,34 +6080,46 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     $("settings-button").disabled = kind !== "map";
     document.body.dataset.lesson = lesson ? lesson.key : "end";
     document.body.dataset.solved = one.solved ? "1" : "0";
+    document.body.dataset.locked = mapLocked() ? "1" : "0";
     const which = blinking();
     for (const id of BLINKERS) $(id).classList.toggle("blink", id === which);
     document.body.dataset.blink = which;
   }
 
-  // Where the world of a lesson lies: beside its card (a wide screen) or under it (a
-  // tall one), as large as the room allows. The card keeps its height while a lesson
+  // Where the world of a lesson lies: in the largest room the card leaves free, beside it
+  // or under it (the card stands at the top left, or on a large screen at the bottom
+  // right, app.css), as large as the room allows. The card keeps its height while a lesson
   // runs, so the world stands still. A lesson on another screen gets the same room: the
-  // ring and the picture of an organism are drawn beside or under the card, not behind it.
+  // ring and the picture of an organism are drawn beside or under the card, not behind it
+  // (--learn-top, -left, -right, -bottom: the room's distance from the stage's edges).
   function fitLesson() {
     if (!state.learn) return;
     const { width, height } = renderer.size();
     const side = state.world.width;
-    const card = $("lesson").getBoundingClientRect();
+    const box = $("lesson").getBoundingClientRect();
     const stage = $("stage").getBoundingClientRect();
-    const below = card.bottom - stage.top + 10;
-    const beside = card.right - stage.left + 10;
-    const tall = height - below >= width - beside;  // more room under the card than beside it
-    document.body.style.setProperty("--learn-top", (tall ? Math.round(below - 4) : 0) + "px");
-    document.body.style.setProperty("--learn-left", (tall ? 0 : Math.round(beside - 4)) + "px");
+    const card = { left: box.left - stage.left, top: box.top - stage.top, right: box.right - stage.left, bottom: box.bottom - stage.top };
+    const GAP = 6;  // between the card and the room
+    const rooms = [
+      { top: card.bottom + GAP, left: 0, right: width, bottom: height },   // under the card
+      { top: 0, left: card.right + GAP, right: width, bottom: height },    // to its right
+      { top: 0, left: 0, right: card.left - GAP, bottom: height },         // to its left
+      { top: 0, left: 0, right: width, bottom: card.top - GAP },           // above it
+    ];
+    const fits = (room) => Math.min(room.right - room.left, room.bottom - room.top);
+    const room = rooms.reduce((best, one) => (fits(one) > fits(best) ? one : best));
+    const insets = { top: room.top, left: room.left, right: width - room.right, bottom: height - room.bottom };
+    for (const [edge, value] of Object.entries(insets)) document.body.style.setProperty("--learn-" + edge, Math.max(0, Math.round(value)) + "px");
     ring.resize();
     picture.resize();
     ringsShown = "";
-    const roomX = tall ? width - 16 : width - beside - 12;
-    const roomY = tall ? height - below - 12 : height - 16;
-    const scale = Math.max(2, Math.min(MAX_SCALE, Math.floor(Math.min(roomX, roomY) / side)));
-    const middleX = tall ? width / 2 : beside + roomX / 2;
-    const middleY = tall ? below + roomY / 2 : height / 2;
+    // the map: a margin inside the room for the frame and the shadow of the world
+    const roomX = room.right - room.left - 16;
+    const roomY = room.bottom - room.top - 16;
+    const scale = Math.max(2, Math.min(LESSON_SCALE, Math.floor(Math.min(roomX, roomY) / side)));
+    state.learn.room = room;  // (the lock of a locked map stays inside it, render.js)
+    const middleX = (room.left + room.right) / 2;
+    const middleY = (room.top + room.bottom) / 2;
     state.camera = { scale, x: side / 2 - (middleX - width / 2) / scale, y: side / 2 - (middleY - height / 2) / scale };
     state.fitted = false;
   }
@@ -5933,8 +6153,10 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (!lesson || !cell.inside) return;
     const other = lesson.kind === "watch" || lesson.kind === "add" || lesson.kind === "map" || lesson.kind === "look";
     if (other || one.stepped) {
+      // the map is locked now (and drawn so): say it, and show what to press instead
       const which = blinking() || (lesson.kind === "watch" ? "play" : "");
       if (which) flash(which);
+      hint(which ? "The map is locked now. Press the blinking button." : "The map is locked now: just watch.");
       return;
     }
     if (lesson.kind === "predict") {
@@ -6448,7 +6670,13 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   $("lesson-again").addEventListener("click", () => {
     if (state.learn) showLesson(state.learn.index);
   });
-  $("lesson-leave").addEventListener("click", () => leaveLearning());
+  $("lesson-leave").addEventListener("click", askLeave);
+  $("lesson-next").addEventListener("click", nextLesson);
+  $("leave-stay").addEventListener("click", closeSheets);
+  $("leave-yes").addEventListener("click", () => {
+    closeSheets();
+    leaveLearning();
+  });
 
   // ---- sheets
 
@@ -6457,9 +6685,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // to the hidden button instead of starting the world)
     const focused = document.activeElement;
     if (focused && focused.closest && focused.closest(".sheet, #book")) focused.blur();
+    if (focused && focused.closest && focused.closest("#leave-ask")) focused.blur();
     $("settings").hidden = true;
     $("formations").hidden = true;
     $("book").hidden = true;
+    $("leave-ask").hidden = true;
     $("shade").hidden = true;
     if (state.learn) showLessonCard();  // which button blinks depends on it
   }
@@ -6689,6 +6919,14 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (event.target.closest && event.target.closest("textarea")) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (!$("leave-ask").hidden) {
+      // the question before leaving the lessons: Esc stays, the rest is for its two buttons
+      if (key === "Escape") {
+        closeSheets();
+        event.preventDefault();
+      }
+      return;
+    }
     if (!$("book").hidden) {
       // the book is open: the arrows turn its pages, Esc closes it
       if (key === "ArrowLeft" || key === "ArrowRight") turnPage(key === "ArrowLeft" ? -1 : 1);
@@ -6700,7 +6938,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (state.learn && !["Escape", " ", ".", "n", "ArrowLeft", "ArrowRight"].includes(key)) return;
     if (key === "Escape") {
       if (!$("shade").hidden) closeSheets();
-      else if (state.learn) leaveLearning();
+      else if (state.learn) askLeave();
       else if (state.stamp) leaveStamping();
     } else if (key === " ") {
       if (event.target.closest && event.target.closest("button")) return;  // the button does its own
@@ -6793,8 +7031,32 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     hint("Back once more leaves the game.", 3200);
   });
 
+  // ---- the icon of the page in the browser's tab (the user, 2026-11-22: "add a favicon
+  // for the game. with the blue face some times, and some times red face. If possible it
+  // should change some times when you open the page again"): the face of a young cell
+  // (red) or of an old one (blue), in the colours of Yoru, the look the game opens with,
+  // chosen anew at every opening. Drawn from the tables of pixel.js and given as data:
+  // nothing is loaded.
+  function setIcon() {
+    const theme = render.THEMES.yoru;
+    const age = Math.random() < 0.5 ? "young" : "old";
+    const face = pixel.sprite(pixel.CELLS[age], { X: theme[age], h: theme.light, o: theme.face });
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 32;
+    const c = canvas.getContext("2d");
+    c.imageSmoothingEnabled = false;
+    c.drawImage(face, 0, 0, 32, 32);
+    const icon = document.createElement("link");
+    icon.rel = "icon";
+    icon.type = "image/png";
+    icon.href = canvas.toDataURL("image/png");
+    icon.dataset.face = age;
+    document.head.appendChild(icon);
+  }
+
   // ---- start
 
+  setIcon();
   buildLists();
   const prefs = readStored(PREFS) || {};
   setTheme(prefs.theme || "yoru");
@@ -6902,7 +7164,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       index: state.learn.index, key: lessonNow() ? lessonNow().key : "end", solved: state.learn.solved, stepped: state.learn.stepped,
       steps: state.learn.steps, guesses: Array.from(state.learn.guesses).sort((a, b) => a - b), says: state.learn.says,
       view: state.view, blink: blinking(), oneColour: Boolean(lessonNow()) && !lessonNow().ages, rate: learnRate(),
-      cheer: state.learn.cheer, learned: Array.from(state.learned),
+      cheer: state.learn.cheer, learned: Array.from(state.learned), locked: mapLocked(),
       home: state.learn.home.world === state.world ? "same" : "kept",
     } : null),
     camera: () => ({ ...state.camera }),
