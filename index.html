@@ -75,7 +75,7 @@
     <li class="page">
       <h2><a href="retro_life.html">Retro Life: a Game of Life game that shows its hypergraph</a></h2>
       <p>Conway's Game of Life as a small game for phone, tablet and desktop, in pixel art with
-      a Japanese touch. Four screens and six buttons.</p>
+      a Japanese touch. Three screens and six buttons.</p>
       <ul>
         <li><b>MAP</b>: alive cells are little faces. A finger or the mouse sets and unsets
         cells; two fingers or the wheel zoom. It opens calmly, with one glider, one block and
@@ -98,26 +98,32 @@
         <li><b>ORGANISM</b>: one organism of the world, a glider for instance, close up, in
         a window on the grid of the ring, laid flat. A larger screen shows a larger piece
         of the grid, and the picture stands still while the organism lives in it. The
-        world plays slowly there, one generation a second. The button NEXT turns the
-        picture into a forecast: every node carries the number of its alive neighbours,
-        a light tile stays alive, a red tile dies, a hollow tile is born. Two arrow
-        buttons, a tap on the picture or a tap on the small map choose the organism.</li>
-        <li><b>CELL</b>: a look into one cell of that organism, as through a magnifying
-        glass. Here the cell is not one node but a small graph of its own, as it could
-        look inside when Life is played by a more general kind of system that knows only
-        nodes, arrows between them and rules that rewrite small pieces of such a graph: a
-        ring of eight nodes, one door for each neighbour, with an arrow each way between
-        the doors of two neighbours. Four more arrows, the cords, lie across the ring
-        while the cell is alive and rest along its rim while it is dead; being born and
-        dying only swing them. A ring with its cords across cannot be drawn without
-        crossings, a knot of the kind the Wolfram Physics Project pictures particles as;
-        here it is the mark of life, tied and undone by the rules. An alive cell wears
-        its face in its ring, and a heart sits on every line that carries life to a
-        neighbour: count the hearts that arrive at a cell and you have the rule of
-        Life. The picture zooms out to the 5 × 5 and 7 × 7 cells round the cell and
-        stands still; only faces, cords and hearts change. A map of the organism chooses the cell, a
-        tap on the ring of a neighbour goes there, and one button says how the picture
-        follows an organism that moves or a cell that dies.</li>
+        world plays slowly there, one generation a second. Two arrow buttons or a tap on
+        the small map choose the organism. A row of three buttons changes what the
+        window shows, and nothing moves when you switch:
+          <ul>
+            <li><b>Normal</b>: the organism as it is, faces and rocks, with the life
+            signals.</li>
+            <li><b>Numbers</b>: a forecast. Every node carries the number of its alive
+            neighbours; a light tile stays alive, a red tile dies, a hollow tile is
+            born.</li>
+            <li><b>Graph</b>: every cell opened up. Here a cell is not one node but a
+            small graph of its own, as it could look inside when Life is played by a more
+            general kind of system that knows only nodes, arrows between them and rules
+            that rewrite small pieces of such a graph: a ring of eight nodes, one door
+            for each neighbour, with an arrow each way between the doors of two
+            neighbours. Four more arrows, the cords, lie across the ring while the cell
+            is alive and rest along its rim while it is dead; being born and dying only
+            swing them. A ring with its cords across cannot be drawn without crossings,
+            a knot of the kind the Wolfram Physics Project pictures particles as; here
+            it is the mark of life, tied and undone by the rules. An alive cell wears
+            its face in its ring, and the lines that carry life to its neighbours have a
+            colour of their own: count the coloured lines that arrive at a cell and you
+            have the rule of Life.</li>
+          </ul>
+        Minus and plus (or the wheel, or two fingers) show more of the world or look
+        closer, from a single cell to the whole world. Close up, the window keeps one
+        cell of the organism in its middle, and a tap on another cell goes there.</li>
         <li>The plus adds one of 29 formations (gliders and spaceships, still lifes,
         oscillators, two glider guns, shapes that live long). The wheel holds everything
         else: speed, one generation back, 14 maps up to a world of 512 × 512 cells, four
@@ -130,14 +136,14 @@
         <li>How the screens belong together: on the page below, 17 rewriting rules play
         Life on exactly this hypergraph. This game turns that round: the ordinary rule
         computes, which is far faster, and the hypergraph is shown as the rules would hold
-        it at that moment. The fourth screen shows a second set of 17 rules the same way: one that plays Life on a graph of arrows only.</li>
+        it at that moment. The view Graph shows a second set of 17 rules the same way: one that plays Life on a graph of arrows only.</li>
       </ul>
       <p><a class="open" href="retro_life.html">Open the game</a></p>
       <p class="small">One small file that loads nothing else: it starts at once and, once
       open, needs no network.</p>
       <p class="small">Kept versions: <a href="retro_life_v1.html">v1 of the game</a>, as it
       first stood on 21 November 2026 (two screens; without the life signals and the
-      screens of an organism and of a cell, with solid rocks and a ring that turned only part of the
+      screen of an organism, with solid rocks and a ring that turned only part of the
       way). It stays as it is; the link above is always
       the latest version.</p>
     </li>

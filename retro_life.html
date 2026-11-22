@@ -65,8 +65,12 @@ body[data-theme="kuroi"] .sheet h3 .plain { font-size: 13px; letter-spacing: 0.1
 body[data-theme="kuroi"] button { border-radius: 10px; box-shadow: none; }
 body[data-theme="kuroi"] button:active { transform: none; opacity: 0.7; }
 body[data-theme="kuroi"] :is(#mascot, #view-kana, .kana, .kanji) { display: none; }
-body[data-theme="kuroi"] :is(#donut, #organism, #organism-map, #cell-map) { image-rendering: auto; }
-body[data-theme="kuroi"] :is(#organism-map, #cell-map-box, #hint, textarea) { border-radius: 10px; }
+body[data-theme="kuroi"] :is(#donut, #organism, #organism-map) { image-rendering: auto; }
+body[data-theme="kuroi"] :is(#organism-map, #hint, textarea) { border-radius: 10px; }
+body[data-theme="kuroi"] .row button { border-radius: 0; }
+body[data-theme="kuroi"] .row button:first-child { border-radius: 10px 0 0 10px; }
+body[data-theme="kuroi"] .row button:last-child { border-radius: 0 10px 10px 0; }
+body[data-theme="kuroi"] .row { box-shadow: none; }
 body[data-theme="kuroi"] .sheet h3::before { border-radius: 50%; }
 body[data-theme="kuroi"] #bar { border-top-width: 1px; }
 
@@ -111,6 +115,22 @@ button[aria-pressed="true"], button.primary { background: var(--accent); color: 
 button:focus-visible, canvas:focus-visible, textarea:focus-visible { outline: 2px dashed var(--accent); outline-offset: 2px; }
 button:disabled { opacity: 0.35; cursor: default; }
 
+/* What can be switched looks the same everywhere, on the screens and in the settings (the
+   user, 2026-11-22: "we should find a unified way of signalling that you can toggle/choose
+   something"):
+   - a choice of several is a row of joined buttons that shows all of them, the chosen
+     one filled (.row);
+   - a switch that is on or off carries a lamp, filled when it is on (.lamp);
+   - a button that does something once is a plain block. */
+.row { display: inline-flex; flex-wrap: wrap; margin: 8px 0 10px; box-shadow: 0 var(--px) 0 var(--shadow); max-width: 100%; }
+.row button { box-shadow: none; min-height: 42px; margin: 0 0 0 calc(-1 * var(--px)); }
+.row button:first-child { margin-left: 0; }
+.row button:active { transform: none; }
+button.lamp::before { content: ""; flex: none; width: 12px; height: 12px; border: var(--px) solid var(--ink); background: transparent; }
+button.lamp[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
+button.lamp[aria-pressed="true"]::before { background: var(--accent); }
+body[data-theme="kuroi"] button.lamp::before { border-radius: 3px; }
+
 /* ---- the stage: the map, the ring, or an organism */
 #stage { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg); }
 #view, #donut, #organism { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline-offset: -4px; }
@@ -130,10 +150,26 @@ body[data-view="organism"] #organism-pick { display: flex; }
 button.flash, button.flash:disabled { background: var(--accent); color: var(--accent-ink); transform: translateY(var(--px)); box-shadow: none; }
 #organism-map { display: block; width: 96px; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; touch-action: manipulation;
   border: var(--px) solid var(--ink); box-shadow: 0 var(--px) 0 var(--shadow); background: var(--surface); margin-bottom: var(--px); }
-#organism-next { position: absolute; left: 12px; bottom: 12px; display: none; min-height: 44px; padding: 4px 14px; }
-body[data-view="organism"] #organism-next { display: inline-flex; }
-#organism-fate { position: absolute; left: 12px; bottom: 68px; display: none; gap: 6px; color: var(--space-ink); pointer-events: none; }
-body[data-view="organism"][data-forecast="1"] #organism-fate { display: grid; }
+/* at the bottom left: how much the window shows, and what it shows */
+#organism-ways { position: absolute; left: 10px; bottom: 12px; display: none; flex-direction: column; align-items: flex-start; gap: 8px; }
+body[data-view="organism"] #organism-ways { display: flex; }
+#organism-ways .row { margin: 0; }
+#organism-ways .row button { min-height: 44px; padding: 4px 9px; }
+#organism-ways .zoom { display: flex; align-items: center; gap: 8px; color: var(--space-ink); }
+#organism-ways .zoom button { width: 46px; min-height: 44px; padding: 0; }
+#organism-ways [data-icon] > .px { height: 18px; }
+#organism-size { display: inline-flex; justify-content: center; width: 104px; }  /* a fixed width: the button beside it does not move */
+#zoom-size { display: inline-flex; justify-content: center; width: 104px; color: var(--accent); }
+/* a narrow screen: the row beside the small map needs smaller letters */
+@media (max-width: 440px) {
+  #organism-ways .row button { padding: 4px 6px; }
+  #organism-ways .row .px { height: 10.5px; }
+  body[data-theme="kuroi"] #organism-ways .row .plain { font-size: 11px; letter-spacing: 0.04em; }
+  #organism-map { width: 84px; }
+}
+#organism-fate { position: absolute; left: 12px; bottom: 120px; display: none; gap: 6px 16px; color: var(--space-ink); pointer-events: none; }
+body[data-view="organism"][data-shows="numbers"] #organism-fate { display: grid; }
+@media (orientation: portrait) { #organism-fate { grid-template-columns: auto auto; justify-content: start; } }
 .fate { display: flex; align-items: center; gap: 8px; }
 .mark { flex: none; width: 15px; height: 15px; display: grid; place-items: center; }
 .mark.stays { background: var(--space-ink); }
@@ -144,80 +180,44 @@ body[data-view="organism"][data-forecast="1"] #organism-fate { display: grid; }
 .legend .mark { outline: 4px solid #0e0d1c; background-color: #0e0d1c; margin: 4px; }  /* as on the screen, where it is night */
 .legend .mark.stays { background-color: var(--space-ink); }
 .legend .mark.dies { background-color: var(--seal); }
-body[data-view="organism"] #hint { bottom: 168px; }  /* above the legend and the small map */
-@media (orientation: landscape) { body[data-view="organism"] #hint { bottom: 12px; max-width: calc(100% - 500px); } }  /* between them */
-/* the fourth screen: one cell as a piece of a directed graph, a ring of eight nodes; night, like the ring */
-#cell-view { position: absolute; inset: 0; display: none; background: var(--night, #0b0a1a); --night: #0b0a1a; }
-body[data-view="cell"] #cell-view { display: block; }
-body[data-view="cell"] #view { visibility: hidden; }
-#cell-svg { position: absolute; display: block; overflow: visible; touch-action: none; }
+body[data-view="organism"] #hint { bottom: 180px; }  /* above the legend and the small map */
+@media (orientation: landscape) { body[data-view="organism"] #hint { bottom: auto; top: 10px; left: auto; right: 10px; transform: none; max-width: min(360px, calc(100% - 330px)); } }  /* at the top right */
+/* the view GRAPH of the third screen: the cells of the window as a piece of a directed
+   graph, every cell a ring of eight nodes. Drawn with smooth lines, as graphs are drawn,
+   over the night of the canvas. Every arrow of a kind looks alike, wherever it lies. */
+#organism-graph { position: absolute; inset: 0; width: 100%; height: 100%; display: none; pointer-events: none; touch-action: none; --night: #0b0a1a; --line: 1.5px; }
+body[data-view="organism"][data-rings="1"] #organism-graph { display: block; }
 .cell-graph .arrow { color: var(--space-ink); }
-.cell-graph .line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.cell-graph .line { fill: none; stroke: currentColor; stroke-width: var(--line); stroke-linecap: round; }
 .cell-graph .head { fill: currentColor; stroke: none; }
-.cell-graph .hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; }
-/* the cords of a dead cell lie along its rim: grey, as a rock of the ring */
-.cell-graph .arrow.cord-along { color: var(--rock, #7d8090); }
-.cell-graph .arrow.cord-across .line { stroke-width: 2.4; }
-.cell-graph .arrow.line:not(.coloured) { color: var(--rock, #7d8090); }
-/* a line that carries life: stronger, with a heart on it */
-.cell-graph .arrow.life .line { stroke-width: 2.6; }
-.cell-graph .arrow.life.of-between .line { stroke-width: 1.8; }
+.cell-graph .hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; cursor: pointer; }
+.cell-graph .arrow.rim { opacity: 0.85; }
+/* the cords of a dead cell lie along its rim, and a line that carries nothing: grey, as a rock of the ring */
+.cell-graph .arrow.cord-along, .cell-graph .arrow.line:not(.coloured) { color: var(--rock, #7d8090); }
+/* the cords of an alive cell, across its ring: a lighter tint of the cell's colour */
+.cell-graph .arrow.cord-across .line { stroke-width: calc(var(--line) * 1.5); }
+/* a line that carries life: stronger */
+.cell-graph .arrow.life .line { stroke-width: calc(var(--line) * 1.7); }
+/* a face takes the tap that is meant for its cell (the cords lie under it) */
 .cell-graph .sign { pointer-events: all; cursor: pointer; }
-.cell-graph .sign.first { cursor: default; }
-.cell-graph .sign-back { fill: var(--night); }
-.cell-graph .sign.of-between { opacity: 0.6; }
-.cell-graph.lit .sign[data-arrow]:not(.on) { opacity: 0.2; }
-/* what lies round the cell shown is fainter: the rings of its neighbours, and fainter still the lines among them */
-.cell-graph .arrow.of-neighbour { opacity: 0.62; }
-.cell-graph .arrow.of-between { opacity: 0.4; }
-.cell-graph .arrow.of-neighbour .line, .cell-graph .arrow.of-between .line { stroke-width: 1.2; }
-.cell-graph .arrow.of-neighbour.cord-across .line { stroke-width: 1.9; }
 .cell-graph .pad { fill: currentColor; stroke: currentColor; stroke-linejoin: round; opacity: 0.055; }
 .cell-graph .group { color: var(--space-ink); }
 .cell-graph .group.alive .pad { opacity: 0.2; }
-.cell-graph .frame { fill: none; stroke: var(--space-ink); stroke-width: 2.5; stroke-linejoin: round; stroke-dasharray: 2 5; stroke-linecap: round; pointer-events: none; }
-.cell-graph .group:not(.first) { cursor: pointer; outline: none; }
-.cell-graph .group:not(.first):is(:hover, :focus-visible) .pad { opacity: 0.24; }
-.cell-graph .node { fill: var(--night); stroke: var(--space-ink); stroke-width: 1.3; pointer-events: none; }
-.cell-graph .node.first { stroke-width: 1.8; }
+.cell-graph .node { fill: var(--night); stroke: var(--space-ink); stroke-width: calc(var(--line) * 0.9); }
 .cell-graph .node.alive { fill: currentColor; stroke: var(--night); }
 .cell-graph.lit .arrow:not(.on) { opacity: 0.14; }
 .cell-graph .arrow.on { color: var(--accent) !important; opacity: 1; }
-.cell-graph .arrow.on .line { stroke-width: 3; }
-#cell-pick { position: absolute; top: 10px; right: 10px; display: none; flex-direction: column; align-items: flex-end; gap: 9px; }
-body[data-view="cell"] #cell-pick { display: flex; }
-#cell-map-box { width: 124px; height: 124px; display: grid; place-items: center; cursor: pointer; touch-action: manipulation;
-  background: var(--surface); border: var(--px) solid var(--ink); box-shadow: 0 var(--px) 0 var(--shadow); }
-#cell-map { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
-#cell-follow, #cell-zoom { min-height: 40px; padding: 4px 10px; }
-/* the words on the picture, where the screen has room for them */
-#cell-legend { position: absolute; display: grid; gap: 9px; color: var(--space-ink); font-size: 12.5px; line-height: 1.35; pointer-events: none; }
-body:not([data-view="cell"]) #cell-legend { display: none; }
-#cell-legend > div { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; }
-#cell-legend i { display: grid; place-items: center; font-style: normal; }
-#cell-legend i.ring { width: 20px; height: 20px; margin: 0 auto; border-radius: 50%; border: 2px solid var(--rock, #7d8090); }
-#cell-legend i.rule { font-weight: 700; font-size: 16px; }
-#cell-legend span { opacity: 0.86; }
-#cell-legend small { font-size: inherit; }
-@media (orientation: portrait) {
-  #cell-legend { grid-template-columns: 1fr 1fr; gap: 5px 10px; font-size: 11.5px; }
-  #cell-legend small { display: none; }
-  #cell-legend > div { grid-template-columns: 24px 1fr; gap: 6px; }
-}
-#cell-fate { position: absolute; left: 12px; bottom: 14px; display: none; gap: 7px; color: var(--space-ink); pointer-events: none; }
-body[data-view="cell"] #cell-fate { display: grid; }
-body[data-view="cell"] .hud-line { max-width: min(520px, calc(100vw - 220px)); }
-body[data-view="cell"] #hint { bottom: 104px; }  /* above the lines at the bottom left */
-@media (orientation: landscape) {
-  body[data-view="cell"] #hint { left: auto; right: 10px; transform: none; bottom: auto; top: var(--cell-hint-top, 200px); max-width: var(--cell-column, 280px); }  /* beside the picture, under the small map */
-  body[data-view="cell"][data-cell-hint="left"] #hint { left: 10px; right: auto; top: var(--cell-card-bottom, 90px); }  /* or under the card */
-}
+.cell-graph .arrow.on .line { stroke-width: calc(var(--line) * 2); }
+/* many small cells: plain lines; the rims and what carries nothing step back, so that life is seen */
+.cell-graph.light .arrow.rim { opacity: 0.5; }
+.cell-graph.light .arrow.cord-along { display: none; }
+.cell-graph.light .arrow.line:not(.coloured) { opacity: 0.45; }
 #organism-note { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 32px)); pointer-events: none;
   text-align: center; padding: 12px 14px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow); }
 #organism-note-title { display: flex; justify-content: center; }
 #organism-note .px { height: 14px; color: var(--accent); }
 #organism-note p { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--dim); }
-body:not([data-view="organism"]):not([data-view="cell"]) #organism-note { display: none; }
+body:not([data-view="organism"]) #organism-note { display: none; }
 
 #hud { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 10px; pointer-events: none;
   padding: 6px 10px 6px 6px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow); }
@@ -230,9 +230,15 @@ body[data-playing="1"] #mascot { animation: hop 0.8s steps(1) infinite; }
 #view-kana { font-size: 12px; line-height: 1; color: var(--dim); font-weight: 700; }
 .hud-line { display: flex; flex-wrap: wrap; gap: 5px 12px; max-width: calc(100vw - 110px); }
 body[data-view="map"] .donut-only { display: none; }  /* the second line: ring and organism */
+/* On the third screen the picture keeps clear of this card, and a picture must not move
+   because a number got longer or another view counts other things: the card has one
+   size there, whatever it says (its two counts each on a line of their own). */
+body[data-view="organism"] #hud { width: min(350px, calc(100vw - 20px)); }
+body[data-view="organism"] .hud-text { min-width: 0; }
+body[data-view="organism"] .hud-line.donut-only { flex-direction: column; flex-wrap: nowrap; }
 /* on the ring, and on the piece cut out of it, it is night in every theme */
-body[data-view="donut"] #hud, body[data-view="organism"] #hud, body[data-view="cell"] #hud { background: transparent; border-color: transparent; box-shadow: none; color: var(--space-ink); }
-body[data-view="donut"] #view-kana, body[data-view="organism"] #view-kana, body[data-view="cell"] #view-kana { color: var(--space-ink); opacity: 0.7; }
+body[data-view="donut"] #hud, body[data-view="organism"] #hud { background: transparent; border-color: transparent; box-shadow: none; color: var(--space-ink); }
+body[data-view="donut"] #view-kana, body[data-view="organism"] #view-kana { color: var(--space-ink); opacity: 0.7; }
 
 #hint {
   position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 20px);
@@ -284,9 +290,6 @@ body[data-stamping="1"] #add { background: var(--seal); color: var(--surface); }
 /* the part of the settings that belongs to the screen one came from */
 .sheet section.here > h3 { color: var(--accent); }
 .sheet section.here > h3::before { width: 18px; }
-#view-lens { display: none; color: var(--accent); margin-right: -2px; }
-body[data-view="cell"] #view-lens { display: block; }
-#view-lens > .px { height: 17px; }
 .note { margin: 6px 0 8px; color: var(--dim); font-size: 13px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; align-items: center; }
 .chips button { min-height: 42px; }
@@ -319,8 +322,6 @@ textarea {
   #bar { gap: 6px; padding: 8px 8px 11px; }
   .sheet { top: auto; left: 0; width: 100%; max-height: 84dvh; border-left: 0; border-top: var(--px) solid var(--ink); }
   #hud { top: 8px; left: 8px; }
-  #cell-pick { top: 8px; right: 8px; }
-  #cell-map-box { width: 104px; height: 104px; }
   /* below the card at the top, not over it */
   #stamp-bar { top: 82px; left: 8px; right: 8px; flex-wrap: nowrap; justify-content: space-between; }
   #stamp-bar button { padding: 4px 8px; }
@@ -345,30 +346,27 @@ textarea {
   <main id="stage">
     <canvas id="view" tabindex="0" aria-label="The map. Draw with one finger or the mouse, zoom with two fingers or the wheel."></canvas>
     <canvas id="donut" aria-label="The world as a hypergraph on a ring. Drag to turn it, zoom with two fingers or the wheel, tap a node to set or unset its cell."></canvas>
-    <canvas id="organism" aria-label="One organism of the world on a piece of the grid of the ring. Tap for the next organism; the button Next shows what the coming generation does."></canvas>
+    <canvas id="organism" aria-label="One organism of the world on a piece of the grid of the ring. Tap for the next organism, or, zoomed in, a cell to go there; the row Normal, Numbers, Graph changes what the picture shows."></canvas>
+    <svg id="organism-graph" role="img" aria-label="The cells of the window as a directed graph: every cell a ring of eight nodes, with the arrows between them."></svg>
     <div id="organism-note" hidden><div id="organism-note-title"></div><p id="organism-note-text"></p></div>
-    <div id="cell-view">
-      <svg id="cell-svg" role="img" aria-label="One cell of the organism and its eight neighbours as a directed graph: every cell a ring of eight nodes, with the arrows between them. Tap the ring of a neighbour to go there, tap an arrow to hear what it says."></svg>
-    </div>
-    <div id="cell-fate" hidden aria-label="The cell now, and in the coming generation"><span id="cell-where"></span><span id="cell-now"></span><span id="cell-rule"></span><span id="cell-next"></span></div>
-    <div id="cell-pick">
-      <div id="cell-map-box" title="The organism. Tap a cell to look at it."><canvas id="cell-map" width="8" height="8" role="img" aria-label="The organism, with the cell shown and its eight neighbours framed. Tap a cell to look at it."></canvas></div>
-      <button type="button" id="cell-follow" aria-label="What the picture does when the organism moves on or the cell dies"></button>
-      <button type="button" id="cell-zoom" title="How many cells the picture shows. Tap for more (or turn the wheel, or pinch with two fingers)" aria-label="How many cells the picture shows"></button>
-    </div>
-    <div id="cell-legend" hidden aria-label="What the picture shows">
-      <div><i data-sign="face"></i><span><b>A face</b>: the cell is alive.<small> Its four cords cross its ring.</small></span></div>
-      <div><i class="ring"></i><span><b>An empty ring</b>: the cell is dead.<small> Its cords rest along the rim.</small></span></div>
-      <div><i data-sign="heart"></i><span><b>A heart</b>: a line that carries life<small> to a neighbour</small>.</span></div>
-      <div><i class="rule"><b>3</b></i><span><b>3 hearts</b> reach a dead cell: born. <b>2 or 3</b> reach an alive cell: it stays.<small> Otherwise: dead.</small></span></div>
-    </div>
     <div id="organism-fate" hidden aria-label="What the coming generation does to this organism">
       <div class="fate" title="Alive now and in the coming generation: a filled tile in the ink of the screen"><i class="mark stays"></i><span id="fate-stay"></span></div>
       <div class="fate" title="Alive now, dead in the coming generation: a filled red tile"><i class="mark dies"></i><span id="fate-die"></span></div>
       <div class="fate" title="Dead now, alive in the coming generation: a hollow tile"><i class="mark born" data-border="born"></i><span id="fate-born"></span></div>
       <div class="fate" title="The number on a node: how many of its eight neighbours are alive"><i class="mark count" data-px="3"></i><span data-px="ALIVE AROUND"></span></div>
     </div>
-    <button type="button" id="organism-next" aria-pressed="false" title="Show what the coming generation does: who stays, who dies, who is born, and how many alive neighbours every node has" data-px="NEXT"></button>
+    <div id="organism-ways">
+      <div class="zoom" role="group" aria-label="How much of the world the window shows">
+        <button type="button" id="organism-out" title="Show more of the world (or turn the wheel, or pinch with two fingers)" aria-label="Show more of the world" data-icon="minus"></button>
+        <span id="organism-size" title="The cells of the window: across, and down"></span>
+        <button type="button" id="organism-in" title="Look closer (or turn the wheel, or spread two fingers)" aria-label="Look closer" data-icon="add"></button>
+      </div>
+      <div id="organism-views" class="row" role="group" aria-label="What the picture shows">
+        <button type="button" data-mode="normal" aria-pressed="true" title="The organism as it is: faces, rocks and the lines that carry life" data-px="NORMAL"></button>
+        <button type="button" data-mode="numbers" aria-pressed="false" title="What the coming generation does: on every cell the number of its alive neighbours; who stays, who dies, who is born" data-px="NUMBERS"></button>
+        <button type="button" data-mode="graph" aria-pressed="false" title="Every cell opened up into a ring of eight nodes, with the arrows between them" data-px="GRAPH"></button>
+      </div>
+    </div>
     <div id="organism-pick">
       <div class="steps">
         <button type="button" id="organism-up" title="The organism before (up arrow key)" aria-label="The organism before" data-icon="up"></button>
@@ -393,7 +391,7 @@ textarea {
     <div id="hud">
       <canvas id="mascot" width="16" height="15" aria-hidden="true"></canvas>
       <div class="hud-text">
-        <div class="hud-title"><span id="view-lens" data-icon="lens" title="Looking into one cell" aria-hidden="true"></span><span id="view-name"></span><span id="view-kana" lang="ja"></span></div>
+        <div class="hud-title"><span id="view-name"></span><span id="view-kana" lang="ja"></span></div>
         <div class="hud-line"><span id="hud-generation" title="Generations played"></span><span id="hud-alive" title="Alive cells"></span></div>
         <div class="hud-line donut-only"><span id="hud-nodes" title="Every cell is a node of the hypergraph"></span><span id="hud-relations" title="20 relations per node: 1 neighbourhood, 9 of its round, 1 alive or dead, 1 ready, 8 lines"></span></div>
       </div>
@@ -445,7 +443,7 @@ textarea {
           <button type="button" id="faster" aria-label="Faster" title="Faster (key +)" data-icon="add"></button>
         </span>
       </div>
-      <p class="note">On the third and the fourth screen, Organism and Cell, the world plays at one generation a second at most, so that it can be followed.</p>
+      <p class="note">On the third screen, Organism, the world plays at one generation a second at most, so that it can be followed.</p>
     </section>
     <section>
       <h3 data-px="MAPS"></h3>
@@ -454,7 +452,7 @@ textarea {
     <section>
       <h3 data-px="WORLD"></h3>
       <p class="note">A new size keeps what lives round the middle. The world wraps round: what leaves on one side comes back on the other. That is why it is a ring on the second screen.</p>
-      <div id="size-list" class="chips"></div>
+      <div id="size-list" class="row"></div>
       <div class="chips">
         <button type="button" id="random" data-px="RANDOM"></button>
         <button type="button" id="clear" data-px="CLEAR"></button>
@@ -463,7 +461,7 @@ textarea {
     </section>
     <section>
       <h3 data-px="LOOK"></h3>
-      <div id="theme-list" class="chips"></div>
+      <div id="theme-list" class="row"></div>
     </section>
     <section data-for="donut">
       <h3 data-px="RING"></h3>
@@ -474,35 +472,29 @@ textarea {
         <button type="button" data-ring="tilted" title="Look at the ring as the game opens it" data-px="TILTED"></button>
       </div>
       <div class="chips">
-        <button type="button" id="signals" aria-pressed="true" title="Paint the lines along which alive nodes send their state" data-px="LIFE SIGNALS"></button>
-        <button type="button" id="spin" aria-pressed="true" title="While the world plays, the ring turns slowly round its own axis" data-px="TURN BY ITSELF"></button>
+        <button type="button" id="signals" class="lamp" aria-pressed="true" title="Paint the lines along which alive nodes send their state" data-px="LIFE SIGNALS"></button>
+        <button type="button" id="spin" class="lamp" aria-pressed="true" title="While the world plays, the ring turns slowly round its own axis" data-px="TURN BY ITSELF"></button>
       </div>
     </section>
     <section data-for="organism">
       <h3 data-px="ORGANISM"></h3>
-      <p class="note">The third screen: one organism in a window on the grid of the ring. What comes next changes the picture into a forecast of the coming generation (the button Next on that screen does the same).</p>
+      <p class="note">The third screen: one organism in a window on the grid of the ring. Three views of the same window (the row at the bottom of that screen does the same): Normal shows it as it is, Numbers what the coming generation does, Graph every cell opened up into a ring of eight nodes.</p>
+      <div id="modes" class="row">
+        <button type="button" data-mode="normal" aria-pressed="true" title="The organism as it is: faces, rocks and the lines that carry life" data-px="NORMAL"></button>
+        <button type="button" data-mode="numbers" aria-pressed="false" title="What the coming generation does: on every cell the number of its alive neighbours; who stays, who dies, who is born" data-px="NUMBERS"></button>
+        <button type="button" data-mode="graph" aria-pressed="false" title="Every cell opened up into a ring of eight nodes, with the arrows between them" data-px="GRAPH"></button>
+      </div>
+      <p class="note">How much of the world the window shows, from a single cell to the whole world (minus and plus on that screen, the wheel and two fingers do the same). Fit goes back to the window that suits the organism.</p>
       <div class="chips">
-        <button type="button" id="forecast" aria-pressed="false" title="Show what the coming generation does: who stays, who dies, who is born" data-px="WHAT COMES NEXT"></button>
+        <button type="button" id="zoom-out" title="Show more of the world" aria-label="Show more of the world" data-icon="minus"></button>
+        <output id="zoom-size" title="The cells of the window: across, and down"></output>
+        <button type="button" id="zoom-in" title="Look closer" aria-label="Look closer" data-icon="add"></button>
+        <button type="button" id="zoom-fit" title="The window that suits the organism (key 0 on that screen)" data-px="FIT"></button>
       </div>
-    </section>
-    <section data-for="cell">
-      <h3 data-px="CELL"></h3>
-      <p class="note">The fourth screen: one cell as a small graph, a ring of eight nodes. How many cells the picture shows (the button under the small map of that screen, the wheel and two fingers do the same):</p>
-      <div id="reaches" class="chips">
-        <button type="button" data-reach="1" aria-pressed="true" title="The cell and its eight neighbours" data-px="3 x 3"></button>
-        <button type="button" data-reach="2" aria-pressed="false" title="The 5 x 5 cells round the cell" data-px="5 x 5"></button>
-        <button type="button" data-reach="3" aria-pressed="false" title="The 7 x 7 cells round the cell" data-px="7 x 7"></button>
-      </div>
-      <p class="note">Where the nodes lie: tidy, every ring a regular octagon, or by forces, the way the Wolfram project places its graphs (for the nine cells of the smallest picture only).</p>
-      <div id="placings" class="chips">
+      <p class="note">Where the nodes of the view Graph lie: tidy, every ring a regular octagon on the grid, or by forces, the way the Wolfram project places its graphs.</p>
+      <div id="placings" class="row">
         <button type="button" data-placing="tidy" aria-pressed="true" title="Every ring a regular octagon, the rings as the cells lie on the map" data-px="TIDY"></button>
         <button type="button" data-placing="forces" aria-pressed="false" title="Arrows pull their two nodes together, all nodes push each other away" data-px="BY FORCES"></button>
-      </div>
-      <p class="note">What the picture does when the organism moves on or the cell dies (the button under the small map of that screen does the same):</p>
-      <div id="follows" class="chips">
-        <button type="button" data-follow="near" aria-pressed="true" data-px="STAY NEAR"></button>
-        <button type="button" data-follow="alive" aria-pressed="false" data-px="STAY ON LIFE"></button>
-        <button type="button" data-follow="fixed" aria-pressed="false" data-px="STAY PUT"></button>
       </div>
     </section>
     <section>
@@ -535,44 +527,45 @@ textarea {
       <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> is the same world with its edges joined. The map wraps round: a glider that leaves on the right comes back on the left, one that leaves at the bottom comes back at the top. On the flat map you have to remember that; the donut shows it. Glue the left and right edges of the map together and you get a tube; bend the tube until its two ends meet and you get a ring. The columns of the map go round the ring, the rows round its tube. Nothing about the game changes: every cell keeps its eight neighbours, and the rule is the same. Only the sizes are not true, as on a globe: cells on the inner side of the ring sit closer together than those on the outer side, though on the map they are all the same.</p>
       <p><b>The donut as a hypergraph.</b> The same world can be written as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. A hypergraph knows no places, only which nodes are related. Place the nodes by those relations alone, and because the world wraps round they close into a ring: the same donut as the glued map. Drag to turn the ring any way you like, also to see it from the top (Ring, further up in these settings, has ready views); tap a node to set or unset its cell.</p>
       <p><b>The lines of the ring.</b> The thin dark lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Ring, in these settings) turns the colours off.</p>
-      <p><b>Organism</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the ring, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map. The thin dark lines and the coloured life signals are those of the ring; the organism shown has the strong lines, others nearby have fainter ones. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross.</p>
-      <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down), and so does a tap on the picture; on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. The world plays slowly on this screen, one generation a second at most. A large organism is drawn small: first the faces become blocks, then the lines are left out.</p>
-      <p><b>Next</b>, the button at the bottom left of that screen, changes the picture into a forecast of the coming generation. Every node then carries a number: how many of its eight neighbours are alive, its life support. And colours say what comes:</p>
+      <p><b>Organism</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the ring, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross. The world plays slowly on this screen, one generation a second at most.</p>
+      <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down); on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. <b>Minus and plus</b> (or the wheel, or two fingers) show more of the world or look closer, from a single cell to the whole world; the number between them says how many cells the window shows. When you have zoomed in so far that the organism no longer fits, the window shows one of its cells in the middle and stays with it while the organism is there; tap another cell to go there. Otherwise a tap on the picture goes to the next organism.</p>
+      <p>The row <b>Normal, Numbers, Graph</b> at the bottom of that screen changes what the window shows. Nothing moves when you switch.</p>
+      <p><b>Normal</b> shows the organism as it is. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map: an alive cell is a face in the colour of its age, a dead one a grey rock. The thin dark lines and the coloured life signals are those of the ring; the organism shown has the strong lines, others nearby have fainter ones. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
+      <p><b>Numbers</b> shows what the coming generation does. Every node carries a number: how many of its eight neighbours are alive, its life support. And colours say what comes:</p>
       <ul class="legend">
         <li><i class="mark stays"></i><span>a <b>filled light tile</b> is alive and stays alive: its number is 2 or 3</span></li>
         <li><i class="mark dies"></i><span>a <b>filled red tile</b> is alive and dies: its number is below 2 or above 3</span></li>
         <li><i class="mark born" data-border="born"></i><span>a <b>hollow tile</b> is a dead cell that is born: its number is exactly 3</span></li>
         <li><i class="swatch hollow"></i><span>a <b>grey number</b> or a rock is a dead cell that stays dead</span></li>
       </ul>
-      <p>The legend beside the button counts them. Press Next again for the organism as it is. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
-      <p><b>Cell</b> <span lang="ja">(セル)</span> looks into one cell of that organism, as through a magnifying glass. On the donut and in the window of an organism a cell is one node. Here that node is opened up. This is what the inside of a Game of Life cell could look like when Life is played by a more general kind of system: one that knows nothing of cells or of Life, only of nodes, of arrows between them, and of rules that rewrite small pieces of such a graph (a Wolfram model; an arrow is the simplest relation a hypergraph can have, one between two nodes).</p>
-      <p>In such a graph a cell is not one node any more. It is a small graph of its own: <b>a ring of eight nodes</b>, its doors, one for each neighbour. The soft pad under a ring shows which nodes are one cell; the cell you look at has the dotted frame, the cells round it lie as they do on the map.</p>
+      <p>The lines above the buttons count them for the organism shown.</p>
+      <p><b>Graph</b> opens every cell of the window up. On the donut and in the other two views a cell is one node. This is what the inside of a Game of Life cell could look like when Life is played by a more general kind of system: one that knows nothing of cells or of Life, only of nodes, of arrows between them, and of rules that rewrite small pieces of such a graph (a Wolfram model; an arrow is the simplest relation a hypergraph can have, one between two nodes). It is a second model of the same Life, not the hypergraph of the other views.</p>
+      <p>In such a graph a cell is not one node any more. It is a small graph of its own: <b>a ring of eight nodes</b>, its doors, one for each neighbour. The rings lie as the cells lie on the map.</p>
       <p><b>How to read it as the Game of Life:</b></p>
       <ul class="legend">
-        <li><span><b>A face in a ring</b> is an alive cell, the same face as on the map. On this screen every alive cell has one colour, however old it is.</span></li>
+        <li><span><b>A face in a ring</b> is an alive cell, the same face as on the map. In this view every alive cell has one colour, however old it is.</span></li>
         <li><span><b>An empty ring</b> is a dead cell.</span></li>
-        <li><span><b>A heart</b> sits on a line that carries life: an alive cell tells each of its eight neighbours "I am alive". The heart lies near the door where the line arrives.</span></li>
-        <li><span><b>Count the hearts that arrive at a cell</b> and you have the rule of Life: a dead cell with exactly 3 hearts is born; an alive cell with 2 or 3 hearts stays alive; every other cell is dead in the next generation. The lines at the bottom left count them for the cell you look at.</span></li>
+        <li><span><b>A coloured line between two rings</b> carries life: an alive cell tells each of its eight neighbours "I am alive". Every such line is drawn alike, wherever it lies; all other lines are grey.</span></li>
+        <li><span><b>Count the coloured lines that arrive at a cell</b> and you have the rule of Life: a dead cell with exactly 3 is born; an alive cell with 2 or 3 stays alive; every other cell is dead in the next generation. The view Numbers counts them for you.</span></li>
       </ul>
       <p><b>What the arrows are:</b></p>
       <ul class="legend">
         <li><span>An <b>arrow</b> joins two nodes and points from the first to the second. The eight arrows from door to door are the <b>rim</b> of a ring.</span></li>
-        <li><span>Between the doors that face each other in two neighbouring cells run two arrows, one each way: the <b>lines</b> along which the two cells tell each other their state. A line out of an alive cell has the colour of life and its heart; the others are grey.</span></li>
-        <li><span>Every cell has four more arrows, its <b>cords</b>. In a <b>dead</b> cell they rest along the rim: grey, four sides of the ring are double. In an <b>alive</b> cell they are stretched across the ring, each to the door opposite, behind the face, in the colour of the cell. Being born and dying make and remove nothing: four arrows swing across, or back.</span></li>
+        <li><span>Between the doors that face each other in two neighbouring cells run two arrows, one each way: the <b>lines</b> along which the two cells tell each other their state.</span></li>
+        <li><span>Every cell has four more arrows, its <b>cords</b>. In a <b>dead</b> cell they rest along the rim: grey, four sides of the ring are double. In an <b>alive</b> cell they are stretched across the ring, each to the door opposite, behind the face, in a lighter tint of the cell's colour, so that they can be told from the face. Being born and dying make and remove nothing: four arrows swing across, or back.</span></li>
       </ul>
-      <p>The picture shows the cell with its eight neighbours. The button with <b>3 x 3</b> under the small map (or the wheel, or two fingers) zooms out to the 5 x 5 or the 7 x 7 cells round it.</p>
+      <p><b>Near and far.</b> Zoomed in to a single cell, the picture is that cell's ring alone: 8 nodes, its rim and its four cords, without the lines to its neighbours. With a few cells in the window every arrow has its head, and two arrows along the same two nodes lie side by side; tap one to hear which arrow it is. Further out, where cells are small, every arrow is a plain line and the nodes are left out. And where a ring could not be read at all, the window is drawn as in Normal: look closer to see the rings.</p>
       <p><b>A knot.</b> A ring with its four cords across cannot be drawn on paper without two arrows crossing, however the nodes are moved (it holds the graph mathematicians call K3,3). A dead ring can. The Wolfram Physics Project pictures particles as such knots in a graph that is flat everywhere else: rules that never undo a knot would carry it along, like a particle. Life is not such a world. Its cells are born and die, so here the knot is only the mark of life, tied and undone by the rules; what travels in Life is a pattern like the glider, made anew from other cells in every generation. And why is a dead cell not simply an empty ring? A rewriting rule can only ask for something that is there, never for something missing, so "dead" needs a mark of its own: the same four cords, resting.</p>
-      <p>A cell is 8 nodes and 20 arrows: 8 of the rim, 4 cords, 8 lines out. 17 rewriting rules play Life on this graph, in the same three steps as on the hypergraph of the donut: a cell sends its state along its eight lines, reads the eight messages that come in and counts the alive ones, and then lays its cords. Tests hold that these rules give Life, cell for cell, and that between two generations the graph is exactly what this screen draws. The picture shows every arrow between the nodes of its cells (72 nodes and 148 arrows for nine cells, 392 and 900 for the widest picture); left out are the lines to cells further away.</p>
-      <p>Where a node lies means nothing in a graph. The picture is <b>tidy</b>: every ring a regular octagon, the rings as the cells lie on the map. Cell, further up in these settings, can also place the nodes of the nine cells <b>by forces</b>, the way the Wolfram project draws its graphs: every arrow pulls its two nodes together, all nodes push each other away; that nine cells lie three by three then comes out of the arrows alone. Either way the picture stands still; only faces, cords and hearts change.</p>
-      <p>The lines at the bottom left say where the cell lies on the map, what it is, how many of its neighbours are alive, and what it is next. Tap the ring of a neighbour to go there, or a cell on the map of the organism at the top right (the frame there shows the nine cells of the picture). Tap an arrow of the cell, a line or its heart to hear which arrow it is. The button under the map says what the picture does when the world moves on: <b>Stay near</b> keeps the cell while the organism is at it and moves on with the organism when it has left (a blinker's cell is watched as it blinks, a glider is followed); <b>Stay on life</b> moves to the nearest alive cell as soon as the cell dies, a newly born one first; <b>Stay put</b> never moves.</p>
-      <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on the hypergraph of the donut, cell for cell, and a second one, also of 17 rules, on the graph of arrows of the fourth screen. This game turns that round. It computes with the ordinary rule, which is far faster, and shows what the rules would hold at that moment. Tests hold them equal, relation for relation and arrow for arrow, between every two generations.</p>
+      <p>A cell is 8 nodes and 20 arrows: 8 of the rim, 4 cords, 8 lines out. 17 rewriting rules play Life on this graph, in the same three steps as on the hypergraph of the donut: a cell sends its state along its eight lines, reads the eight messages that come in and counts the alive ones, and then lays its cords. Tests hold that these rules give Life, cell for cell, and that between two generations the graph is exactly what this view draws. The picture shows every arrow between the nodes of its cells; left out are the lines to cells outside the window. The line at the top counts the nodes and the arrows of the window.</p>
+      <p>Where a node lies means nothing in a graph. The picture is <b>tidy</b>: every ring a regular octagon, the rings as the cells lie on the map. Organism, further up in these settings, can also place the nodes <b>by forces</b>, the way the Wolfram project draws its graphs: every arrow pulls its two nodes together, all nodes push each other away, and the nodes settle where the forces balance. The page works that out once for a window of a size, beginning at the tidy places, so it comes out the same every time, for a window of any size. Either way the picture stands still; only faces, cords and the colours of the lines change.</p>
+      <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on the hypergraph of the donut, cell for cell, and a second one, also of 17 rules, on the graph of arrows of the view Graph. This game turns that round. It computes with the ordinary rule, which is far faster, and shows what the rules would hold at that moment. Tests hold them equal, relation for relation and arrow for arrow, between every two generations.</p>
       <p><b>Learn Game of Life</b>, at the top of these settings, is a tutorial of nine small lessons on a map of 9 x 9 cells: you keep a cell alive, let one be born, say what the next generation will be, and build a shape that stays and one that blinks. The button One generation is the check. The tutorial has its own world; the arrow to the left brings you back to yours, as you left it.</p>
-      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3 4) · ↑ ↓ organisms · A add · S settings · R F turn/mirror · 0 show all</p>
+      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ organisms · A add · S settings · R F turn/mirror · 0 show all</p>
     </section>
   </aside>
 </div>
 
-<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"places":{"forces":[[0.0092,-1.558],[1.3233,-1.2925],[1.5284,0.0626],[1.3355,1.4089],[0.0194,1.4933],[-1.2839,1.2268],[-1.513,-0.1152],[-1.3176,-1.4435],[0.0298,-4.2529],[0.8365,-4.0549],[1.4387,-3.2961],[1.2804,-2.2187],[0.0033,-2.2163],[-1.2774,-2.3047],[-1.4734,-3.3106],[-0.7074,-3.7494],[2.7587,-4.5781],[3.2607,-4.6438],[3.9313,-4.2507],[3.8834,-3.3875],[3.3232,-2.4512],[2.2914,-2.3048],[2.2427,-3.3197],[2.6044,-4.0995],[3.2576,-1.4054],[3.6952,-0.4497],[3.5657,0.5808],[3.768,1.314],[3.1839,1.8769],[2.1999,1.4486],[2.1867,0.1182],[2.2355,-1.1975],[3.319,2.7396],[4.0887,3.4203],[4.4184,4.0705],[3.7928,4.1685],[3.4897,4.7285],[2.8171,4.3478],[2.203,3.5761],[2.2632,2.5279],[-0.0317,2.1347],[1.1981,2.3449],[1.2681,3.4249],[0.3802,3.9435],[-0.605,3.8914],[-1.5057,3.3026],[-1.6752,2.8205],[-1.2896,2.0098],[-3.1989,2.6653],[-2.2306,2.2591],[-2.1687,3.1667],[-1.9645,3.9315],[-2.5262,4.7226],[-3.093,4.9907],[-3.7373,4.5707],[-3.7107,3.6745],[-3.3018,-1.7279],[-2.276,-1.414],[-2.1994,-0.1371],[-2.2108,1.1486],[-3.0629,1.6711],[-3.2605,0.8858],[-3.87,0.0385],[-3.8905,-0.912],[-3.4503,-4.7164],[-2.8948,-4.3263],[-2.3273,-3.5296],[-2.2813,-2.5106],[-3.2871,-2.7352],[-3.7807,-3.6752],[-3.9348,-4.4896],[-4.0928,-4.6323]],"tidy":[[0.0,-1.0],[0.7071,-0.7071],[1.0,-0.0],[0.7071,0.7071],[0.0,1.0],[-0.7071,0.7071],[-1.0,0.0],[-0.7071,-0.7071],[0.0,-4.4],[0.7071,-4.1071],[1.0,-3.4],[0.7071,-2.6929],[0.0,-2.4],[-0.7071,-2.6929],[-1.0,-3.4],[-0.7071,-4.1071],[3.4,-4.4],[4.1071,-4.1071],[4.4,-3.4],[4.1071,-2.6929],[3.4,-2.4],[2.6929,-2.6929],[2.4,-3.4],[2.6929,-4.1071],[3.4,-1.0],[4.1071,-0.7071],[4.4,-0.0],[4.1071,0.7071],[3.4,1.0],[2.6929,0.7071],[2.4,0.0],[2.6929,-0.7071],[3.4,2.4],[4.1071,2.6929],[4.4,3.4],[4.1071,4.1071],[3.4,4.4],[2.6929,4.1071],[2.4,3.4],[2.6929,2.6929],[0.0,2.4],[0.7071,2.6929],[1.0,3.4],[0.7071,4.1071],[0.0,4.4],[-0.7071,4.1071],[-1.0,3.4],[-0.7071,2.6929],[-3.4,2.4],[-2.6929,2.6929],[-2.4,3.4],[-2.6929,4.1071],[-3.4,4.4],[-4.1071,4.1071],[-4.4,3.4],[-4.1071,2.6929],[-3.4,-1.0],[-2.6929,-0.7071],[-2.4,-0.0],[-2.6929,0.7071],[-3.4,1.0],[-4.1071,0.7071],[-4.4,0.0],[-4.1071,-0.7071],[-3.4,-4.4],[-2.6929,-4.1071],[-2.4,-3.4],[-2.6929,-2.6929],[-3.4,-2.4],[-4.1071,-2.6929],[-4.4,-3.4],[-4.1071,-4.1071],[0.0,-7.8],[0.7071,-7.5071],[1.0,-6.8],[0.7071,-6.0929],[0.0,-5.8],[-0.7071,-6.0929],[-1.0,-6.8],[-0.7071,-7.5071],[3.4,-7.8],[4.1071,-7.5071],[4.4,-6.8],[4.1071,-6.0929],[3.4,-5.8],[2.6929,-6.0929],[2.4,-6.8],[2.6929,-7.5071],[6.8,-7.8],[7.5071,-7.5071],[7.8,-6.8],[7.5071,-6.0929],[6.8,-5.8],[6.0929,-6.0929],[5.8,-6.8],[6.0929,-7.5071],[6.8,-4.4],[7.5071,-4.1071],[7.8,-3.4],[7.5071,-2.6929],[6.8,-2.4],[6.0929,-2.6929],[5.8,-3.4],[6.0929,-4.1071],[6.8,-1.0],[7.5071,-0.7071],[7.8,-0.0],[7.5071,0.7071],[6.8,1.0],[6.0929,0.7071],[5.8,0.0],[6.0929,-0.7071],[6.8,2.4],[7.5071,2.6929],[7.8,3.4],[7.5071,4.1071],[6.8,4.4],[6.0929,4.1071],[5.8,3.4],[6.0929,2.6929],[6.8,5.8],[7.5071,6.0929],[7.8,6.8],[7.5071,7.5071],[6.8,7.8],[6.0929,7.5071],[5.8,6.8],[6.0929,6.0929],[3.4,5.8],[4.1071,6.0929],[4.4,6.8],[4.1071,7.5071],[3.4,7.8],[2.6929,7.5071],[2.4,6.8],[2.6929,6.0929],[0.0,5.8],[0.7071,6.0929],[1.0,6.8],[0.7071,7.5071],[0.0,7.8],[-0.7071,7.5071],[-1.0,6.8],[-0.7071,6.0929],[-3.4,5.8],[-2.6929,6.0929],[-2.4,6.8],[-2.6929,7.5071],[-3.4,7.8],[-4.1071,7.5071],[-4.4,6.8],[-4.1071,6.0929],[-6.8,5.8],[-6.0929,6.0929],[-5.8,6.8],[-6.0929,7.5071],[-6.8,7.8],[-7.5071,7.5071],[-7.8,6.8],[-7.5071,6.0929],[-6.8,2.4],[-6.0929,2.6929],[-5.8,3.4],[-6.0929,4.1071],[-6.8,4.4],[-7.5071,4.1071],[-7.8,3.4],[-7.5071,2.6929],[-6.8,-1.0],[-6.0929,-0.7071],[-5.8,-0.0],[-6.0929,0.7071],[-6.8,1.0],[-7.5071,0.7071],[-7.8,0.0],[-7.5071,-0.7071],[-6.8,-4.4],[-6.0929,-4.1071],[-5.8,-3.4],[-6.0929,-2.6929],[-6.8,-2.4],[-7.5071,-2.6929],[-7.8,-3.4],[-7.5071,-4.1071],[-6.8,-7.8],[-6.0929,-7.5071],[-5.8,-6.8],[-6.0929,-6.0929],[-6.8,-5.8],[-7.5071,-6.0929],[-7.8,-6.8],[-7.5071,-7.5071],[-3.4,-7.8],[-2.6929,-7.5071],[-2.4,-6.8],[-2.6929,-6.0929],[-3.4,-5.8],[-4.1071,-6.0929],[-4.4,-6.8],[-4.1071,-7.5071],[0.0,-11.2],[0.7071,-10.9071],[1.0,-10.2],[0.7071,-9.4929],[0.0,-9.2],[-0.7071,-9.4929],[-1.0,-10.2],[-0.7071,-10.9071],[3.4,-11.2],[4.1071,-10.9071],[4.4,-10.2],[4.1071,-9.4929],[3.4,-9.2],[2.6929,-9.4929],[2.4,-10.2],[2.6929,-10.9071],[6.8,-11.2],[7.5071,-10.9071],[7.8,-10.2],[7.5071,-9.4929],[6.8,-9.2],[6.0929,-9.4929],[5.8,-10.2],[6.0929,-10.9071],[10.2,-11.2],[10.9071,-10.9071],[11.2,-10.2],[10.9071,-9.4929],[10.2,-9.2],[9.4929,-9.4929],[9.2,-10.2],[9.4929,-10.9071],[10.2,-7.8],[10.9071,-7.5071],[11.2,-6.8],[10.9071,-6.0929],[10.2,-5.8],[9.4929,-6.0929],[9.2,-6.8],[9.4929,-7.5071],[10.2,-4.4],[10.9071,-4.1071],[11.2,-3.4],[10.9071,-2.6929],[10.2,-2.4],[9.4929,-2.6929],[9.2,-3.4],[9.4929,-4.1071],[10.2,-1.0],[10.9071,-0.7071],[11.2,-0.0],[10.9071,0.7071],[10.2,1.0],[9.4929,0.7071],[9.2,0.0],[9.4929,-0.7071],[10.2,2.4],[10.9071,2.6929],[11.2,3.4],[10.9071,4.1071],[10.2,4.4],[9.4929,4.1071],[9.2,3.4],[9.4929,2.6929],[10.2,5.8],[10.9071,6.0929],[11.2,6.8],[10.9071,7.5071],[10.2,7.8],[9.4929,7.5071],[9.2,6.8],[9.4929,6.0929],[10.2,9.2],[10.9071,9.4929],[11.2,10.2],[10.9071,10.9071],[10.2,11.2],[9.4929,10.9071],[9.2,10.2],[9.4929,9.4929],[6.8,9.2],[7.5071,9.4929],[7.8,10.2],[7.5071,10.9071],[6.8,11.2],[6.0929,10.9071],[5.8,10.2],[6.0929,9.4929],[3.4,9.2],[4.1071,9.4929],[4.4,10.2],[4.1071,10.9071],[3.4,11.2],[2.6929,10.9071],[2.4,10.2],[2.6929,9.4929],[0.0,9.2],[0.7071,9.4929],[1.0,10.2],[0.7071,10.9071],[0.0,11.2],[-0.7071,10.9071],[-1.0,10.2],[-0.7071,9.4929],[-3.4,9.2],[-2.6929,9.4929],[-2.4,10.2],[-2.6929,10.9071],[-3.4,11.2],[-4.1071,10.9071],[-4.4,10.2],[-4.1071,9.4929],[-6.8,9.2],[-6.0929,9.4929],[-5.8,10.2],[-6.0929,10.9071],[-6.8,11.2],[-7.5071,10.9071],[-7.8,10.2],[-7.5071,9.4929],[-10.2,9.2],[-9.4929,9.4929],[-9.2,10.2],[-9.4929,10.9071],[-10.2,11.2],[-10.9071,10.9071],[-11.2,10.2],[-10.9071,9.4929],[-10.2,5.8],[-9.4929,6.0929],[-9.2,6.8],[-9.4929,7.5071],[-10.2,7.8],[-10.9071,7.5071],[-11.2,6.8],[-10.9071,6.0929],[-10.2,2.4],[-9.4929,2.6929],[-9.2,3.4],[-9.4929,4.1071],[-10.2,4.4],[-10.9071,4.1071],[-11.2,3.4],[-10.9071,2.6929],[-10.2,-1.0],[-9.4929,-0.7071],[-9.2,-0.0],[-9.4929,0.7071],[-10.2,1.0],[-10.9071,0.7071],[-11.2,0.0],[-10.9071,-0.7071],[-10.2,-4.4],[-9.4929,-4.1071],[-9.2,-3.4],[-9.4929,-2.6929],[-10.2,-2.4],[-10.9071,-2.6929],[-11.2,-3.4],[-10.9071,-4.1071],[-10.2,-7.8],[-9.4929,-7.5071],[-9.2,-6.8],[-9.4929,-6.0929],[-10.2,-5.8],[-10.9071,-6.0929],[-11.2,-6.8],[-10.9071,-7.5071],[-10.2,-11.2],[-9.4929,-10.9071],[-9.2,-10.2],[-9.4929,-9.4929],[-10.2,-9.2],[-10.9071,-9.4929],[-11.2,-10.2],[-10.9071,-10.9071],[-6.8,-11.2],[-6.0929,-10.9071],[-5.8,-10.2],[-6.0929,-9.4929],[-6.8,-9.2],[-7.5071,-9.4929],[-7.8,-10.2],[-7.5071,-10.9071],[-3.4,-11.2],[-2.6929,-10.9071],[-2.4,-10.2],[-2.6929,-9.4929],[-3.4,-9.2],[-4.1071,-9.4929],[-4.4,-10.2],[-4.1071,-10.9071]]},"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8}],"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations."},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Go back to the game: the plus adds famous shapes, and the other screens show the same world as a graph.","endRows":[".........","..##.##..",".#######.",".#######.","..#####..","...###...","....#....",".........","........."]}}</script>
+<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"ringGap":3.4,"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8}],"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations."},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Go back to the game: the plus adds famous shapes, and the other screens show the same world as a graph.","endRows":[".........","..##.##..",".#######.",".#######.","..#####..","...###...","....#....",".........","........."]}}</script>
 <script>
 // The Game of Life of the game: a world that wraps round at its borders, played by the
 // ordinary rule (born with 3 alive neighbours, staying alive with 2 or 3).
@@ -999,9 +992,10 @@ textarea {
 //   {s,r,r,r}        the line from cell s to cell r is empty
 //
 // The screen ORGANISM shows a piece of that hypergraph: one organism (alive cells whose
-// signals meet) with the cells next to it and the cells next to those. The screen CELL
-// shows one cell of it: the 36 relations that name the cell and its eight neighbours'
-// states (cellScope).
+// signals meet) with the cells next to it and the cells next to those. Its view GRAPH
+// shows the cells of its window as a piece of a second model, a directed graph in which
+// a cell is a ring of eight nodes (ringWindow). cellScope and ringScope are the cuts the
+// former screen CELL drew (one cell and the cells round it); they stay with their tests.
 //
 // No drawing and no page in here (it also runs in Node, tests/harness.cjs).
 (function (root) {
@@ -1117,7 +1111,7 @@ textarea {
     return relation[0] === cell ? "line out" : "line in";
   }
 
-  // One cell for its picture (the screen CELL): the cell and its eight neighbours
+  // One cell for its picture (the former screen CELL): the cell and its eight neighbours
   // (clockwise from the one above), and 36 relations in the order of the table: the cell's
   // state, its ready mark, its eight lines out, the eight lines in, the states of its eight
   // neighbours, its round (nine relations) and its neighbourhood. Also how many of the
@@ -1150,7 +1144,7 @@ textarea {
     };
   }
 
-  // ---- the same world as a directed graph: the screen CELL
+  // ---- the same world as a directed graph: the view GRAPH of the screen ORGANISM
   //
   // A second Wolfram model of the same Life (wolframs_game_of_life.model_rings): every
   // relation is a pair, an arrow from one node to another, and a cell is no longer one
@@ -1240,7 +1234,7 @@ textarea {
     return block;
   }
 
-  // One cell for its picture (the screen CELL): the rings of the cell and of the cells
+  // One cell for its picture (the former screen CELL): the rings of the cell and of the cells
   // round it (`reach` 1: its eight neighbours; 2 and 3: the 5 x 5 and 7 x 7 cells round
   // it), and every arrow of the world's graph between two of their doors, in this order:
   // the 20 arrows of the cell (rim, cords, lines out), the eight lines that come in, of
@@ -1291,6 +1285,50 @@ textarea {
       next: aliveNeighbours === 3 || (cells[index] && aliveNeighbours === 2) ? 1 : 0,
       arrows,
     };
+  }
+
+  // A window on the world as a piece of the directed graph (the view GRAPH of the screen
+  // ORGANISM): the rings of the cells of a rectangle of `rows` x `columns` cells whose
+  // first cell lies in row `top`, column `left` (0-based; the world wraps round, the
+  // window does not), row by row. The arrows, in this order: of every cell its rim and
+  // its cords, then of every cell its lines to the cells that lie next to it in the
+  // window. A window of one cell is its ring alone: 8 nodes and 12 arrows.
+  //
+  // Where the window is smaller than the world both ways, that is every arrow of the
+  // world's graph between two doors of the window, and no other. A window as wide or as
+  // high as the world leaves out the lines that run round the world from one of its
+  // edges to the other: a picture has no way round.
+  //
+  // An arrow is {nodes: [a, b], kind, cell}: "rim", "cord across" (the cell is alive),
+  // "cord along" (dead) or "line"; `cell` is the cell (0-based) whose rim or cord it is,
+  // or that sends along the line.
+  function ringWindow(cells, width, height, top, left, rows, columns) {
+    if (!(rows >= 1 && columns >= 1 && rows <= height && columns <= width)) {
+      throw new Error("no window of " + rows + " x " + columns + " cells in a world of " + height + " x " + width);
+    }
+    const at = (j, i) => ((((top + j) % height) + height) % height) * width + (((left + i) % width) + width) % width;
+    const order = [];
+    for (let j = 0; j < rows; j++) for (let i = 0; i < columns; i++) order.push(at(j, i));
+    const arrows = [];
+    for (const cell of order) {
+      for (let i = 0; i < DOORS; i++) arrows.push({ nodes: [door(cell, i), door(cell, (i + 1) % DOORS)], kind: "rim", cell });
+      const lie = cells[cell] ? "cord across" : "cord along";
+      for (const [a, b] of cordsOf(cells[cell])) arrows.push({ nodes: [door(cell, a), door(cell, b)], kind: lie, cell });
+    }
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < columns; i++) {
+        const cell = order[j * columns + i];
+        for (let d = 0; d < DOORS; d++) {
+          const j2 = j + DIRECTIONS[d][0];
+          const i2 = i + DIRECTIONS[d][1];
+          if (j2 < 0 || i2 < 0 || j2 >= rows || i2 >= columns) continue;
+          arrows.push({ nodes: [door(cell, d), door(order[j2 * columns + i2], (d + DOORS / 2) % DOORS)], kind: "line", cell });
+        }
+      }
+    }
+    const nodes = [];
+    for (const cell of order) for (let i = 0; i < DOORS; i++) nodes.push(door(cell, i));
+    return { top, left, rows, columns, cells: order, alive: order.map((cell) => (cells[cell] ? 1 : 0)), nodes, arrows };
   }
 
   // ---- the whole world as a picture: the screen DONUT
@@ -1512,7 +1550,7 @@ textarea {
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
     neighbours, neighboursInto, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
     alive, dead, ready, emptyLine,
-    DOORS, ARROWS_PER_CELL, DIRECTION_NAMES, MAX_REACH, door, arrowsOfCell, arrowsOfWorld, describeArrow, blockOf, ringScope,
+    DOORS, ARROWS_PER_CELL, DIRECTION_NAMES, MAX_REACH, door, arrowsOfCell, arrowsOfWorld, describeArrow, blockOf, ringScope, ringWindow,
   };
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -2880,26 +2918,38 @@ void main() {
 //     shown has the strong lines and a soft light behind its faces; other organisms in
 //     the window are drawn with fainter lines.
 //
-// Nothing in this view says what comes next: it shows the world as it is (the user,
-// 2026-11-22: "remove the signaling which cells will stay alive").
+// Three views share the window (scene.mode); switching between them moves nothing.
 //
-// The view NEXT (scene.next, a button of the page) shows the same window as a forecast
-// instead (hypergraph.js, forecast): every node carries the number of its alive
-// neighbours, its life support, and colours say what the coming generation does:
+// NORMAL is the picture above. Nothing in it says what comes next: it shows the world
+// as it is (the user, 2026-11-22: "remove the signaling which cells will stay alive").
+//
+// NUMBERS shows the same window as a forecast (hypergraph.js, forecast): every node
+// carries the number of its alive neighbours, its life support, and colours say what the
+// coming generation does:
 //
 //   - a filled tile is a cell that is alive now: in the ink of the screen when it stays
 //     alive, in the red of the theme's seal when it dies;
 //   - a hollow tile in the colour of the just born is a dead cell that is born;
 //   - a dead cell that stays dead is a rock, with its number beside nothing else.
 //
+// GRAPH shows every cell of the window opened up into a ring of eight nodes: a piece of
+// the directed graph of the second model. This file only keeps the ground free for it
+// and says where the cells lie (draw returns `rings`); the page draws the rings over the
+// canvas (cellgraph.js). Where a cell has fewer than RINGS_FROM pixels of the screen, a
+// ring could not be read, and the window is drawn as in NORMAL.
+//
 // The picture stands still (the user: "I get motion sick when watching the organism
 // change, cause it is moving too much around when the grid gets restructured"). The
 // window is always full of nodes, so nothing appears or goes at its edge when the
 // organism changes. The camera moves only when the organism comes within EDGE nodes of
 // the edge of the window, and then it moves ahead of it, so that a glider has the whole
-// window to cross before the picture moves again. The scale changes only when the
-// organism no longer fits, or has become small in a wide room. Both views share the
-// camera: switching between them moves nothing.
+// window to cross before the picture moves again.
+//
+// How much the window shows: as the organism needs it (scene.across 0: the scale changes
+// only when the organism no longer fits, or has become small in a wide room), or as the
+// user asks (scene.across: so many nodes across the shorter side of the room, from one
+// node to the whole world). A window too small for the organism shows the cell the page
+// names (scene.focus) in its middle, and moves only when that cell changes.
 //
 // A small organism is drawn large, a large one small: below FACES_FROM pixels from node to
 // node the faces are plain blocks and the numbers are left out, below LINES_FROM the
@@ -2907,9 +2957,6 @@ void main() {
 //
 // The small map (a canvas of its own beside the buttons of this screen) shows the whole
 // world with this organism marked, and a frame round the window.
-//
-// For the screen CELL this file also draws the map of the piece (drawPieceMap): the
-// organism alone, a square per cell, with the chosen cell and its eight neighbours framed.
 //
 // Nothing about Life or the model is computed here: which cells are of the organism, how
 // many signals reach a cell and what it is next come from hypergraph.js.
@@ -2922,7 +2969,7 @@ void main() {
   const pixel = root.RetroLife.pixel;
 
   // pixels of the canvas from node to node, from which ...
-  const FACES_FROM = 14;     // ... alive nodes are faces, and the view NEXT writes its numbers
+  const FACES_FROM = 14;     // ... alive nodes are faces, and the view NUMBERS writes its numbers
   const LINES_FROM = 5;      // ... links and signals are drawn
   const ROCKS_FROM = 3;      // ... dead nodes are drawn
   const PITCH = 28;          // pixels of the screen from node to node at most, on a phone; a larger screen
@@ -2933,8 +2980,8 @@ void main() {
   const FADING_UP_TO = 700;  // signals up to which each one fades along its way
   const GLIDE = 0.2;         // of the way to where it should be, the camera goes per picture
   const MAP_SIDE = 192;      // pixels of the small map at most (larger worlds are made smaller)
-  const PIECE_SIDE = 132;    // pixels of the map of a piece (a larger piece: a pixel per cell)
-  const PIECE_NEAR = 8;      // a chosen cell this near to the piece is shown on its map
+  const RINGS_FROM = 16;     // pixels of the screen from cell to cell, from which the view GRAPH draws rings
+  const ODD_UP_TO = 9;       // a window the user asked for of up to so many nodes across has a node in its middle
   const STAR_EVERY = 2400;   // pixels of the canvas per star
   const LINKS = [2, 3, 4, 5];  // of graph.DIRECTIONS: right, below right, below, below left
 
@@ -2946,6 +2993,8 @@ void main() {
     const state = {
       camera: null,   // {x, y, tx, ty, pitch}: the middle (cells, not wrapped), where it goes, pixels per cell
       pick: null,     // the choice the camera belongs to (scene.pick)
+      across: 0,      // the zoom the camera belongs to (scene.across)
+      close: false,   // the window is too small for the organism: it shows the named cell
       piece: null,    // the organism placed on the grid (place)
       view: null,     // the window the picture shows: {fx, fy, columns, rows}
       at: null,       // per cell of the world: its number in the piece, or -1
@@ -2985,7 +3034,7 @@ void main() {
       const digits = (colour) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((value) => digit(value, colour));
       const born = seen(render.rgbOf(theme.born));
       state.looks = {
-        // the view NEXT: who stays (the ink of the screen), who dies (the red of the seal),
+        // the view NUMBERS: who stays (the ink of the screen), who dies (the red of the seal),
         // who is born (the colour of the just born); the numbers in the ground's colour on
         // filled tiles, in the tile's own colour on hollow ones, in the rock's on rocks
         stays: css(star, 1),
@@ -3101,9 +3150,25 @@ void main() {
 
     const still = () => Boolean(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
-    // The camera and the window for an organism: {columns, rows, moving}. The camera is
+    // Where the cell the page names lies on the grid of the piece (the world wraps
+    // round, the picture does not): {x, y}, or null.
+    function focusOf(scene, piece) {
+      const cell = scene.focus;
+      if (!(cell >= 0)) return null;
+      const k = state.at[cell];
+      if (k >= 0) return { x: piece.xs[k], y: piece.ys[k] };
+      const { width, height } = scene.world;
+      const column = cell % width, row = Math.floor(cell / width);
+      return {
+        x: column + width * Math.round(((piece.x0 + piece.x1) / 2 - column) / width),
+        y: row + height * Math.round(((piece.y0 + piece.y1) / 2 - row) / height),
+      };
+    }
+
+    // The camera and the window for an organism: {columns, rows, moving, close}. The camera is
     // kept while the organism is inside the window, and moved ahead of it when it comes
-    // too near the edge.
+    // too near the edge. Where the user asked for a window that is too small for the
+    // organism, the cell the page names lies in its middle.
     function cameraFor(scene, piece, room) {
       const { world } = scene;
       const wide = room.right - room.left, high = room.bottom - room.top;
@@ -3111,47 +3176,72 @@ void main() {
       const low = { x: piece.x0 + 2, y: piece.y0 + 2 };
       const size = { x: piece.x1 - piece.x0 - 3, y: piece.y1 - piece.y0 - 3 };
       const middle = { x: low.x + (size.x - 1) / 2, y: low.y + (size.y - 1) / 2 };
+      const across = scene.across || 0;
       const most = Math.max(16, Math.min(Math.round(PITCH / Math.sqrt(state.pixel)), Math.floor(Math.min(wide, high) / ACROSS)));
-      const want = Math.min(most, wide / (size.x + 2 * MARGIN), high / (size.y + 2 * MARGIN));
+      const want = across ? Math.min(wide, high) / across : Math.min(most, wide / (size.x + 2 * MARGIN), high / (size.y + 2 * MARGIN));
       const whole = (pitch) => (pitch >= 4 ? Math.floor(pitch) : pitch);
-      const fresh = !state.camera || state.pick !== scene.pick;
+      const fresh = !state.camera || state.pick !== scene.pick || state.across !== across;
       if (fresh) {
         state.camera = { x: middle.x, y: middle.y, tx: middle.x, ty: middle.y, pitch: whole(want) };
         state.pick = scene.pick;
+        state.across = across;
       }
       const camera = state.camera;
-      if (want < camera.pitch) camera.pitch = whole(want * 0.88);
+      if (across) camera.pitch = whole(want);
+      else if (want < camera.pitch) camera.pitch = whole(want * 0.88);
       else if (want >= camera.pitch * 1.5) camera.pitch = whole(want);
       // the window: the nodes the room holds, and never a node of the world twice
       const count = { x: Math.min(world.width, Math.max(1, Math.floor(wide / camera.pitch))), y: Math.min(world.height, Math.max(1, Math.floor(high / camera.pitch))) };
+      if (across === 1) count.x = count.y = 1;  // one cell, and nothing of its neighbours
+      else if (across && across <= ODD_UP_TO) {
+        for (const axis of ["x", "y"]) if (count[axis] > 1 && count[axis] % 2 === 0) count[axis]--;
+      }
       const limit = { x: world.width, y: world.height };
+      const focus = across ? focusOf(scene, piece) : null;
+      const jump = fresh || Boolean(scene.jump) || still();
+      // Too small for the organism one way: the named cell lies in the middle, both
+      // ways, and from then on (until another organism or another zoom is chosen). An
+      // organism that fits in one generation and not in the next, or across and not down
+      // (a blinker), must not make the window hop between two rules.
+      if (fresh) state.close = false;
+      if (focus && (size.x + 2 * EDGE > count.x || size.y + 2 * EDGE > count.y)) state.close = true;
+      const close = state.close && Boolean(focus);
       let moving = false;
       for (const [axis, goal] of [["x", "tx"], ["y", "ty"]]) {
         const half = (count[axis] - 1) / 2;
         const first = camera[goal] - half;
         const outside = low[axis] - EDGE < first || low[axis] + size[axis] - 1 + EDGE > first + count[axis] - 1;
-        // a window as wide as the world shows all of it: it has no reason to move
-        if (!fresh && outside && count[axis] < limit[axis]) {
+        if (close) {
+          camera[goal] = focus[axis];
+        } else if (!fresh && outside && count[axis] < limit[axis]) {
+          // (a window as wide as the world shows all of it: it has no reason to move)
           const way = Math.sign(middle[axis] - camera[goal]);
           camera[goal] = middle[axis] + way * Math.max(0, half - MARGIN - (size[axis] - 1) / 2);
         }
         camera[goal] = Math.round(camera[goal] - half) + half;  // nodes on whole places of the window
         const gap = camera[goal] - camera[axis];
-        if (fresh || still() || Math.abs(gap) * camera.pitch < 0.5) camera[axis] = camera[goal];
+        if (jump || Math.abs(gap) * camera.pitch < 0.5) camera[axis] = camera[goal];
         else {
           camera[axis] += gap * GLIDE;
           moving = true;
         }
       }
-      return { columns: count.x, rows: count.y, moving };
+      return { columns: count.x, rows: count.y, moving, close };
     }
 
     // scene: {world, labels, number, organism (hypergraph.js organismOf, or null), forecast
-    // (hypergraph.js forecast of the world), next (true: the view NEXT), theme, room, pick
-    // (changes when another organism is chosen: the picture then jumps)}. Returns {took,
-    // moving, pitch, columns, rows, x, y}: the milliseconds it took, whether the camera is
-    // still on its way, the pixels of the canvas from node to node, the nodes of the
-    // window, and its middle (in cells).
+    // (hypergraph.js forecast of the world), mode ("normal", "numbers" or "graph"), theme,
+    // room, pick (changes when another organism is chosen: the picture then jumps), across
+    // (nodes across the shorter side of the room, as the user asked; 0: as the organism
+    // needs), focus (the cell in the middle of a window too small for the organism), jump
+    // (true: the camera does not glide)}. Returns {took, moving, close, pitch, columns, rows,
+    // x, y, top, left, rings, at, step}: the milliseconds it took, whether the camera is still
+    // on its way, whether the window is too small for the organism (it shows the named
+    // cell), the pixels of the canvas from node to node, the nodes of the window, its
+    // middle (in cells), the row and the column of the world its first node is (not
+    // wrapped), whether the page is to draw rings over the picture, and for that where
+    // the first node lies and how far it is from node to node (pixels of the screen from
+    // the corner of the canvas).
     function draw(scene) {
       const begin = performance.now();
       const { world, organism, theme, labels, number } = scene;
@@ -3167,18 +3257,19 @@ void main() {
       if (!organism) {
         state.camera = null;
         drawMap(scene);
-        return { took: performance.now() - begin, moving: false, pitch: 0, columns: 0, rows: 0, x: 0, y: 0 };
+        return { took: performance.now() - begin, moving: false, close: false, pitch: 0, columns: 0, rows: 0, x: 0, y: 0, top: 0, left: 0, rings: false, at: null, step: 0 };
       }
       const piece = place(world, organism);
       const room = roomOf(scene);
-      const { columns, rows, moving } = cameraFor(scene, piece, room);
+      const { columns, rows, moving, close } = cameraFor(scene, piece, room);
       const camera = state.camera;
       const p = camera.pitch;
       const ox = (room.left + room.right) / 2 - camera.x * p;
       const oy = (room.top + room.bottom) / 2 - camera.y * p;
       const { width, height, cells } = world;
       const { reaching, next } = scene.forecast;
-      const forecast = Boolean(scene.next);
+      const rings = scene.mode === "graph" && p * state.pixel >= RINGS_FROM;
+      const forecast = scene.mode === "numbers";
       // the nodes of the window: column fx + i, row fy + j of the grid (the world wraps round)
       const fx = Math.round(camera.x - (columns - 1) / 2);
       const fy = Math.round(camera.y - (rows - 1) / 2);
@@ -3189,12 +3280,16 @@ void main() {
       state.view = { fx: Math.round(camera.tx - (columns - 1) / 2), fy: Math.round(camera.ty - (rows - 1) / 2), columns, rows };
       const done = () => {
         drawMap(scene);
-        return { took: performance.now() - begin, moving, pitch: p, columns, rows, x: camera.tx, y: camera.ty };
+        return {
+          took: performance.now() - begin, moving, close, pitch: p, columns, rows, x: camera.tx, y: camera.ty, top: fy, left: fx, rings,
+          at: { x: (ox + fx * p) * state.pixel, y: (oy + fy * p) * state.pixel }, step: p * state.pixel,
+        };
       };
+      if (rings) return done();  // the page draws the rings on this ground
 
       if (p < LINES_FROM) {
         // a large organism: blocks only. As it is: in the colours of the ages; in the view
-        // NEXT: who stays, who dies, and a small block where a cell is born.
+        // NUMBERS: who stays, who dies, and a small block where a cell is born.
         const side = Math.max(1, p * 0.84);
         const small = Math.max(1, p * 0.5);
         const colours = looks.shades.map((rgb) => rgb && css(rgb, 1));
@@ -3246,7 +3341,7 @@ void main() {
       };
 
       if (forecast) {
-        // 2. the view NEXT: tiles in the colours of what comes, with the life support
+        // 2. the view NUMBERS: tiles in the colours of what comes, with the life support
         const tile = Math.max(3, 2 * Math.round(p * 0.4) + 1);
         const half = (tile - 1) / 2;
         const line = Math.max(1, Math.round(p / 12));
@@ -3431,99 +3526,18 @@ void main() {
       };
     }
 
-    // The map of the piece, for the screen CELL: the organism alone on a canvas of its
-    // own (`target`), a square per cell: alive cells in the colour of their age, the cells
-    // round them as ground a shade lighter, so that the whole organism can be looked over.
-    // The chosen cell (`chosen`, a cell of the world or -1) has a frame, and a larger one
-    // goes round it and its eight neighbours: the nine nodes the screen draws. A chosen
-    // cell that is not of the piece is shown while it lies near it.
-    const pieceMaps = new WeakMap();
-    function drawPieceMap(target, scene, chosen, reach) {
-      reach = reach || 1;
-      const { world, organism, theme } = scene;
-      const c = target.getContext("2d");
-      const side = Math.max(40, target.parentNode.clientWidth || PIECE_SIDE);
-      if (!organism) {
-        pieceMaps.delete(target);
-        target.width = target.height = 8;
-        target.style.width = target.style.height = side + "px";
-        c.fillStyle = theme.field;
-        c.fillRect(0, 0, 8, 8);
-        return;
-      }
-      const piece = place(world, organism);
-      const { width, height } = world;
-      let x0 = piece.x0 - 1, x1 = piece.x1 + 1, y0 = piece.y0 - 1, y1 = piece.y1 + 1;
-      let at = null;  // where the chosen cell lies on the grid of the piece
-      if (chosen >= 0) {
-        const k = state.at[chosen];
-        if (k >= 0) at = [piece.xs[k], piece.ys[k]];
-        else {
-          const column = chosen % width, row = Math.floor(chosen / width);
-          const x = column + width * Math.round(((piece.x0 + piece.x1) / 2 - column) / width);
-          const y = row + height * Math.round(((piece.y0 + piece.y1) / 2 - row) / height);
-          if (x >= piece.x0 - PIECE_NEAR && x <= piece.x1 + PIECE_NEAR && y >= piece.y0 - PIECE_NEAR && y <= piece.y1 + PIECE_NEAR) at = [x, y];
-        }
-        if (at) {
-          x0 = Math.min(x0, at[0] - reach - 1); x1 = Math.max(x1, at[0] + reach + 1);
-          y0 = Math.min(y0, at[1] - reach - 1); y1 = Math.max(y1, at[1] + reach + 1);
-        }
-      }
-      const columns = x1 - x0 + 1, rows = y1 - y0 + 1;
-      const unit = Math.max(1, Math.floor(PIECE_SIDE / Math.max(columns, rows)));
-      target.width = columns * unit;
-      target.height = rows * unit;
-      target.style.width = Math.max(1, Math.round((side * columns) / Math.max(columns, rows))) + "px";
-      target.style.height = Math.max(1, Math.round((side * rows) / Math.max(columns, rows))) + "px";
-      c.fillStyle = theme.field;
-      c.fillRect(0, 0, target.width, target.height);
-      const gap = unit >= 4 ? 1 : 0;
-      const colours = render.shadeColours(theme).map((rgb) => rgb && css(rgb, 1));
-      const { cells, xs, ys } = piece;
-      c.fillStyle = theme.grid;
-      for (let k = organism.alive.length; k < cells.length; k++) c.fillRect((xs[k] - x0) * unit, (ys[k] - y0) * unit, unit - gap, unit - gap);
-      for (let k = 0; k < organism.alive.length; k++) {
-        c.fillStyle = colours[Math.max(1, Math.min(AGE_CAP, world.shade[cells[k]]))];
-        c.fillRect((xs[k] - x0) * unit, (ys[k] - y0) * unit, unit - gap, unit - gap);
-      }
-      if (at) {
-        const line = Math.max(1, Math.round(unit / 5));
-        c.lineWidth = line;
-        c.strokeStyle = theme.border;
-        c.globalAlpha = 0.75;
-        const wide = 2 * reach + 1;
-        c.strokeRect((at[0] - reach - x0) * unit - line / 2, (at[1] - reach - y0) * unit - line / 2, wide * unit - gap + line, wide * unit - gap + line);
-        c.globalAlpha = 1;
-        c.strokeStyle = theme.seal;
-        c.strokeRect((at[0] - x0) * unit - line / 2, (at[1] - y0) * unit - line / 2, unit - gap + line, unit - gap + line);
-      }
-      pieceMaps.set(target, { x0, y0, columns, rows, world });
-    }
-
-    // the cell of the world under a point of the map of the piece (pixels of the window),
-    // or -1
-    function pieceCell(target, clientX, clientY) {
-      const map = pieceMaps.get(target);
-      if (!map) return -1;
-      const box = target.getBoundingClientRect();
-      const x = map.x0 + Math.floor(((clientX - box.left) / Math.max(1, box.width)) * map.columns);
-      const y = map.y0 + Math.floor(((clientY - box.top) / Math.max(1, box.height)) * map.rows);
-      const { width, height } = map.world;
+    // the cell of the world under a point of the picture (pixels of the screen from the
+    // corner of the canvas), or -1 where the window shows none
+    function cellUnder(scene, px, py) {
+      const camera = state.camera;
+      const view = state.view;
+      if (!camera || !view || !scene.organism) return -1;
+      const { width, height } = scene.world;
+      const room = roomOf(scene);
+      const x = Math.round(camera.x + (px / state.pixel - (room.left + room.right) / 2) / camera.pitch);
+      const y = Math.round(camera.y + (py / state.pixel - (room.top + room.bottom) / 2) / camera.pitch);
+      if (x < view.fx || y < view.fy || x >= view.fx + view.columns || y >= view.fy + view.rows) return -1;
       return (((y % height) + height) % height) * width + (((x % width) + width) % width);
-    }
-
-    // the middle of a cell on the map of the piece (pixels of the window), or null when
-    // the map does not show it
-    function piecePoint(target, cell) {
-      const map = pieceMaps.get(target);
-      if (!map) return null;
-      const { width, height } = map.world;
-      const box = target.getBoundingClientRect();
-      const column = cell % width, row = Math.floor(cell / width);
-      const x = column + width * Math.round((map.x0 + map.columns / 2 - column) / width);
-      const y = row + height * Math.round((map.y0 + map.rows / 2 - row) / height);
-      if (x < map.x0 || y < map.y0 || x >= map.x0 + map.columns || y >= map.y0 + map.rows) return null;
-      return { x: box.left + ((x - map.x0 + 0.5) / map.columns) * box.width, y: box.top + ((y - map.y0 + 0.5) / map.rows) * box.height };
     }
 
     // where a cell of the world is drawn (pixels of the screen from the corner of the
@@ -3542,16 +3556,16 @@ void main() {
       };
     }
 
-    return { draw, resize, pointOf, mapPoint, drawPieceMap, pieceCell, piecePoint, looksFor };
+    return { draw, resize, pointOf, cellUnder, mapPoint, looksFor };
   }
 
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.organism = { create, FACES_FROM, LINES_FROM, PITCH };
+  root.RetroLife.organism = { create, FACES_FROM, LINES_FROM, PITCH, RINGS_FROM };
 })(window);
 
 </script>
 <script>
-// The picture of one chosen cell (the screen CELL) as a directed graph: nodes, and arrows
+// A directed graph as a picture (the view GRAPH of the screen ORGANISM): nodes, and arrows
 // from one node to another. Nothing else: no relation of three or more nodes, no arrow
 // from a node to itself.
 //
@@ -3562,22 +3576,28 @@ void main() {
 //   2. arrows along the same two nodes, whichever way they point, lie side by side: each
 //      is bent a little to its own side, so that all of them can be seen and counted;
 //   3. a group of nodes that the view names (a cell: its sub-graph) gets a soft pad under
-//      it; the pad of the first group has a frame, the others can be tapped;
-//   4. the nodes on top, small; those of the first group a little larger; the nodes of a
-//      group that the view calls alive are filled;
-//   5. a group or an arrow may carry a sign, a small picture out of a table of pixels
-//      that the view brings (`view.signs`): a group in its middle, over its arrows, an
-//      arrow near the node it arrives at. Signs are for the eye; they stand for no node
-//      and no arrow.
+//      it;
+//   4. the nodes on top, small, all of one size; those of a group that the view calls
+//      alive are filled;
+//   5. a group may carry a sign, a small picture out of a table of pixels that the view
+//      brings (`view.signs`), in its middle, over its arrows. Signs are for the eye; they
+//      stand for no node and no arrow.
 //
-// What an arrow is (its kind, whose it is) comes as class names for the stylesheet
-// (app.css, `.cell-graph`), and an arrow or a group may bring a colour of its own.
+// Every arrow of a kind is drawn alike, wherever it lies in the picture (the user,
+// 2026-11-22: "some outgoing edges ... are transparent, some are totally solidly shown
+// ... make this more consistent"). What an arrow is comes as class names for the
+// stylesheet (app.css, `.cell-graph`), and an arrow or a group may bring a colour.
 //
-// The view: {nodes: [{node, group}], places: {name: [[x, y], ...]}, groups: [{title,
-// colour, alive, sign}], arrows: [{nodes: [a, b], classes, colour, sign, text, meaning}],
-// signs: {name: {rows: ["..X..", ...], colours: {X: css}, back}}}. Places are in units of
-// their own (about the length of an arrow); y grows downwards; there may be more places
-// than nodes (the first ones count).
+// Two levels of detail. "full": as above. "light", for many small cells: every arrow a
+// plain straight line without a head (two arrows along the same two nodes fall on each
+// other; one that brings a colour lies on top), no nodes, pads only under alive groups.
+//
+// The view: {nodes: [{node, group}], places: [[x, y], ...] (one per node), groups:
+// [{colour, alive, sign}], arrows: [{nodes: [a, b], classes, colour}], signs: {name:
+// {rows: ["..X..", ...], colours: {X: css}}}}. Places are in units of their own (about
+// the length of an arrow); y grows downwards.
+//
+// `relaxed` places nodes by forces, the way the Wolfram project places its graphs.
 //
 // This replaced, on 2026-11-22, the drawing of the hypergraph the way the Wolfram
 // Physics Project draws one (parked/cellpicture.js).
@@ -3586,32 +3606,29 @@ void main() {
 
   // shares of the unit of the places
   const NODE = 0.085;    // the radius of a node
-  const FIRST = 1.3;     // the nodes of the first group are drawn this much larger
   const HEAD = 0.2;      // the length of an arrowhead
   const LANE = 0.17;     // between two arrows side by side, at their middle
   const PAD = 0.3;       // how far the pad of a group reaches beyond its nodes
-  const MARGIN = 0.55;   // room round the outermost nodes
-  const ARROW_SIGN = 0.34;  // the side of a sign on an arrow
-  const SIGN_AT = 0.7;      // how far along its arrow a sign sits: nearer to where the arrow arrives
+  const MARGIN = 0.55;   // room round the outermost nodes, when the picture is fitted into a box
   const GROUP_SIGN = 1.02;  // the side of a sign in a group, in mean distances of its nodes from its middle
-
-  function escapeText(text) {
-    return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  }
 
   const f = (value) => value.toFixed(1);
 
-  // From the places (units) to the pixels of a box of `width` x `height`.
-  function frameOf(places, width, height) {
-    const xs = places.map((p) => p[0]);
-    const ys = places.map((p) => p[1]);
-    const low = [Math.min(...xs), Math.min(...ys)];
-    const high = [Math.max(...xs), Math.max(...ys)];
-    const scale = Math.min(width / (high[0] - low[0] + 2 * MARGIN), height / (high[1] - low[1] + 2 * MARGIN));
-    const middle = [(low[0] + high[0]) / 2, (low[1] + high[1]) / 2];
+  // From the places (units) to the pixels of a box {left, top, width, height}: as large
+  // as the box allows, in its middle.
+  function fitted(places, box) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of places) {
+      if (p[0] < x0) x0 = p[0];
+      if (p[0] > x1) x1 = p[0];
+      if (p[1] < y0) y0 = p[1];
+      if (p[1] > y1) y1 = p[1];
+    }
+    const scale = Math.min(box.width / (x1 - x0 + 2 * MARGIN), box.height / (y1 - y0 + 2 * MARGIN));
     return {
       scale,
-      at: (p) => [width / 2 + (p[0] - middle[0]) * scale, height / 2 + (p[1] - middle[1]) * scale],
+      x: box.left + box.width / 2 - ((x0 + x1) / 2) * scale,
+      y: box.top + box.height / 2 - ((y0 + y1) / 2) * scale,
     };
   }
 
@@ -3623,7 +3640,7 @@ void main() {
     const pixel = 1 / size;
     const left = (size - rows[0].length) / 2;
     const top = (size - rows.length) / 2;
-    let marks = sign.back ? '<circle class="sign-back" cx="0.5" cy="0.5" r="0.62"/>' : "";
+    let marks = "";
     rows.forEach((row, y) => {
       let x = 0;
       while (x < row.length) {
@@ -3640,18 +3657,9 @@ void main() {
     return marks;
   }
 
-  // The same as a picture of its own, `side` pixels a side (for a legend).
-  function signMarkup(sign, side) {
-    return '<svg viewBox="-0.15 -0.15 1.3 1.3" width="' + side + '" height="' + side + '" shape-rendering="crispEdges" aria-hidden="true">' +
-      signMarks(sign) + "</svg>";
-  }
-
-  const signAt = (marks, at, side, extra) => "<g " + extra + ' transform="translate(' + f(at[0] - side / 2) + "," + f(at[1] - side / 2) +
-    ") scale(" + side.toFixed(2) + ')" shape-rendering="crispEdges">' + marks + "</g>";
-
   // One arrow as SVG: from `start` to `end`, bent by `shift` pixels to the left of the
   // way from `low` to `high` (the two nodes in a fixed order, so that two arrows that
-  // point against each other are bent to different sides). Also where it carries a sign.
+  // point against each other are bent to different sides).
   function arrowMarks(start, end, low, high, shift, endRadius, head) {
     const along = [high[0] - low[0], high[1] - low[1]];
     const length = Math.hypot(along[0], along[1]) || 1;
@@ -3668,97 +3676,128 @@ void main() {
     const d = shift
       ? "M" + f(start[0]) + "," + f(start[1]) + " Q" + f(bend[0]) + "," + f(bend[1]) + " " + f(base[0]) + "," + f(base[1])
       : "M" + f(start[0]) + "," + f(start[1]) + " L" + f(base[0]) + "," + f(base[1]);
-    return {
-      marks: '<path class="hit" d="' + d + '"/><path class="line" d="' + d + '"/>' +
-        '<polygon class="head" points="' + f(tip[0]) + "," + f(tip[1]) + " " + f(left[0]) + "," + f(left[1]) + " " +
-        f(right[0]) + "," + f(right[1]) + '"/>',
-      carries: [0, 1].map((axis) => (1 - SIGN_AT) * (1 - SIGN_AT) * start[axis] + 2 * (1 - SIGN_AT) * SIGN_AT * bend[axis] +
-        SIGN_AT * SIGN_AT * end[axis]),
-    };
+    return '<path class="hit" d="' + d + '"/><path class="line" d="' + d + '"/>' +
+      '<polygon class="head" points="' + f(tip[0]) + "," + f(tip[1]) + " " + f(left[0]) + "," + f(left[1]) + " " +
+      f(right[0]) + "," + f(right[1]) + '"/>';
   }
 
-  // Draws `view` into `svg`. options: placing (a key of view.places). The SVG gets one
-  // <g class="arrow" data-arrow="i"> per arrow (i: its number in view.arrows), one
-  // <g class="group" data-group="g"> per group, one <circle class="node"> per node, and
-  // one <g class="sign"> per sign (with data-group or data-arrow).
+  // Draws `view` into `svg`. options: {width, height: the pixels of the SVG; frame:
+  // {scale, x, y}, where a place p is drawn at (x + p[0] scale, y + p[1] scale), or, in
+  // its stead, box: {left, top, width, height}, into which the picture is fitted; detail:
+  // "full" or "light"}. Returns {unit: the pixels of a unit, middles: the middle of every
+  // group, [[x, y], ...]}.
+  //
+  // In full detail the SVG gets one <g class="arrow" data-arrow="i"> per arrow (i: its
+  // number in view.arrows), one <g class="group" data-group="g"> per group and one
+  // <circle class="node"> per node; in light detail one <g class="arrow"> per kind and
+  // colour of arrow. A sign is a <use class="sign" data-group="g">.
   function draw(svg, view, options) {
-    const width = Math.max(160, Math.round(svg.clientWidth || svg.parentNode.clientWidth || 400));
-    const height = Math.max(160, Math.round(svg.clientHeight || width));
-    const places = (view.places[options.placing] || view.places.tidy).slice(0, view.nodes.length);
-    const frame = frameOf(places, width, height);
+    const light = options.detail === "light";
+    const frame = options.frame || fitted(view.places, options.box);
     const unit = frame.scale;
-    const where = places.map(frame.at);
+    const where = view.places.map((p) => [frame.x + p[0] * unit, frame.y + p[1] * unit]);
     const number = new Map(view.nodes.map((n, k) => [n.node, k]));
-    const radiusOf = (k) => NODE * unit * (view.nodes[k].group === 0 ? FIRST : 1);
+    const radius = NODE * unit;
     const head = Math.max(2.5, HEAD * unit);
-    const signs = {};
-    for (const [name, sign] of Object.entries(view.signs || {})) signs[name] = signMarks(sign);
 
-    // the lanes: how many arrows run along each two nodes
-    const keyOf = (a, b) => Math.min(a, b) + "-" + Math.max(a, b);
-    const total = new Map();
-    for (const arrow of view.arrows) {
-      const key = keyOf(number.get(arrow.nodes[0]), number.get(arrow.nodes[1]));
-      total.set(key, (total.get(key) || 0) + 1);
-    }
-    const taken = new Map();
-    const carried = [];  // the signs on arrows
-    const arrows = view.arrows.map((arrow, i) => {
-      const a = number.get(arrow.nodes[0]);
-      const b = number.get(arrow.nodes[1]);
-      const key = keyOf(a, b);
-      const lane = taken.get(key) || 0;
-      taken.set(key, lane + 1);
-      const shift = (lane - (total.get(key) - 1) / 2) * LANE * unit;
-      const colour = arrow.colour ? ' style="color:' + arrow.colour + '"' : "";
-      const drawn = arrowMarks(where[a], where[b], where[Math.min(a, b)], where[Math.max(a, b)], shift, radiusOf(b), head);
-      if (arrow.sign && signs[arrow.sign]) {
-        // of the arrow's classes the sign takes those that say whose it is ("of-...")
-        const whose = arrow.classes.split(" ").filter((name) => name.startsWith("of-")).join(" ");
-        carried.push(signAt(signs[arrow.sign], drawn.carries, ARROW_SIGN * unit, 'class="sign ' + whose + '" data-arrow="' + i + '"'));
-      }
-      return '<g class="arrow ' + arrow.classes + (arrow.colour ? " coloured" : "") + '" data-arrow="' + i + '"' + colour + "><title>" +
-        escapeText(arrow.text + ": " + arrow.meaning) + "</title>" + drawn.marks + "</g>";
-    });
+    // the nodes of every group, its middle, and how far its nodes lie from it
+    const members = view.groups.map(() => []);
+    view.nodes.forEach((n, k) => members[n.group].push(k));
+    const middles = members.map((mine) => [0, 1].map((axis) => mine.reduce((sum, k) => sum + where[k][axis], 0) / mine.length));
+    const far = members.map((mine, g) => mine.reduce((sum, k) => sum + Math.hypot(where[k][0] - middles[g][0], where[k][1] - middles[g][1]), 0) / mine.length);
 
-    // the pads: a shape through the nodes of a group, in their order, with round corners;
-    // and the sign of a group in its middle
+    let defs = "";
+    for (const [name, sign] of Object.entries(view.signs || {})) defs += '<g id="cell-sign-' + name + '" shape-rendering="crispEdges">' + signMarks(sign) + "</g>";
     const worn = [];
-    const groups = view.groups.map((group, g) => {
-      const mine = view.nodes.map((n, k) => (n.group === g ? k : -1)).filter((k) => k >= 0);
-      const middle = [0, 1].map((axis) => mine.reduce((sum, k) => sum + where[k][axis], 0) / mine.length);
-      const far = mine.reduce((sum, k) => sum + Math.hypot(where[k][0] - middle[0], where[k][1] - middle[1]), 0) / mine.length;
-      const points = mine.map((k) => f(where[k][0]) + "," + f(where[k][1])).join(" ");
-      const button = g === 0 ? "" : ' role="button" tabindex="0" aria-label="' + escapeText(group.title) + '"';
-      if (group.sign && signs[group.sign]) {
-        worn.push(signAt(signs[group.sign], middle, GROUP_SIGN * far, 'class="sign' + (g === 0 ? " first" : "") + '" data-group="' + g + '"'));
+    view.groups.forEach((group, g) => {
+      if (!group.sign || !view.signs[group.sign]) return;
+      const side = GROUP_SIGN * far[g];
+      worn.push('<use class="sign" data-group="' + g + '" href="#cell-sign-' + group.sign + '" transform="translate(' +
+        f(middles[g][0] - side / 2) + "," + f(middles[g][1] - side / 2) + ") scale(" + side.toFixed(2) + ')"/>');
+    });
+    const corners = (g) => members[g].map((k) => f(where[k][0]) + "," + f(where[k][1])).join(" ");
+
+    let groups = "";
+    let arrows = "";
+    let nodes = "";
+    if (light) {
+      // the pads of the alive groups, one shape per colour
+      const pads = new Map();
+      view.groups.forEach((group, g) => {
+        if (!group.alive) return;
+        const key = group.colour || "";
+        pads.set(key, (pads.get(key) || "") + "M" + members[g].map((k) => f(where[k][0]) + "," + f(where[k][1])).join("L") + "Z");
+      });
+      for (const [colour, d] of pads) {
+        groups += '<g class="group alive"' + (colour ? ' style="color:' + colour + '"' : "") + '><path class="pad" d="' + d + '" stroke-width="' + f(2 * PAD * unit) + '"/></g>';
       }
-      return '<g class="group' + (g === 0 ? " first" : "") + (group.alive ? " alive" : "") + '" data-group="' + g + '"' + button +
-        (group.colour ? ' style="color:' + group.colour + '"' : "") + "><title>" + escapeText(group.title) + "</title>" +
-        '<polygon class="pad" points="' + points + '" stroke-width="' + f(2 * PAD * unit) + '"/>' +
-        (g === 0 ? '<polygon class="frame" points="' + mine.map((k) => {
-          const out = 1 + (PAD * unit * 1.25) / (Math.hypot(where[k][0] - middle[0], where[k][1] - middle[1]) || 1);
-          return f(middle[0] + (where[k][0] - middle[0]) * out) + "," + f(middle[1] + (where[k][1] - middle[1]) * out);
-        }).join(" ") + '"/>' : "") + "</g>";
-    });
+      // the arrows, one path per kind and colour; those that bring a colour on top
+      const kinds = new Map();
+      for (const arrow of view.arrows) {
+        const key = arrow.classes + "|" + (arrow.colour || "");
+        const a = where[number.get(arrow.nodes[0])];
+        const b = where[number.get(arrow.nodes[1])];
+        kinds.set(key, (kinds.get(key) || "") + "M" + f(a[0]) + "," + f(a[1]) + "L" + f(b[0]) + "," + f(b[1]));
+      }
+      const plain = [];
+      const coloured = [];
+      for (const [key, d] of kinds) {
+        const [classes, colour] = key.split("|");
+        (colour ? coloured : plain).push('<g class="arrow ' + classes + (colour ? ' coloured" style="color:' + colour : "") + '"><path class="line" d="' + d + '"/></g>');
+      }
+      arrows = plain.join("") + coloured.join("");
+    } else {
+      view.groups.forEach((group, g) => {
+        groups += '<g class="group' + (group.alive ? " alive" : "") + '" data-group="' + g + '"' +
+          (group.colour ? ' style="color:' + group.colour + '"' : "") + '><polygon class="pad" points="' + corners(g) +
+          '" stroke-width="' + f(2 * PAD * unit) + '"/></g>';
+      });
+      // the lanes: how many arrows run along each two nodes
+      const keyOf = (a, b) => (a < b ? a * view.nodes.length + b : b * view.nodes.length + a);
+      const total = new Map();
+      for (const arrow of view.arrows) {
+        const key = keyOf(number.get(arrow.nodes[0]), number.get(arrow.nodes[1]));
+        total.set(key, (total.get(key) || 0) + 1);
+      }
+      const taken = new Map();
+      const marks = [];
+      view.arrows.forEach((arrow, i) => {
+        const a = number.get(arrow.nodes[0]);
+        const b = number.get(arrow.nodes[1]);
+        const key = keyOf(a, b);
+        const lane = taken.get(key) || 0;
+        taken.set(key, lane + 1);
+        const shift = (lane - (total.get(key) - 1) / 2) * LANE * unit;
+        marks.push('<g class="arrow ' + arrow.classes + (arrow.colour ? ' coloured" style="color:' + arrow.colour : "") + '" data-arrow="' + i + '">' +
+          arrowMarks(where[a], where[b], where[Math.min(a, b)], where[Math.max(a, b)], shift, radius, head) + "</g>");
+      });
+      arrows = marks.join("");
+      const circles = [];
+      view.nodes.forEach((n, k) => {
+        const group = view.groups[n.group];
+        circles.push('<circle class="node' + (group.alive ? " alive" : "") + '" cx="' + f(where[k][0]) + '" cy="' + f(where[k][1]) + '" r="' + f(radius) + '"' +
+          (group.alive && group.colour ? ' style="color:' + group.colour + '"' : "") + "/>");
+      });
+      nodes = circles.join("");
+    }
 
-    const nodes = view.nodes.map((n, k) => {
-      const group = view.groups[n.group];
-      return '<circle class="node' + (n.group === 0 ? " first" : "") + (group.alive ? " alive" : "") + '" data-node="' + k +
-        '" cx="' + f(where[k][0]) + '" cy="' + f(where[k][1]) + '" r="' + f(radiusOf(k)) + '"' +
-        (group.alive && group.colour ? ' style="color:' + group.colour + '"' : "") + "/>";
-    });
-
-    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("viewBox", "0 0 " + options.width + " " + options.height);
     svg.classList.add("cell-graph");
-    svg.innerHTML = '<g class="groups">' + groups.join("") + '</g><g class="arrows">' + arrows.join("") +
-      '</g><g class="signs">' + worn.join("") + carried.join("") + '</g><g class="nodes">' + nodes.join("") + "</g>";
+    svg.classList.toggle("light", light);
+    svg.classList.remove("lit");
+    // lines grow with the picture, within bounds
+    svg.style.setProperty("--line", Math.max(0.8, Math.min(3, unit * 0.035)).toFixed(2) + "px");
+    svg.innerHTML = "<defs>" + defs + '</defs><g class="groups">' + groups + '</g><g class="arrows">' + arrows +
+      '</g><g class="signs">' + worn.join("") + '</g><g class="nodes">' + nodes + "</g>";
     svg.dataset.arrows = String(view.arrows.length);
     svg.dataset.nodes = String(view.nodes.length);
     svg.dataset.unit = f(unit);
+    svg.dataset.detail = light ? "light" : "full";
+    return { unit, middles };
   }
 
-  // Lights arrow `i` (its number in view.arrows; -1: none) and pales the rest.
+  // Lights arrow `i` (its number in view.arrows; -1: none) and pales the rest. Full
+  // detail only.
   function light(svg, i) {
     svg.classList.toggle("lit", i >= 0);
     for (const element of svg.querySelectorAll(".on")) element.classList.remove("on");
@@ -3767,32 +3806,132 @@ void main() {
     }
   }
 
+  function clear(svg) {
+    if (svg.innerHTML) svg.innerHTML = "";
+    svg.dataset.arrows = svg.dataset.nodes = "0";
+    svg.dataset.detail = "";
+  }
+
+  // Places by forces: the method the Wolfram project places its graphs with (a
+  // spring-electrical embedding). Every link pulls its two nodes together (with the
+  // square of its length), all nodes push each other away (with one over their
+  // distance), and the nodes are moved a little at a time, less and less, until the
+  // forces balance.
+  //
+  // `start`: where the nodes lie to begin with, [[x, y], ...]; `links`: pairs of node
+  // numbers, [[a, b], ...]; `length`: how long a link wants to be. It does not start
+  // from random places: so the outcome is the same every time (a picture must not differ
+  // from one look to the next), and it holds for any number of nodes (from random starts,
+  // pictures of more than nine rings came out with rings folded over each other). A node
+  // pushes only the nodes within REACH lengths of it: further away the push is small, and
+  // so the work grows with the number of nodes and not with its square.
+  const REACH = 3;
+  const ROUNDS = 160;
+
+  function relaxed(start, links, length) {
+    const n = start.length;
+    const x = new Float64Array(n);
+    const y = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      x[i] = start[i][0];
+      y[i] = start[i][1];
+    }
+    const fx = new Float64Array(n);
+    const fy = new Float64Array(n);
+    const next = new Int32Array(n);
+    const far = REACH * length;
+    for (let round = 0; round < ROUNDS; round++) {
+      fx.fill(0);
+      fy.fill(0);
+      // the nodes sorted into squares of `far` a side: a node looks only into its own
+      // square and the eight round it
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let i = 0; i < n; i++) {
+        if (x[i] < x0) x0 = x[i];
+        if (x[i] > x1) x1 = x[i];
+        if (y[i] < y0) y0 = y[i];
+        if (y[i] > y1) y1 = y[i];
+      }
+      const columns = Math.floor((x1 - x0) / far) + 1;
+      const rows = Math.floor((y1 - y0) / far) + 1;
+      const first = new Int32Array(columns * rows).fill(-1);
+      for (let i = 0; i < n; i++) {
+        const square = Math.floor((y[i] - y0) / far) * columns + Math.floor((x[i] - x0) / far);
+        next[i] = first[square];
+        first[square] = i;
+      }
+      for (let i = 0; i < n; i++) {
+        const column = Math.floor((x[i] - x0) / far);
+        const row = Math.floor((y[i] - y0) / far);
+        for (let r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
+          for (let c = Math.max(0, column - 1); c <= Math.min(columns - 1, column + 1); c++) {
+            for (let j = first[r * columns + c]; j >= 0; j = next[j]) {
+              if (j <= i) continue;
+              let dx = x[i] - x[j];
+              let dy = y[i] - y[j];
+              let apart = dx * dx + dy * dy;
+              if (apart >= far * far) continue;
+              if (apart < 1e-9) {
+                // two nodes on one spot: apart along a way that their numbers decide
+                dx = ((i * 7 + j * 13) % 11 - 5) * 1e-3 || 1e-3;
+                dy = ((i * 5 + j * 3) % 7 - 3) * 1e-3;
+                apart = dx * dx + dy * dy;
+              }
+              const push = (length * length) / apart;  // (length² / distance) along (d / distance)
+              fx[i] += dx * push; fy[i] += dy * push;
+              fx[j] -= dx * push; fy[j] -= dy * push;
+            }
+          }
+        }
+      }
+      for (const [a, b] of links) {
+        const dx = x[b] - x[a];
+        const dy = y[b] - y[a];
+        const pull = Math.hypot(dx, dy) / length;  // (distance² / length) along (d / distance)
+        fx[a] += dx * pull; fy[a] += dy * pull;
+        fx[b] -= dx * pull; fy[b] -= dy * pull;
+      }
+      const most = 0.25 * length * (1 - round / ROUNDS);  // a node moves at most this far in a round
+      for (let i = 0; i < n; i++) {
+        const force = Math.hypot(fx[i], fy[i]);
+        if (force < 1e-12) continue;
+        const step = Math.min(most, force * 0.05) / force;
+        x[i] += fx[i] * step;
+        y[i] += fy[i] * step;
+      }
+    }
+    const places = new Array(n);
+    for (let i = 0; i < n; i++) places[i] = [x[i], y[i]];
+    return places;
+  }
+
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.cellGraph = { draw, light, signMarkup };
-})(window);
+  root.RetroLife.cellGraph = { draw, light, clear, relaxed, NODE };
+})(typeof window !== "undefined" ? window : globalThis);
 
 </script>
 <script>
-// Retro Life, the page: what a touch does, the play loop, the four screens, the sheets.
+// Retro Life, the page: what a touch does, the play loop, the three screens, the sheets.
 //
 // The world and its rule are in life.js, the hypergraph in hypergraph.js, the drawing in
 // render.js (the map), donut.js (the ring), organism.js (one organism as a piece of the
-// ring's grid), cellgraph.js (one cell as a piece of a directed graph) and
-// pixel.js (letters, icons, faces). Nothing
-// about Life or the model is decided in this file: it asks those, and it gets its
-// formations and maps as data (#game-data, written by retro_game.page from
+// ring's grid), cellgraph.js (a piece of a directed graph) and pixel.js (letters, icons,
+// faces). Nothing about Life or the model is decided in this file: it asks those, and it
+// gets its formations and maps as data (#game-data, written by retro_game.page from
 // retro_game.patterns).
 //
 // The page has six buttons: the screen to the left, start/stop, one generation, add a
 // formation, settings, the screen to the right. Everything else is in the settings sheet.
 // On the map a finger draws; two fingers (or the wheel) zoom and move. On the ring a
 // finger turns it, two fingers zoom, a tap sets or unsets the cell of a node. The
-// picture of an organism has two buttons of its own (the organism before, the next one)
-// and a small map on which an organism is chosen; a tap on the picture goes to the next.
-// Its button NEXT changes the picture into a forecast: who stays, dies and is born.
-// The picture of a cell has the map of its organism, on which a cell is chosen (a tap on
-// a neighbour in the picture goes there too), and a button for what the picture does when
-// the organism moves on. On both the world plays slowly (ORGANISM_RATE), to be followed.
+// picture of an organism has two buttons of its own (the organism before, the next one),
+// a small map on which an organism is chosen, a row for what the window shows (NORMAL:
+// as it is; NUMBERS: who stays, dies and is born; GRAPH: every cell a ring of eight
+// nodes, a piece of the directed graph of the second model) and two buttons for how much
+// of the world it shows. There the world plays slowly (ORGANISM_RATE), to be followed.
+//
+// What can be switched looks alike everywhere: a choice of several is a row of joined
+// buttons (`.row`), a switch that is on or off carries a lamp (`.lamp`).
 //
 // Drawing happens only when something changed (`requestDraw`); a loop of frames runs only
 // while the world plays or a stamp flashes.
@@ -3807,22 +3946,28 @@ void main() {
 
   const SPEEDS = [1, 2, 5, 10, 20, 30, 60, 120, 240, 0];  // generations a second; 0: as fast as it goes
   const FIRST_SPEED = 2;     // 5 generations a second: calm
-  const ORGANISM_RATE = 1;   // generations a second at most while the third or the fourth screen shows
+  const ORGANISM_RATE = 1;   // generations a second at most while the third screen shows
   const FRAME_BUDGET = 12;   // ms a frame may spend on computing generations
   const VIEWS = [
     { key: "map", name: "MAP", kana: "マップ" },
     { key: "donut", name: "DONUT", kana: "ドーナツ" },
     { key: "organism", name: "ORGANISM", kana: "いきもの" },
-    { key: "cell", name: "CELL", kana: "セル" },
   ];
-  // What the picture of a cell does when the world moves on (the fourth screen).
-  const FOLLOWS = [
-    { key: "near", name: "STAY NEAR", says: "Stay near: the picture stays at its cell while the organism is at it, and moves on with the organism when it has left." },
-    { key: "alive", name: "STAY ON LIFE", says: "Stay on life: when the cell dies, the picture moves to the nearest alive cell of the organism, a newly born one first." },
-    { key: "fixed", name: "STAY PUT", says: "Stay put: the picture stays at its cell whatever happens." },
+  // What the window of the third screen shows; `says` pops up when the view is changed
+  // (the user, 2026-11-22: "when changing view a short description should pop up").
+  const MODES = [
+    { key: "normal", says: "Normal: the organism as it is. A face is an alive cell, a rock a dead one. The coloured lines carry life to the neighbours." },
+    { key: "numbers", says: "Numbers: on every cell, how many of its neighbours are alive. Light tiles stay alive, red ones die, a hollow frame is born." },
+    { key: "graph", says: "Graph: every cell opened up into a ring of eight nodes. A face in a ring is alive; a coloured line between rings carries life. Plus looks closer." },
   ];
-  const SLOW_VIEWS = new Set(["organism", "cell"]);
-  const FORECAST_ROOM = 156;  // pixels kept free for the button NEXT and its legend
+  // How much the window of the third screen shows when the user says so: nodes across the
+  // shorter side of its room, from one cell to the whole world.
+  const ACROSS = [1, 3, 5, 7, 9, 13, 19, 27, 39, 55, 79, 111, 159, 223, 319];
+  const SLOW_VIEWS = new Set(["organism"]);
+  const LEGEND_ROOM = 58;     // pixels kept free above the buttons of the third screen for the legend of NUMBERS
+  const FULL_FROM = 44;       // pixels from cell to cell, from which the view GRAPH draws every arrow with its head ...
+  const FULL_CELLS = 400;     // ... and the cells of the window up to which it does
+  const FORCES_NODES = 60000; // nodes up to which the view GRAPH places by forces (about a second of work, once)
   const MAX_SCALE = 96;      // pixels per cell at the closest zoom of the map
   const TAP = 10;            // a touch that moved less than this many pixels is a tap
   const SPIN = 0.00012;      // the ring turns by itself while the world plays: radians a ms
@@ -3853,11 +3998,10 @@ void main() {
     followed: null,      // the organism of the third screen: {world, cells, x, y}
     pick: 0,             // counts the times another organism came into the picture (it jumps)
     chosen: 0,           // counts the times the user chose another organism, or a world began
-    cell: -1,            // the cell of the fourth screen
-    follow: "near",      // what its picture does when the world moves on (FOLLOWS)
-    placing: "tidy",     // where the nodes of its picture lie (a key of data.places)
-    reach: 1,            // how far its picture reaches: 1, 2, 3 for 3 x 3, 5 x 5, 7 x 7 cells
-    forecast: false,     // the third screen shows what the coming generation does (NEXT)
+    cell: -1,            // the cell in the middle of a window too small for the organism
+    mode: "normal",      // what the window of the third screen shows (MODES)
+    across: 0,           // how much it shows: nodes across (ACROSS), or 0: as the organism needs
+    placing: "tidy",     // where the nodes of the view GRAPH lie: "tidy" or "forces"
     view: "map",
     playing: false,
     speed: FIRST_SPEED,
@@ -3894,8 +4038,8 @@ void main() {
 
   function savePrefs() {
     store(PREFS, {
-      theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin, follow: state.follow,
-      forecast: state.forecast, cellPlacing: state.placing, reach: state.reach, lesson: state.lessonAt || 0,
+      theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin,
+      mode: state.mode, placing: state.placing, lesson: state.lessonAt || 0,
     });
   }
 
@@ -4132,13 +4276,49 @@ void main() {
     showAnother(which);
   }
 
-  // The view NEXT of the third screen: the picture as a forecast of the coming generation.
-  function setForecast(on) {
-    state.forecast = Boolean(on);
-    document.body.dataset.forecast = state.forecast ? "1" : "0";
-    $("organism-next").setAttribute("aria-pressed", String(state.forecast));
-    $("forecast").setAttribute("aria-pressed", String(state.forecast));
+  // What the window of the third screen shows. `says`: with the short description.
+  function setMode(key, says) {
+    const at = Math.max(0, MODES.findIndex((entry) => entry.key === key));
+    state.mode = MODES[at].key;
+    document.body.dataset.shows = state.mode;
+    for (const element of document.querySelectorAll("button[data-mode]")) {
+      element.setAttribute("aria-pressed", String(element.dataset.mode === state.mode));
+    }
+    if (says) hint(MODES[at].says, 6400);
     requestDraw();
+  }
+
+  // How much the window shows. The steps the world has room for: the last one is the
+  // whole of its shorter side.
+  function zoomSteps() {
+    const most = Math.min(state.world.width, state.world.height);
+    return ACROSS.filter((across) => across < most).concat([most]);
+  }
+
+  // 0: as the organism needs it; otherwise the step nearest to `across`
+  function setAcross(across) {
+    const steps = zoomSteps();
+    across = Math.round(Number(across)) || 0;
+    state.across = across > 0 ? steps.reduce((best, step) => (Math.abs(step - across) < Math.abs(best - across) ? step : best)) : 0;
+    requestDraw();
+  }
+
+  // One step closer (1) or one step further out (-1). From the window that suits the
+  // organism: the next step from what that window shows.
+  function zoomBy(by) {
+    const steps = zoomSteps();
+    let at;
+    if (state.across) {
+      const now = steps.indexOf(Math.min(state.across, steps[steps.length - 1]));
+      at = now - by;
+    } else {
+      const shown = organismView && organismView.columns ? Math.min(organismView.columns, organismView.rows) : steps[steps.length - 1];
+      at = by > 0 ? steps.filter((step) => step < shown).length - 1 : steps.findIndex((step) => step > shown);
+      if (by < 0 && at < 0) return;  // the window shows all there is
+    }
+    if (at < 0 || at >= steps.length) return;
+    flash(by > 0 ? "organism-in" : "organism-out");
+    setAcross(steps[at]);
   }
 
   function organismScene() {
@@ -4147,35 +4327,59 @@ void main() {
     if (!now.forecast) now.forecast = graph.forecast(state.world.cells, state.world.width, state.world.height);
     // The picture keeps clear of the card at the top and of what lies at the bottom: on
     // an upright screen it stays above the buttons and the legend, on a wide one between
-    // them. The room is the same whether the legend shows or not: nothing moves when
-    // the view NEXT is switched on.
+    // them. The room is the same whatever the window shows: nothing moves when the view
+    // is changed.
     const box = organismCanvas.getBoundingClientRect();
     const card = $("hud").getBoundingClientRect();
     const pick = $("organism-pick").getBoundingClientRect();
+    const ways = $("organism-ways").getBoundingClientRect();
     const room = { left: 0, top: Math.max(0, card.bottom - box.top), right: box.width, bottom: box.height };
     if (pick.width) {
-      if (box.height >= box.width) room.bottom = Math.min(pick.top - box.top, box.height - FORECAST_ROOM);
+      if (box.height >= box.width) room.bottom = Math.min(pick.top, ways.top) - box.top - LEGEND_ROOM;
       else {
+        // between the buttons: under the card, or beside it from the top of the screen,
+        // whichever leaves the picture more room
         room.right = pick.left - box.left;
-        room.left = Math.max(box.right - pick.left, FORECAST_ROOM);  // as much room left as right
+        const under = { left: ways.right - box.left, top: room.top };
+        const beside = { left: Math.max(ways.right, card.right) - box.left, top: 0 };
+        const area = (place) => Math.max(0, room.right - place.left) * Math.max(0, room.bottom - place.top);
+        const best = area(beside) > area(under) ? beside : under;
+        room.left = best.left;
+        room.top = best.top;
       }
     }
+    const most = Math.min(state.world.width, state.world.height);
     return {
       world: state.world, labels: now.labels, number: now.which, organism: now.organism, forecast: now.forecast,
-      next: state.forecast, theme: renderer.theme(), room, pick: state.pick,
+      mode: state.mode, theme: renderer.theme(), room, pick: state.pick,
+      across: Math.min(state.across, most), focus: lookAtCell(), jump: state.mode === "graph",
     };
   }
 
-  // the line at the top, the legend of the coming generation, and the note when nothing
-  // is alive, for the organism shown
+  // the line at the top, the legend of the coming generation, how much the window shows,
+  // and the note when nothing is alive, for the organism shown
   function showOrganism() {
     const now = looked;
     const drawn = now.organism;
-    setPixels("hud-nodes", drawn ? (now.which + 1) + "/" + number(now.count) + "  " + number(now.nodes) + " NODES" : "0/0");
-    setPixels("hud-relations", drawn ? number(graph.relationCountOfOrganism(drawn)) + " RELATIONS" : "");
+    const seen = organismView;
+    if (seen && seen.rings && ringsView) {
+      // the view GRAPH: the piece of the directed graph the window shows
+      setPixels("hud-nodes", drawn ? (now.which + 1) + "/" + number(now.count) + "  " + number(ringsView.window.nodes.length) + " NODES" : "0/0");
+      setPixels("hud-relations", number(ringsView.window.arrows.length) + " ARROWS");
+    } else {
+      setPixels("hud-nodes", drawn ? (now.which + 1) + "/" + number(now.count) + "  " + number(now.nodes) + " NODES" : "0/0");
+      setPixels("hud-relations", drawn ? number(graph.relationCountOfOrganism(drawn)) + " RELATIONS" : "");
+    }
     $("organism-up").disabled = $("organism-down").disabled = now.count < 2;
     $("organism-fate").hidden = !drawn;
-    $("organism-next").disabled = !drawn;
+    const steps = zoomSteps();
+    const size = drawn && seen && seen.columns ? seen.columns + " x " + seen.rows : "";
+    setPixels("organism-size", size);
+    setPixels("zoom-size", size || "-");
+    const shown = seen && seen.columns ? Math.min(seen.columns, seen.rows) : 0;
+    $("organism-in").disabled = $("zoom-in").disabled = !drawn || shown <= 1;
+    $("organism-out").disabled = $("zoom-out").disabled = !drawn || (state.across ? state.across >= steps[steps.length - 1] : shown >= steps[steps.length - 1]);
+    $("zoom-fit").disabled = !state.across;
     if (drawn) {
       setPixels("fate-stay", number(now.fate.stay) + " STAY");
       setPixels("fate-die", number(now.fate.die) + " DIE");
@@ -4188,23 +4392,19 @@ void main() {
     }
   }
 
-  // ---- the cell of the fourth screen
-
-  // The fourth screen shows one cell of the organism of the third. Which cell: the one
-  // the user chose (on the map of the organism, or by a tap on a neighbour); to begin
-  // with, and whenever another organism is chosen, the alive cell nearest to the
-  // organism's middle. What happens to the choice when the world moves on is `state.follow`:
+  // ---- the cell in the middle of a window that is too small for the organism
   //
-  //   near   the cell stays while the organism is at it (it is one of its alive cells or
-  //          next to one); when the organism has left it behind, the picture moves on to
-  //          the organism's nearest alive cell. A blinker's cell is watched as it blinks,
-  //          a glider is followed.
-  //   alive  as soon as the cell is dead after a generation, the picture moves to the
-  //          nearest alive cell.
-  //   fixed  the cell stays whatever happens.
+  // When the user has zoomed in so far that the organism no longer fits, the window shows
+  // one cell of it in its middle: the one the user tapped; to begin with, and whenever
+  // another organism is chosen, the alive cell nearest to the organism's middle. When the
+  // world moves on, the cell stays while the organism is at it (it is one of its alive
+  // cells or next to one); when the organism has left it behind, the window moves on to
+  // the organism's nearest alive cell. So a blinker's cell is watched as it blinks, and a
+  // glider is followed. (The screen CELL, which this replaces, had two more ways on a
+  // button: stay on life, stay put. They went with it.)
   //
   // "Nearest" is counted in steps of the grid (a neighbour before anything further away);
-  // among equally near cells one that was just born comes first, as the user proposed.
+  // among equally near cells one that was just born comes first.
   let settled = null;  // for which state of the world the cell was last settled
 
   function sortedHas(list, value) {
@@ -4246,20 +4446,15 @@ void main() {
     if (same && settled.version === world.version && settled.chosen === state.chosen) return state.cell;
     const organism = now.organism;
     let cell = same ? state.cell : -1;
-    let moved = false;
     if (organism) {
-      const leave = state.follow === "alive" ? !world.cells[cell]
-        : state.follow === "near" && !(sortedHas(organism.alive, cell) || sortedHas(organism.around, cell));
       if (cell < 0 || settled.chosen !== state.chosen) {
         cell = nearestOf(organism, state.followed.x, state.followed.y);
-      } else if (leave) {
+      } else if (!(sortedHas(organism.alive, cell) || sortedHas(organism.around, cell))) {
         cell = nearestOf(organism, (cell % world.width) + 0.5, Math.floor(cell / world.width) + 0.5);
-        moved = true;
       }
     }
     state.cell = cell;
     settled = { world, version: world.version, chosen: state.chosen };
-    if (moved && state.view === "cell") flash("cell-follow");  // the button says why the picture moved
     return cell;
   }
 
@@ -4270,200 +4465,192 @@ void main() {
     requestDraw();
   }
 
-  // How far the picture of a cell reaches: the cell with its eight neighbours, or the
-  // 5 x 5 or 7 x 7 cells round it (as far as the world is large enough).
-  function setReach(reach) {
-    const most = Math.min(graph.MAX_REACH, Math.floor((Math.min(state.world.width, state.world.height) - 1) / 2));
-    state.reach = Math.max(1, Math.min(most, Math.round(Number(reach)) || 1));
-    const wide = 2 * state.reach + 1;
-    setPixels("cell-zoom", wide + " x " + wide);
-    for (const element of $("reaches").children) {
-      element.setAttribute("aria-pressed", String(Number(element.dataset.reach) === state.reach));
-    }
-    requestDraw();
-  }
+  // ---- the view GRAPH: the cells of the window as rings of eight nodes
+  //
+  // organism.js keeps the ground free and says where the cells of the window lie; this
+  // draws, over it, the piece of the directed graph of the second model that belongs to
+  // those cells (hypergraph.js, ringWindow): every cell a ring of eight nodes.
 
   function setPlacing(key) {
-    state.placing = data.places[key] ? key : "tidy";
+    state.placing = key === "forces" ? "forces" : "tidy";
     for (const element of document.querySelectorAll("[data-placing]")) {
       element.setAttribute("aria-pressed", String(element.dataset.placing === state.placing));
     }
     requestDraw();
   }
 
-  function setFollow(key) {
-    const at = Math.max(0, FOLLOWS.findIndex((entry) => entry.key === key));
-    state.follow = FOLLOWS[at].key;
-    setPixels("cell-follow", FOLLOWS[at].name);
-    $("cell-follow").title = FOLLOWS[at].says + " Tap for another way.";
-    for (const element of $("follows").children) {
-      element.setAttribute("aria-pressed", String(element.dataset.follow === state.follow));
-      element.title = FOLLOWS.find((entry) => entry.key === element.dataset.follow).says;
+  const graphSvg = $("organism-graph");
+  let ringsShown = "";   // what the rings show (drawn again only when that changes)
+  let ringsView = null;  // {window, middles, detail, placing}: the rings as they were last drawn
+  let lit = -1;          // the arrow kept lit by a tap
+  let ringsRefused = false;  // the view GRAPH is on, and the cells are too small for rings
+  let forcesRefused = false; // by forces is on, and the window holds too many rings for it
+
+  // Tidy places for a window of columns x rows cells: every ring a regular octagon of
+  // radius 1 with each door towards its neighbour (door 0 at the top), the rings
+  // data.ringGap apart, as the cells lie on the map.
+  const placed = new Map();
+  function remembered(key, make) {
+    if (!placed.has(key)) {
+      if (placed.size > 16) placed.clear();
+      placed.set(key, make());
     }
+    return placed.get(key);
   }
 
-  const cellSvg = $("cell-svg");
-  let cellShown = "";    // what the picture shows (redrawn only when that changes)
-  let cellScope = null;  // the scope of the cell shown
-  let lit = -1;          // the arrow kept lit by a tap
+  function tidyPlaces(columns, rows) {
+    return remembered("tidy|" + columns + "|" + rows, () => {
+      const places = [];
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < columns; i++) {
+          for (let k = 0; k < graph.DOORS; k++) {
+            const angle = (2 * Math.PI * k) / graph.DOORS;
+            places.push([i * data.ringGap + Math.sin(angle), j * data.ringGap - Math.cos(angle)]);
+          }
+        }
+      }
+      return places;
+    });
+  }
 
-  // Draws the fourth screen: the cell and its eight neighbours as a piece of a directed
-  // graph (every cell a ring of eight nodes, 72 nodes and 148 arrows), the map of the
-  // organism, and what comes next. Returns the milliseconds it took.
-  function showCell() {
+  // Places by forces for such a window (cellgraph.js, relaxed), from the arrows that
+  // never change alone: the rims and the lines. The cords are left out, because they
+  // move when a cell is born or dies and the picture must not. Worked out once per size
+  // of window, from the tidy places.
+  function forcePlaces(columns, rows) {
+    return remembered("forces|" + columns + "|" + rows, () => {
+      const blank = graph.ringWindow(new Uint8Array(columns * rows), columns, rows, 0, 0, rows, columns);
+      const links = [];
+      const seen = new Set();
+      for (const arrow of blank.arrows) {
+        if (arrow.kind !== "rim" && arrow.kind !== "line") continue;
+        const a = Math.min(arrow.nodes[0], arrow.nodes[1]) - graph.FIRST_NODE;
+        const b = Math.max(arrow.nodes[0], arrow.nodes[1]) - graph.FIRST_NODE;
+        if (seen.has(a * blank.nodes.length + b)) continue;
+        seen.add(a * blank.nodes.length + b);
+        links.push([a, b]);
+      }
+      return cellGraph.relaxed(tidyPlaces(columns, rows), links, 2 * Math.sin(Math.PI / graph.DOORS));
+    });
+  }
+
+  // Draws the rings for what organism.js last drew (`drawn`), or takes them away.
+  // Returns the milliseconds it took.
+  function showRings(drawn) {
+    const on = Boolean(drawn.rings);
+    document.body.dataset.rings = on ? "1" : "0";
+    if (!on) {
+      if (ringsShown) cellGraph.clear(graphSvg);
+      ringsShown = "";
+      ringsView = null;
+      // the view GRAPH, but the cells are too small for rings: say so, once
+      const small = state.mode === "graph" && drawn.columns > 0 && state.view === "organism";
+      if (small && !ringsRefused) hint("So many cells are too small to be drawn as rings. Plus looks closer.", 5200);
+      ringsRefused = small;
+      return 0;
+    }
+    if (ringsRefused) $("hint").classList.remove("on");  // what it said no longer holds
+    ringsRefused = false;
     const begin = performance.now();
     const world = state.world;
-    const cell = lookAtCell();
+    const { width, height } = world;
+    const wrapped = (value, size) => ((value % size) + size) % size;
+    const seen = graph.ringWindow(world.cells, width, height, wrapped(drawn.top, height), wrapped(drawn.left, width), drawn.rows, drawn.columns);
+    const count = drawn.rows * drawn.columns;
+    const detail = drawn.step >= FULL_FROM && count <= FULL_CELLS ? "full" : "light";
+    const tooMany = state.placing === "forces" && seen.nodes.length > FORCES_NODES;
+    const placing = state.placing === "forces" && count > 1 && !tooMany ? "forces" : "tidy";
+    if (tooMany && !forcesRefused) hint("Too many rings to place by forces: they lie tidy. Plus looks closer.", 5200);
+    forcesRefused = tooMany;
+    const box = organismCanvas.getBoundingClientRect();
+    const key = [width, height, seen.cells[0], drawn.columns, drawn.rows, drawn.step, drawn.at.x, drawn.at.y, box.width, box.height,
+      state.theme, placing, detail, seen.alive.join("")].join("|");
+    if (key === ringsShown) return performance.now() - begin;
+    ringsShown = key;
+    lit = -1;
     const theme = renderer.theme();
-    const none = cell < 0 || !looked.organism;  // nothing is alive: no organism, no picture
-    $("organism-note").hidden = !none;
-    $("cell-fate").hidden = none;
-    picture.drawPieceMap($("cell-map"), { world, organism: looked.organism, theme }, cell, state.reach);
-    $("cell-legend").hidden = true;
-    if (none) {
-      setPixels("organism-note-title", "NOTHING ALIVE");
-      $("organism-note-text").textContent = "Draw a few cells on the map, or add a formation.";
-      setPixels("hud-nodes", "NO CELL");
-      setPixels("hud-relations", "");
-      cellSvg.innerHTML = "";
-      cellShown = "";
-      cellScope = null;
-      return performance.now() - begin;
-    }
-    // where the picture may lie: a square, clear of the card, the map and the lines below
-    const stage = $("cell-view").getBoundingClientRect();
-    const card = $("hud").getBoundingClientRect();
-    const pick = $("cell-pick").getBoundingClientRect();
-    const fate = $("cell-fate").getBoundingClientRect();
-    let top = Math.max(0, card.bottom - stage.top) + 4;
-    let bottom = stage.height - 4;
-    let wide = stage.width - 8;
-    if (stage.height >= stage.width) {
-      top = Math.max(top, pick.bottom - stage.top + 4);
-      if (fate.height) bottom = fate.top - stage.top - 4;
-    } else if (pick.width) {
-      wide = stage.width - 2 * (stage.right - pick.left) - 8;
-    }
-    const side = Math.max(120, Math.floor(Math.min(wide, bottom - top)));
-    cellSvg.style.width = cellSvg.style.height = side + "px";
-    cellSvg.style.left = Math.round((stage.width - side) / 2) + "px";
-    // upright, the picture lies at the top of its room and a hint below it; sideways it
-    // lies in the middle and a hint in the column beside it, under the small map
-    const upright = stage.height >= stage.width;
-    cellSvg.style.top = Math.round(upright ? top : top + (bottom - top - side) / 2) + "px";
-    document.body.style.setProperty("--cell-column", Math.max(150, Math.floor((stage.width - side) / 2 - 18)) + "px");
-    document.body.style.setProperty("--cell-hint-top", Math.round(pick.bottom - stage.top + 10) + "px");
-    // where the column under the small map is too short for a hint (a phone held
-    // sideways), the hint lies in the column on the left, under the card
-    document.body.dataset.cellHint = !upright && stage.height - (pick.bottom - stage.top) < 130 ? "left" : "right";
-    document.body.style.setProperty("--cell-card-bottom", Math.round(card.bottom - stage.top + 8) + "px");
-
-    const scope = graph.ringScope(world.cells, world.width, world.height, cell, state.reach);
-    // On this screen every alive cell has one colour, whatever its age (the user,
+    // In this view every alive cell has one colour, whatever its age (the user,
     // 2026-11-22: "Living cells should have one color. Life edges and inner living edges
-    // maybe could have different color"): the colour of a young cell for the cell, its
-    // face and its cords, the colour of the just born for the lines that carry life.
-    const shades = picture.looksFor(theme).shades;
+    // maybe could have different color"): the colour of a young cell for the cell and its
+    // face, the colour of the just born for the lines that carry life. The cords across
+    // the face are a lighter tint of the cell's colour (the user, the same day: "the
+    // edges going trough the cell's face are red, just like the face ... make the edges
+    // slightly different color").
+    const looks = picture.looksFor(theme);
     const css = (rgb) => "rgb(" + rgb.join(",") + ")";
-    const aliveColour = css(shades[2]);
-    const lifeColour = css(shades[1]);
-    const signs = cellSigns(theme, aliveColour, lifeColour);
-    // a wider picture is always tidy: placing by forces is worked out for nine cells
-    const placing = state.reach === 1 ? state.placing : "tidy";
-    const key = [world.width, world.height, cell, side, state.theme, placing, state.reach, scope.cells.map((one) => one.alive).join("")].join("|");
-    if (key !== cellShown) {
-      cellShown = key;
-      cellScope = scope;
-      lit = -1;
-      const at = new Map(scope.cells.map((one, k) => [one.cell, k]));
-      const sends = (arrow) => arrow.kind === "line" && scope.cells[at.get(arrow.cell)].alive;
-      cellGraph.draw(cellSvg, {
-        nodes: scope.nodes.map((node, k) => ({ node, group: Math.floor(k / graph.DOORS) })),
-        places: data.places,
-        signs,
-        // an alive cell wears a face in its ring, as on the map
-        groups: scope.cells.map((one, k) => ({
-          title: "the cell in row " + one.row + ", column " + one.column + ": " + (one.alive ? "alive" : "dead") +
-            (k === 0 ? " (the cell shown)" : " · tap to look at it"),
-          colour: one.alive ? aliveColour : "",
-          alive: one.alive,
-          sign: one.alive ? "face" : "",
-        })),
-        // a line out of an alive cell will carry "alive" when the next generation begins:
-        // it has the colour of life and carries a heart
-        arrows: scope.arrows.map((arrow) => ({
-          ...arrow,
-          classes: arrow.kind.replace(" ", "-") + " of-" + arrow.part + (sends(arrow) ? " life" : ""),
-          colour: arrow.kind === "cord across" ? aliveColour : sends(arrow) ? lifeColour : "",
-          sign: sends(arrow) ? "heart" : "",
-        })),
-      }, { placing });
-      cellSvg.dataset.cell = String(cell);
-      cellSvg.dataset.reach = String(state.reach);
-    }
-    setPixels("hud-nodes", graph.DOORS + " NODES");
-    setPixels("hud-relations", graph.ARROWS_PER_CELL + " ARROWS");
-    // the rule of Life in hearts: how many lines that carry life reach the cell
-    const hearts = scope.aliveNeighbours + " \u2665";
-    setPixels("cell-where", "ROW " + scope.row + " COL " + scope.column);
-    setPixels("cell-now", (scope.alive ? "ALIVE" : "DEAD") + "  " + hearts + " REACH IT");
-    setPixels("cell-rule", scope.alive ? "STAYS WITH 2 OR 3 \u2665" : "BORN WITH 3 \u2665");
-    setPixels("cell-next", "NEXT: " + (scope.alive ? (scope.next ? "STAYS ALIVE" : "DIES") : scope.next ? "IS BORN" : "STAYS DEAD"));
-    showLegend(stage, top, side, upright, fate, card);
+    const aliveColour = css(looks.shades[2]);
+    const cordColour = css(looks.shades[2].map((value, k) => Math.round(value + (looks.star[k] - value) * 0.55)));
+    const lifeColour = css(looks.shades[1]);
+    const unit = drawn.step / data.ringGap;
+    const made = cellGraph.draw(graphSvg, {
+      nodes: seen.nodes.map((node, k) => ({ node, group: Math.floor(k / graph.DOORS) })),
+      places: placing === "forces" ? forcePlaces(drawn.columns, drawn.rows) : tidyPlaces(drawn.columns, drawn.rows),
+      // an alive cell wears a face in its ring, as on the map (a plain square in a look without faces)
+      signs: { face: { rows: theme.plain ? pixel.PLAIN_CELL : pixel.CELLS.young, colours: { X: aliveColour, h: theme.light, o: theme.face } } },
+      groups: seen.alive.map((alive) => ({ colour: alive ? aliveColour : "", alive, sign: alive ? "face" : "" })),
+      // a line out of an alive cell will carry "alive" when the next generation begins:
+      // it has the colour of life
+      arrows: seen.arrows.map((arrow) => {
+        const life = arrow.kind === "line" && world.cells[arrow.cell];
+        return {
+          nodes: arrow.nodes,
+          classes: arrow.kind.replace(" ", "-") + (life ? " life" : ""),
+          colour: arrow.kind === "cord across" ? cordColour : life ? lifeColour : "",
+        };
+      }),
+    }, {
+      width: box.width, height: box.height, detail,
+      // tidy: every ring on its node of the grid, so that nothing moves when the view is
+      // changed; by forces: fitted into the rectangle of the window
+      frame: placing === "tidy" ? { scale: unit, x: drawn.at.x, y: drawn.at.y } : null,
+      box: { left: drawn.at.x - drawn.step / 2, top: drawn.at.y - drawn.step / 2, width: drawn.columns * drawn.step, height: drawn.rows * drawn.step },
+    });
+    ringsView = { window: seen, middles: made.middles, detail, placing };
+    graphSvg.dataset.cell = String(seen.cells[0]);
+    graphSvg.dataset.placing = placing;
     return performance.now() - begin;
-  }
-
-  // The signs of the fourth screen: the face of an alive cell (the face of the map, in
-  // the one colour of this screen; a plain square in a look without faces) and the heart
-  // on a line that carries life.
-  function cellSigns(theme, aliveColour, lifeColour) {
-    return {
-      face: { rows: theme.plain ? pixel.PLAIN_CELL : pixel.CELLS.young, colours: { X: aliveColour, h: theme.light, o: theme.face } },
-      heart: { rows: pixel.HEART, colours: { "#": lifeColour }, back: true },
-    };
-  }
-
-  // The words on the picture: what a face, an empty ring and a heart are, and the rule
-  // in hearts. Shown only where the screen has room for them: beside the picture when it
-  // is wide, under it when it is tall.
-  let legendFor = "";
-  function showLegend(stage, top, side, upright, fate, card) {
-    const legend = $("cell-legend");
-    fate = $("cell-fate").getBoundingClientRect();  // its lines were just written
-    const theme = renderer.theme();
-    if (legendFor !== state.theme) {
-      legendFor = state.theme;
-      const shades = picture.looksFor(theme).shades;
-      const css = (rgb) => "rgb(" + rgb.join(",") + ")";
-      const signs = cellSigns(theme, css(shades[2]), css(shades[1]));
-      for (const mark of legend.querySelectorAll("[data-sign]")) {
-        mark.innerHTML = signs[mark.dataset.sign] ? cellGraph.signMarkup(signs[mark.dataset.sign], mark.dataset.sign === "face" ? 26 : 18) : "";
-      }
-    }
-    legend.hidden = false;
-    legend.style.maxWidth = "";
-    if (upright) {
-      // under the picture, above the lines at the bottom
-      const room = (fate.height ? fate.top - stage.top : stage.height) - (top + side) - 16;
-      legend.style.left = "12px";
-      legend.style.top = Math.round(top + side + 8) + "px";
-      legend.style.maxWidth = Math.round(stage.width - 24) + "px";
-      legend.hidden = legend.offsetHeight > room;
-    } else {
-      // in the column to the left of the picture, between the card and the lines
-      const column = Math.floor((stage.width - side) / 2) - 22;
-      const from = card.bottom - stage.top + 12;
-      const room = (fate.height ? fate.top - stage.top : stage.height) - from - 12;
-      legend.style.left = "12px";
-      legend.style.maxWidth = Math.max(0, column) + "px";
-      legend.style.top = Math.round(from + Math.max(0, (room - legend.offsetHeight) / 2)) + "px";
-      legend.hidden = column < 190 || legend.offsetHeight > room;
-    }
   }
 
   function lightArrow(index) {
     lit = index;
-    cellGraph.light(cellSvg, index);
+    cellGraph.light(graphSvg, index);
+  }
+
+  // The cell of the world under a point of the picture (pixels of the window), or -1.
+  function cellAtPoint(clientX, clientY) {
+    const box = organismCanvas.getBoundingClientRect();
+    const x = clientX - box.left, y = clientY - box.top;
+    if (ringsView && ringsView.placing === "forces") {
+      // placed by forces, the rings do not lie on the grid: the ring nearest to the point
+      let best = -1;
+      let nearest = Infinity;
+      ringsView.middles.forEach((middle, k) => {
+        const apart = (middle[0] - x) * (middle[0] - x) + (middle[1] - y) * (middle[1] - y);
+        if (apart < nearest) {
+          nearest = apart;
+          best = k;
+        }
+      });
+      return best >= 0 ? ringsView.window.cells[best] : -1;
+    }
+    return picture.cellUnder(organismScene(), x, y);
+  }
+
+  // A tap on the picture of an organism. On an alive cell of another organism: that
+  // organism is shown. In a window too small for the organism: the cell tapped comes
+  // into the middle. Otherwise: the next organism, as before.
+  function tapOrganism(clientX, clientY) {
+    const now = lookAtOrganism();
+    if (!now.organism) return;
+    const cell = cellAtPoint(clientX, clientY);
+    if (cell >= 0 && state.world.cells[cell] && now.labels[cell] !== now.which) {
+      flash(now.labels[cell] < now.which ? "organism-up" : "organism-down");
+      showAnother(now.labels[cell]);
+    } else if (cell >= 0 && organismView && organismView.close) {
+      chooseCell(cell);
+    } else {
+      stepOrganism(1);
+    }
   }
 
   // ---- drawing
@@ -4488,7 +4675,7 @@ void main() {
     state.scheduled = 0;
     let again = false;
     if (state.playing) {
-      // on the third and the fourth screen time runs slowly, so that an organism can be followed
+      // on the third screen time runs slowly, so that an organism can be followed
       const set = SPEEDS[state.speed];
       const rate = state.learn ? LEARN_RATE : SLOW_VIEWS.has(state.view) ? Math.min(set || ORGANISM_RATE, ORGANISM_RATE) : set;
       const elapsed = Math.min(250, now - state.last);
@@ -4545,11 +4732,9 @@ void main() {
     } else if (state.view === "organism") {
       const drawn = picture.draw(organismScene());
       organismView = drawn;
-      took = drawn.took;
+      took = drawn.took + showRings(drawn);
       showOrganism();
       if (drawn.moving) requestDraw();  // the camera is still on its way: another picture next frame
-    } else if (state.view === "cell") {
-      took = showCell();
     } else {
       took = renderer.draw(mapScene(now));
     }
@@ -4967,15 +5152,7 @@ void main() {
       if (state.stamp) leaveStamping();
       if (!hinted.has("organism")) {
         hinted.add("organism");
-        hint("One organism on its piece of the ring's grid. NEXT shows what the coming generation does. Time runs slowly here.", 6200);
-      }
-    }
-    if (key === "cell") {
-      if (state.stamp) leaveStamping();
-      cellShown = "";
-      if (!hinted.has("cell")) {
-        hinted.add("cell");
-        hint("Inside one cell: a ring of eight nodes. A face: it is alive. A heart: a line that carries life to a neighbour. Tap a ring to go there.", 7000);
+        hint("One organism on its piece of the ring's grid. The row at the bottom changes what you see, minus and plus how much. Time runs slowly here.", 6400);
       }
     }
     if (key === "donut") {
@@ -5286,145 +5463,102 @@ void main() {
     zoomRing(wheelFactor(event));
   }, { passive: false });
 
-  // ---- a tap on the picture of an organism: the next one
+  // ---- the picture of an organism: a tap (tapOrganism), the wheel and two fingers for
+  // how much it shows, a tap on an arrow of the view GRAPH
 
+  const fingers = new Map();  // on the picture of an organism: pointer id -> where it is
   let tapped = null;
-  organismCanvas.addEventListener("pointerdown", (event) => {
-    tapped = { id: event.pointerId, x: event.clientX, y: event.clientY };
-  });
-  organismCanvas.addEventListener("pointerup", (event) => {
-    if (tapped && tapped.id === event.pointerId && Math.hypot(event.clientX - tapped.x, event.clientY - tapped.y) < TAP) stepOrganism(1);
-    tapped = null;
-  });
-  organismCanvas.addEventListener("pointercancel", () => {
-    tapped = null;
-  });
+  let spread = 0;
+  const spreadNow = () => {
+    const [a, b] = Array.from(fingers.values());
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+  // (the rings of the view GRAPH lie over the canvas: a finger may come down on a face or
+  // on an arrow of theirs, so both listen)
+  for (const element of [organismCanvas, graphSvg]) {
+    element.addEventListener("pointerdown", (event) => {
+      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      tapped = fingers.size === 1 ? { id: event.pointerId, x: event.clientX, y: event.clientY } : null;
+      if (fingers.size === 2) spread = spreadNow();
+    });
+    element.addEventListener("pointermove", (event) => {
+      if (!fingers.has(event.pointerId)) return;
+      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (fingers.size !== 2 || !spread) return;
+      // two fingers: a step closer when they have spread, a step out when they have closed
+      const now = spreadNow();
+      if (now < spread * 0.72 || now > spread * 1.38) {
+        zoomBy(now > spread ? 1 : -1);
+        spread = now;
+      }
+    });
+    element.addEventListener("pointerup", (event) => {
+      const tap = tapped && tapped.id === event.pointerId && Math.hypot(event.clientX - tapped.x, event.clientY - tapped.y) < TAP;
+      tapped = null;
+      fingers.delete(event.pointerId);
+      spread = 0;
+      // (a tap on an arrow is its own: the click below says which arrow it is)
+      if (tap && !(event.target.closest && event.target.closest(".arrow[data-arrow]"))) tapOrganism(event.clientX, event.clientY);
+    });
+    for (const type of ["pointercancel", "pointerleave"]) {
+      element.addEventListener(type, (event) => {
+        tapped = null;
+        fingers.delete(event.pointerId);
+        spread = 0;
+      });
+    }
+  }
   organismCanvas.addEventListener("contextmenu", (event) => event.preventDefault());
-  $("organism-next").addEventListener("click", () => {
-    setForecast(!state.forecast);
-    savePrefs();
+  // the wheel: a step at a time
+  let wheeled = 0;
+  for (const element of [organismCanvas, graphSvg]) {
+    element.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      if (performance.now() - wheeled < 260 || !event.deltaY) return;
+      wheeled = performance.now();
+      zoomBy(event.deltaY > 0 ? -1 : 1);
+    }, { passive: false });
+  }
+  // an arrow of the view GRAPH (where arrows have heads): a tap lights it and says which
+  // one it is, in the notation of the project and in words
+  graphSvg.addEventListener("click", (event) => {
+    const arrow = event.target.closest(".arrow[data-arrow]");
+    if (!arrow || !ringsView) return;
+    const index = Number(arrow.dataset.arrow) !== lit ? Number(arrow.dataset.arrow) : -1;
+    lightArrow(index);
+    if (index < 0) return;
+    const one = ringsView.window.arrows[index];
+    hint(graph.text(one.nodes) + ": " + graph.describeArrow(one.nodes, state.world.width, one.kind.startsWith("cord")), 5200);
   });
+  for (const id of ["organism-views", "modes"]) {
+    $(id).addEventListener("click", (event) => {
+      const chosen = event.target.closest("[data-mode]");
+      if (!chosen) return;
+      const changed = chosen.dataset.mode !== state.mode;
+      setMode(chosen.dataset.mode, changed && state.view === "organism");
+      savePrefs();
+    });
+  }
+  $("organism-in").addEventListener("click", () => zoomBy(1));
+  $("organism-out").addEventListener("click", () => zoomBy(-1));
+  $("zoom-in").addEventListener("click", () => zoomBy(1));
+  $("zoom-out").addEventListener("click", () => zoomBy(-1));
+  $("zoom-fit").addEventListener("click", () => setAcross(0));
   $("organism-up").addEventListener("click", () => stepOrganism(-1));
   $("organism-down").addEventListener("click", () => stepOrganism(1));
   $("organism-map").addEventListener("click", (event) => {
     const at = picture.mapPoint(state.world, event.clientX, event.clientY);
     pickOrganismAt(at.x, at.y);
   });
-
-  // ---- the picture of a cell: a tap on the ring of a neighbour goes there, a tap on an
-  // arrow lights it and says what it is; the map of the organism chooses a cell
-
-  let pinched = 0;  // when two fingers last zoomed: the tap that ends it chooses nothing
-  cellSvg.addEventListener("click", (event) => {
-    if (performance.now() - pinched < 400) return;
-    const sign = event.target.closest(".sign");
-    if (sign && cellScope && sign.dataset.group) {
-      if (Number(sign.dataset.group) > 0) chooseCell(cellScope.cells[Number(sign.dataset.group)].cell);
-      return;
-    }
-    const arrow = event.target.closest(".arrow") || (sign && cellSvg.querySelector('.arrow[data-arrow="' + sign.dataset.arrow + '"]'));
-    if (arrow && cellScope) {
-      // the rim and the cords of a neighbour are its ring: a tap there goes to that cell
-      const tapped = cellScope.arrows[Number(arrow.dataset.arrow)];
-      if (tapped.part === "neighbour") {
-        chooseCell(tapped.cell);
-        return;
-      }
-      const index = Number(arrow.dataset.arrow) !== lit ? Number(arrow.dataset.arrow) : -1;
-      lightArrow(index);
-      if (index >= 0) hint(cellScope.arrows[index].text + ": " + cellScope.arrows[index].meaning, 5200);
-      return;
-    }
-    const group = event.target.closest(".group");
-    if (group && cellScope && Number(group.dataset.group) > 0) chooseCell(cellScope.cells[Number(group.dataset.group)].cell);
-    else lightArrow(-1);
-  });
-  cellSvg.addEventListener("keydown", (event) => {
-    const group = event.target.closest(".group");
-    if ((event.key === "Enter" || event.key === " ") && group && cellScope && Number(group.dataset.group) > 0) {
-      chooseCell(cellScope.cells[Number(group.dataset.group)].cell);
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  });
-  $("cell-map-box").addEventListener("click", (event) => {
-    const index = picture.pieceCell($("cell-map"), event.clientX, event.clientY);
-    if (index >= 0) chooseCell(index);
-  });
-  $("follows").addEventListener("click", (event) => {
-    const chosen = event.target.closest("[data-follow]");
-    if (!chosen) return;
-    setFollow(chosen.dataset.follow);
-    savePrefs();
-  });
-  $("reaches").addEventListener("click", (event) => {
-    const chosen = event.target.closest("[data-reach]");
-    if (!chosen) return;
-    setReach(chosen.dataset.reach);
-    savePrefs();
-  });
-  $("cell-zoom").addEventListener("click", () => {
-    const most = Math.min(graph.MAX_REACH, Math.floor((Math.min(state.world.width, state.world.height) - 1) / 2));
-    setReach(state.reach >= most ? 1 : state.reach + 1);
-    savePrefs();
-  });
-  // the wheel and two fingers zoom the picture of a cell, a step at a time
-  let wheeled = 0;
-  cellSvg.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    if (performance.now() - wheeled < 260 || !event.deltaY) return;
-    wheeled = performance.now();
-    setReach(state.reach + (event.deltaY > 0 ? 1 : -1));
-    savePrefs();
-  }, { passive: false });
-  const fingers = new Map();
-  let spread = 0;
-  const spreadNow = () => {
-    const [a, b] = Array.from(fingers.values());
-    return Math.hypot(a.x - b.x, a.y - b.y);
-  };
-  cellSvg.addEventListener("pointerdown", (event) => {
-    fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (fingers.size === 2) spread = spreadNow();
-  });
-  cellSvg.addEventListener("pointermove", (event) => {
-    if (!fingers.has(event.pointerId)) return;
-    fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (fingers.size !== 2 || !spread) return;
-    const now = spreadNow();
-    if (now < spread * 0.72 || now > spread * 1.38) {
-      setReach(state.reach + (now < spread ? 1 : -1));
-      savePrefs();
-      spread = now;
-      pinched = performance.now();
-    }
-  });
-  for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
-    cellSvg.addEventListener(type, (event) => {
-      fingers.delete(event.pointerId);
-      spread = 0;
-    });
-  }
   $("placings").addEventListener("click", (event) => {
     const chosen = event.target.closest("[data-placing]");
     if (!chosen) return;
     setPlacing(chosen.dataset.placing);
     savePrefs();
   });
-  $("forecast").addEventListener("click", () => {
-    setForecast(!state.forecast);
-    savePrefs();
-  });
   $("learn").addEventListener("click", () => startLearning());
   $("lesson-again").addEventListener("click", () => {
     if (state.learn && lessonNow()) showLesson(state.learn.index);
-  });
-  $("cell-follow").addEventListener("click", () => {
-    const at = FOLLOWS.findIndex((entry) => entry.key === state.follow);
-    const next = FOLLOWS[(at + 1) % FOLLOWS.length];
-    setFollow(next.key);
-    savePrefs();
-    hint(next.says, 6200);
   });
 
   // ---- sheets
@@ -5535,10 +5669,10 @@ void main() {
     for (const element of document.querySelectorAll("[data-border]")) {
       element.style.borderColor = render.THEMES[key][element.dataset.border];
     }
-    // the fourth screen is night like the ring, in the night of the theme
-    $("cell-view").style.setProperty("--night", render.THEMES[key].space);
-    $("cell-view").style.setProperty("--rock", render.THEMES[key].rock);
-    cellShown = "";
+    // the rings of the view GRAPH lie on the night of the theme, like the ring
+    graphSvg.style.setProperty("--night", render.THEMES[key].space);
+    graphSvg.style.setProperty("--rock", render.THEMES[key].rock);
+    ringsShown = "";
     drawThumbs();
     requestDraw();
   }
@@ -5661,6 +5795,7 @@ void main() {
       if ($("settings").hidden) openSheet("settings"); else closeSheets();
     } else if (key === "r") turnStamp();
     else if (key === "f") flipStamp();
+    else if (key === "0" && state.view === "organism") setAcross(0);
     else if (key === "0") fit();
     else return;
     event.preventDefault();
@@ -5673,7 +5808,7 @@ void main() {
     ring.resize();
     picture.resize();
     if (state.learn) fitLesson(); else if (state.fitted) fit(); else clampCamera();
-    cellShown = "";
+    ringsShown = "";
     requestDraw();
   }
 
@@ -5688,11 +5823,9 @@ void main() {
   setSpeed(Number.isInteger(prefs.speed) ? prefs.speed : FIRST_SPEED);
   setSignals(prefs.signals !== false);
   setSpin(prefs.spin !== false);
-  setFollow(prefs.follow);
-  setPlacing(prefs.cellPlacing);
+  setPlacing(prefs.placing);
   state.lessonAt = Number.isInteger(prefs.lesson) ? prefs.lesson : 0;
-  setReach(prefs.reach);
-  setForecast(prefs.forecast === true);
+  setMode(prefs.mode || (prefs.forecast === true ? "numbers" : "normal"));
   renderer.resize();
   ring.resize();
   picture.resize();
@@ -5755,31 +5888,30 @@ void main() {
         relations: one && now.nodes <= 2000 ? graph.relationsOfOrganism(state.world.width, state.world.height, one) : null,
       };
     },
-    stepOrganism, pickOrganismAt, organismRate: ORGANISM_RATE, setForecast,
+    stepOrganism, pickOrganismAt, organismRate: ORGANISM_RATE, setMode, setAcross, zoomBy, zoomSteps,
     // what the picture of the third screen showed last: the nodes of its window, its
-    // middle (cells), the pixels from node to node, whether it is the view NEXT
+    // middle (cells), the row and the column of its first node, the pixels from node to
+    // node (of the canvas, and of the screen), what it shows and how much the user asked for
     organismView: () => (organismView ? {
       columns: organismView.columns, rows: organismView.rows, x: organismView.x, y: organismView.y,
-      pitch: organismView.pitch, moving: organismView.moving, forecast: state.forecast,
+      top: organismView.top, left: organismView.left, pitch: organismView.pitch, step: organismView.step,
+      moving: organismView.moving, close: organismView.close, rings: organismView.rings,
+      mode: state.mode, across: state.across, cell: state.cell,
     } : null),
     forecast() {
       const found = graph.forecast(state.world.cells, state.world.width, state.world.height);
       return { reaching: Array.from(found.reaching), next: Array.from(found.next) };
     },
-    // the cell of the fourth screen: which one, how it is followed, what the picture holds
-    cell() {
-      const index = lookAtCell();
-      const scope = index >= 0 ? graph.ringScope(state.world.cells, state.world.width, state.world.height, index, state.reach) : null;
-      return {
-        index, follow: state.follow, reach: state.reach, placing: state.placing,
-        alive: scope ? scope.alive : 0, aliveNeighbours: scope ? scope.aliveNeighbours : 0, next: scope ? scope.next : 0,
-        cells: scope ? scope.cells.map((one) => one.cell) : [],
-        nodes: scope ? scope.nodes : [],
-        arrows: scope ? scope.arrows.map((arrow) => ({ nodes: arrow.nodes, kind: arrow.kind, part: arrow.part })) : [],
-        drawn: { arrows: Number(cellSvg.dataset.arrows || 0), nodes: Number(cellSvg.dataset.nodes || 0), cell: Number(cellSvg.dataset.cell || -1) },
-      };
-    },
-    chooseCell, setFollow, setPlacing, setReach,
+    // the rings of the view GRAPH as they were last drawn: the cells of the window, the
+    // piece of the directed graph, and what the picture holds
+    rings: () => (ringsView ? {
+      cells: ringsView.window.cells, alive: ringsView.window.alive, nodes: ringsView.window.nodes,
+      arrows: ringsView.window.arrows.map((arrow) => ({ nodes: arrow.nodes, kind: arrow.kind, cell: arrow.cell })),
+      rows: ringsView.window.rows, columns: ringsView.window.columns,
+      detail: ringsView.detail, placing: ringsView.placing, middles: ringsView.middles,
+      drawn: { arrows: Number(graphSvg.dataset.arrows || 0), nodes: Number(graphSvg.dataset.nodes || 0) },
+    } : null),
+    chooseCell, setPlacing, tapOrganism,
     // the tutorial: start it (at a lesson), leave it, and what it shows
     startLearning, leaveLearning,
     lesson: () => (state.learn ? {
@@ -5787,7 +5919,6 @@ void main() {
       steps: state.learn.steps, guesses: Array.from(state.learn.guesses).sort((a, b) => a - b), says: state.learn.says,
       home: state.learn.home.world === state.world ? "same" : "kept",
     } : null),
-    cellMapPoint: (index) => picture.piecePoint($("cell-map"), index),
     camera: () => ({ ...state.camera }),
     // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
     orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
