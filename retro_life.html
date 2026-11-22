@@ -2365,8 +2365,9 @@ textarea {
 // Such a line has the colour of the node that sends, strong at that node and fading
 // towards a dead neighbour; between two alive nodes it is strong all the way. Links and
 // signals are drawn for worlds of up to LINKS_UP_TO nodes. Behind it all: stars, which
-// turn with the ring; in the look Hiru (the day) a blue sky in bands with a glowing sun,
-// low on the right, that stands still while the ring turns, and the lights have no glow.
+// turn with the ring; in the look Hiru (the day) a blue sky in bands with a glowing sun
+// that goes slowly round the ring by itself, whatever the ring does (it starts low on the
+// right), and the lights have no glow.
 //
 // It is drawn with WebGL on a canvas of few pixels, shown enlarged with hard edges, so
 // that the picture is pixel art like the rest of the game. Every node is one point: a
@@ -2541,13 +2542,15 @@ void main() {
   gl_PointSize = aSeed > 0.86 ? 2.0 : 1.0;
 }`;
 
-  // the sky of the day, a picture as large as the canvas, laid over all of it
+  // a picture laid flat on the canvas: the sky of the day over all of it, the sun in its
+  // place (uRect: left, bottom, width, height, in the units of the canvas from -1 to 1)
   const SKY_VERTEX = `
 attribute vec2 aCorner;
+uniform vec4 uRect;
 varying vec2 vAt;
 void main() {
   vAt = vec2(aCorner.x * 0.5 + 0.5, 0.5 - aCorner.y * 0.5);
-  gl_Position = vec4(aCorner, 0.0, 1.0);
+  gl_Position = vec4(uRect.xy + (aCorner * 0.5 + 0.5) * uRect.zw, 0.0, 1.0);
 }`;
 
   const SKY_FRAGMENT = `
@@ -2568,16 +2571,25 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // middle and golden towards its rim, as the real sun looks, in a glow that lightens the
   // sky round it and fades out at SUN_GLOW times its radius. Both in a few steps, dithered
   // (a 4 x 4 Bayer pattern), so that it is pixel art like the rest.
+  //
+  // It goes round the ring by itself (the user, 2026-11-22: "make the sun rotate in the
+  // background", and asked how, "circles by itself": like a day passing, whatever the
+  // ring does). Its path is an oval round the middle of the canvas, clockwise (over the
+  // top from left to right, as the sun goes), behind the ring; `scene.sun` is how far it
+  // has come on it, from 0 to 1 (app.js: one round in SUN_ROUND milliseconds). At 0 it
+  // stands where it stood before it moved: low on the right.
   const SUN_RADIUS = 0.12;   // of the shorter side of the picture
-  const SUN_AT = [0.8, 0.4]; // its middle, as parts of the width and the height
+  const SUN_PATH = [0.34, 0.34];  // the half widths of its oval, as parts of the width and the height
+  const SUN_START = Math.atan2(0.1, 0.3);  // the angle of its old place, 80 % across and 40 % down
   const SUN_GLOW = 3.2;
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
   const mixed = (a, b, t) => [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * t));
+  const ditherAt = (x, y) => (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+  const steps = (t, levels, dither) => Math.min(levels, Math.floor(t * levels + dither)) / levels;
 
   // The sky of the day as a picture of width x height pixels: the bands of `theme.sky`
-  // from the top down, each seam dithered in a checker of pixels, and the sun in it. It
-  // stands still: nothing in it turns with the ring.
+  // from the top down, each seam dithered in a checker of pixels. It stands still.
   function skyPicture(width, height, theme) {
     const picture = document.createElement("canvas");
     picture.width = width;
@@ -2586,23 +2598,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const image = c.createImageData(width, height);
     const data = image.data;
     const bands = theme.sky.map(render.rgbOf);
-    const core = render.rgbOf(theme.sun);
-    const rim = render.rgbOf(theme.sunRim);
-    const glow = render.rgbOf(theme.sunGlow);
-    const radius = Math.max(6, Math.round(Math.min(width, height) * SUN_RADIUS));
-    const sx = Math.round(width * SUN_AT[0]);
-    const sy = Math.round(height * SUN_AT[1]);
     for (let y = 0; y < height; y++) {
       const f = ((y + 0.5) / height) * bands.length;
       const band = Math.floor(f);
       const seam = f - band > 0.8;
       for (let x = 0; x < width; x++) {
-        let rgb = bands[Math.min(bands.length - 1, seam && (x + y) % 2 === 0 ? band + 1 : band)];
-        const dither = (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
-        const steps = (t, levels) => Math.min(levels, Math.floor(t * levels + dither)) / levels;
-        const r = Math.hypot(x + 0.5 - sx, y + 0.5 - sy) / radius;
-        if (r <= 1) rgb = mixed(rim, core, steps(Math.pow(1 - r * r, 0.35), 4));
-        else if (r < SUN_GLOW) rgb = mixed(rgb, glow, steps(0.9 * ((SUN_GLOW - r) / (SUN_GLOW - 1)) ** 2.2, 6));
+        const rgb = bands[Math.min(bands.length - 1, seam && (x + y) % 2 === 0 ? band + 1 : band)];
         const at = (y * width + x) * 4;
         data[at] = rgb[0];
         data[at + 1] = rgb[1];
@@ -2612,6 +2613,52 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     }
     c.putImageData(image, 0, 0);
     return picture;
+  }
+
+  // The sun in its glow, as a square picture laid over the sky: the disc solid, the glow
+  // the colour `theme.sunGlow` let through in steps (mixing it into the sky as before).
+  function sunPicture(radius, theme) {
+    const side = 2 * Math.ceil(radius * SUN_GLOW);
+    const picture = document.createElement("canvas");
+    picture.width = side;
+    picture.height = side;
+    const c = picture.getContext("2d");
+    const image = c.createImageData(side, side);
+    const data = image.data;
+    const core = render.rgbOf(theme.sun);
+    const rim = render.rgbOf(theme.sunRim);
+    const glow = render.rgbOf(theme.sunGlow);
+    for (let y = 0; y < side; y++) {
+      for (let x = 0; x < side; x++) {
+        const dither = ditherAt(x, y);
+        const r = Math.hypot(x + 0.5 - side / 2, y + 0.5 - side / 2) / radius;
+        let rgb = glow;
+        let alpha = 0;
+        if (r <= 1) {
+          rgb = mixed(rim, core, steps(Math.pow(1 - r * r, 0.35), 4, dither));
+          alpha = 1;
+        } else if (r < SUN_GLOW) {
+          alpha = steps(0.9 * ((SUN_GLOW - r) / (SUN_GLOW - 1)) ** 2.2, 6, dither);
+        }
+        const at = (y * side + x) * 4;
+        data[at] = rgb[0];
+        data[at + 1] = rgb[1];
+        data[at + 2] = rgb[2];
+        data[at + 3] = Math.round(alpha * 255);
+      }
+    }
+    c.putImageData(image, 0, 0);
+    return picture;
+  }
+
+  // Where the middle of the sun is on a canvas of width x height pixels, `phase` of the
+  // way round (whole pixels, so that its pixels lie on those of the sky).
+  function sunPlace(width, height, phase) {
+    const angle = SUN_START - 2 * Math.PI * (phase || 0);
+    return [
+      Math.round(width * (0.5 + SUN_PATH[0] * Math.cos(angle))),
+      Math.round(height * (0.5 - SUN_PATH[1] * Math.sin(angle))),
+    ];
   }
 
   // A small random number maker with a seed, so that rocks and stars stay where they are.
@@ -2687,7 +2734,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       pixel: 3,          // screen pixels per pixel of the picture
       cssWidth: 1,
       cssHeight: 1,
-      sky: null,         // the sky of the day (skyPicture) and what it was made for
+      sky: null,         // the sky of the day (skyPicture), its sun (sunPicture), and what they were made for
+      sun: null,
       skyKey: "",
       skyOnCard: "",     // what the sky on the graphics card was made for
     };
@@ -2732,7 +2780,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       return { made, uniforms: names, attributes };
     }
 
-    let nodes, lines, stars, sky, skyTexture, buffers;
+    let nodes, lines, stars, sky, skyTexture, sunTexture, buffers;
     if (gl) {
       nodes = program(NODE_VERTEX, NODE_FRAGMENT);
       lines = program(LINE_VERTEX, LINE_FRAGMENT);
@@ -2746,9 +2794,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.corners);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
       skyTexture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, skyTexture);
-      for (const [name, value] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) {
-        gl.texParameteri(gl.TEXTURE_2D, name, value);
+      sunTexture = gl.createTexture();
+      for (const texture of [skyTexture, sunTexture]) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        for (const [name, value] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) {
+          gl.texParameteri(gl.TEXTURE_2D, name, value);
+        }
       }
       const random = randomMaker(7);
       const where = new Float32Array(STARS * 3);
@@ -2890,14 +2941,22 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       if (u.uBg) gl.uniform3fv(u.uBg, unit(render.rgbOf(airOf(theme))));
     }
 
-    // the sky of the day for this canvas, made again only when its size or look changed
+    // the sky of the day and its sun for this canvas, made again only when its size or
+    // look changed
     function skyOf(theme) {
       const key = canvas.width + "x" + canvas.height + theme.title;
       if (state.skyKey !== key) {
         state.sky = skyPicture(canvas.width, canvas.height, theme);
+        state.sun = sunPicture(Math.max(6, Math.round(Math.min(canvas.width, canvas.height) * SUN_RADIUS)), theme);
         state.skyKey = key;
       }
       return state.sky;
+    }
+
+    // where the sun's picture lies on the canvas: its left and top corner, in pixels
+    function sunCorner(scene) {
+      const [x, y] = sunPlace(canvas.width, canvas.height, scene.sun);
+      return [x - state.sun.width / 2, y - state.sun.height / 2];
     }
 
     function ages(u, theme) {
@@ -2930,14 +2989,24 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         const picture = skyOf(theme);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, skyTexture);
-        if (state.skyOnCard !== state.skyKey) {
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, picture);
-          state.skyOnCard = state.skyKey;
-        }
+        const fresh = state.skyOnCard !== state.skyKey;
+        if (fresh) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, picture);
         gl.useProgram(sky.made);
         gl.uniform1i(sky.uniforms.uSky, 0);
+        gl.uniform4f(sky.uniforms.uRect, -1, -1, 2, 2);
         attribute(sky, "aCorner", buffers.corners, 2);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        // the sun on it, where it has come on its way round
+        gl.bindTexture(gl.TEXTURE_2D, sunTexture);
+        if (fresh) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, state.sun);
+        state.skyOnCard = state.skyKey;
+        const [left, top] = sunCorner(scene);
+        const side = state.sun.width;
+        gl.uniform4f(sky.uniforms.uRect, (2 * left) / canvas.width - 1, 1 - (2 * (top + side)) / canvas.height, (2 * side) / canvas.width, (2 * side) / canvas.height);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.disable(gl.BLEND);
       } else {
         // the stars, behind everything
         cameraUniforms(stars, camera, theme);
@@ -3009,6 +3078,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       plain.globalAlpha = 1;
       if (theme.sky) {
         plain.drawImage(skyOf(theme), 0, 0);
+        plain.drawImage(state.sun, ...sunCorner(scene));
       } else {
         plain.fillStyle = theme.space;
         plain.fillRect(0, 0, canvas.width, canvas.height);
@@ -3052,8 +3122,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       plain.globalAlpha = 1;
     }
 
-    // scene: {world, turn: {across, up, towards}, zoom, theme, signals}. Returns the
-    // milliseconds it took.
+    // scene: {world, turn: {across, up, towards}, zoom, theme, signals, sun (how far the
+    // sun of the day has come on its way round, 0 to 1)}. Returns the milliseconds it took.
     function draw(scene) {
       const begin = performance.now();
       prepare(scene.world);
@@ -4169,6 +4239,13 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   const MAX_SCALE = 96;      // pixels per cell at the closest zoom of the map
   const TAP = 10;            // a touch that moved less than this many pixels is a tap
   const SPIN = 0.00012;      // the ring turns by itself while the world plays: radians a ms
+  // The sun of the day goes round the ring by itself (the user, 2026-11-22: "make the sun
+  // rotate in the background", circling by itself): one round in SUN_ROUND milliseconds,
+  // also while the world rests, drawn anew every SUN_FRAME milliseconds then. Where the
+  // device asks for less motion it stays at its start, low on the right.
+  const SUN_ROUND = 120000;
+  const SUN_FRAME = 100;
+  const lessMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   const TURN = 0.007;        // radians the ring turns per pixel a finger moves
   // ready ways to look at the ring: [round its axis, tipped] (donut.turnOf). Tipped the
   // negative way, the near rim of the ring lies at the bottom of the picture, as when one
@@ -4212,6 +4289,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     dirty: true,
     scheduled: 0,
     held: false,         // a finger holds the ring: it does not turn by itself
+    sunPinned: null,     // the sun of the day held at a place on its way (for the page check), or null
+    sunDrawn: 0,         // when the ring was last drawn (the sun goes on from there)
     seed: (Date.now() ^ 0x5eed) >>> 0,
   };
 
@@ -4862,7 +4941,14 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   }
 
   function ringScene() {
-    return { world: state.world, turn: state.orbit.turn, zoom: state.orbit.zoom, theme: renderer.theme(), signals: state.signals };
+    return { world: state.world, turn: state.orbit.turn, zoom: state.orbit.zoom, theme: renderer.theme(), signals: state.signals, sun: sunPhase() };
+  }
+
+  // how far the sun has come on its way round the ring (0 to 1)
+  const sunMoves = () => state.sunPinned === null && !(lessMotion && lessMotion.matches);
+  function sunPhase() {
+    if (state.sunPinned !== null) return state.sunPinned;
+    return sunMoves() ? (performance.now() / SUN_ROUND) % 1 : 0;
   }
 
   function requestDraw() {
@@ -4905,6 +4991,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       state.dirty = true;
       again = again || state.effects.length > 0;
     }
+    if (state.view === "donut" && renderer.theme().sky && sunMoves()) {
+      // the sun goes on while the world rests, a few pictures a second
+      if (now - state.sunDrawn >= SUN_FRAME) state.dirty = true;
+      again = true;
+    }
+    if (state.dirty && state.view === "donut") state.sunDrawn = now;
     if (state.dirty) drawNow(now);
     if (again && !state.scheduled) state.scheduled = requestAnimationFrame(frame);
   }
@@ -6449,6 +6541,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       drawNow();
     },
     lookAtRing, setSignals, setSpin,
+    // hold the sun of the day at a place on its way round (0 to 1), or let it go (null)
+    setSun(phase) {
+      state.sunPinned = phase;
+      requestDraw();
+    },
+    sunPhase,
     loadMap, loadText, worldText, resizeWorld, play, pause, goBack, reset, setView, chooseFormation, setTheme, setSpeed, fit,
   };
 })();
