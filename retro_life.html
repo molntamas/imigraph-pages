@@ -88,12 +88,47 @@ body[data-view="organism"] #organism-fate { display: grid; }
 body[data-theme="sumi"] .mark b:not(.seed) { box-shadow: 0 0 0 1px rgba(244, 238, 225, 0.75); }
 body[data-view="organism"] #hint { bottom: 128px; }  /* above the legend and the small map */
 @media (orientation: landscape) { body[data-view="organism"] #hint { bottom: 12px; max-width: calc(100% - 500px); } }  /* between them */
+/* the fourth screen: one cell as the Wolfram project draws a hypergraph; night, like the ring */
+#cell-view { position: absolute; inset: 0; display: none; background: var(--night, #0b0a1a); --night: #0b0a1a; }
+body[data-view="cell"] #cell-view { display: block; }
+body[data-view="cell"] #view { visibility: hidden; }
+#cell-svg { position: absolute; display: block; overflow: visible; touch-action: manipulation; }
+.cell-picture .rel { color: var(--space-ink); opacity: 0.72; }
+.cell-picture .rel.coloured { opacity: 1; }
+.cell-picture .rel.made, .cell-picture .rel.made.removed { color: var(--seal); opacity: 1; }
+.cell-picture .line, .cell-picture .ring, .cell-picture .stalk { fill: none; stroke: currentColor; stroke-width: 1.3; }
+.cell-picture .head { fill: currentColor; stroke: none; }
+.cell-picture .loop { fill: var(--night); stroke: currentColor; stroke-width: 1.3; }
+.cell-picture text { fill: currentColor; text-anchor: middle; dominant-baseline: central; font-family: var(--font); font-weight: 700; pointer-events: none; }
+.cell-picture .made :is(.line, .ring, .stalk, .loop) { stroke-width: 2.6; }
+.cell-picture .hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; }
+.cell-picture .node .hit { fill: transparent; stroke: none; pointer-events: all; }
+.cell-picture .hull { fill: var(--space-ink); fill-opacity: 0.045; stroke: none; pointer-events: none; }
+.cell-picture .disk { fill: var(--night); stroke: var(--space-ink); stroke-width: 1.5; }
+.cell-picture .node.chosen .disk { stroke: var(--accent); stroke-width: 3.5; }
+.cell-picture .node:not(.chosen) { cursor: pointer; outline: none; }
+.cell-picture .node:not(.chosen):is(:hover, :focus-visible) .disk { stroke: var(--accent); stroke-width: 3; }
+.cell-picture .label { fill: var(--space-ink); opacity: 0.85; font-weight: 700; paint-order: stroke; stroke: var(--night); stroke-width: 3px; stroke-linejoin: round; }
+.cell-picture.lit .rel:not(.on), .cell-picture.lit .hull:not(.on) { opacity: 0.12; }
+.cell-picture .rel.on { color: var(--accent) !important; opacity: 1; }
+.cell-picture .rel.on :is(.line, .ring, .stalk, .loop) { stroke-width: 2.8; }
+#cell-pick { position: absolute; top: 10px; right: 10px; display: none; flex-direction: column; align-items: flex-end; gap: 9px; }
+body[data-view="cell"] #cell-pick { display: flex; }
+#cell-map-box { width: 124px; height: 124px; display: grid; place-items: center; cursor: pointer; touch-action: manipulation;
+  background: var(--surface); border: var(--px) solid var(--ink); box-shadow: 0 var(--px) 0 var(--shadow); }
+#cell-map { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+#cell-follow { min-height: 40px; padding: 4px 10px; }
+#cell-fate { position: absolute; left: 12px; bottom: 14px; display: none; gap: 7px; color: var(--space-ink); pointer-events: none; }
+body[data-view="cell"] #cell-fate { display: grid; }
+body[data-view="cell"] .hud-line { max-width: min(520px, calc(100vw - 220px)); }
+body[data-view="cell"] #hint { bottom: 104px; }  /* above the lines at the bottom left */
+@media (orientation: landscape) { body[data-view="cell"] #hint { left: auto; right: 10px; transform: none; bottom: 12px; max-width: min(46%, 560px); } }  /* beside them */
 #organism-note { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 32px)); pointer-events: none;
   text-align: center; padding: 12px 14px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow); }
 #organism-note-title { display: flex; justify-content: center; }
 #organism-note .px { height: 14px; color: var(--accent); }
 #organism-note p { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--dim); }
-body:not([data-view="organism"]) #organism-note { display: none; }
+body:not([data-view="organism"]):not([data-view="cell"]) #organism-note { display: none; }
 
 #hud { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 10px; pointer-events: none;
   padding: 6px 10px 6px 6px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow); }
@@ -107,8 +142,8 @@ body[data-playing="1"] #mascot { animation: hop 0.8s steps(1) infinite; }
 .hud-line { display: flex; flex-wrap: wrap; gap: 5px 12px; max-width: calc(100vw - 110px); }
 body[data-view="map"] .donut-only { display: none; }  /* the second line: ring and organism */
 /* on the ring, and on the piece cut out of it, it is night in every theme */
-body[data-view="donut"] #hud, body[data-view="organism"] #hud { background: transparent; border-color: transparent; box-shadow: none; color: var(--space-ink); }
-body[data-view="donut"] #view-kana, body[data-view="organism"] #view-kana { color: var(--space-ink); opacity: 0.7; }
+body[data-view="donut"] #hud, body[data-view="organism"] #hud, body[data-view="cell"] #hud { background: transparent; border-color: transparent; box-shadow: none; color: var(--space-ink); }
+body[data-view="donut"] #view-kana, body[data-view="organism"] #view-kana, body[data-view="cell"] #view-kana { color: var(--space-ink); opacity: 0.7; }
 
 #hint {
   position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 20px);
@@ -189,6 +224,8 @@ textarea {
   #bar { gap: 6px; padding: 8px 8px 11px; }
   .sheet { top: auto; left: 0; width: 100%; max-height: 84dvh; border-left: 0; border-top: var(--px) solid var(--ink); }
   #hud { top: 8px; left: 8px; }
+  #cell-pick { top: 8px; right: 8px; }
+  #cell-map-box { width: 104px; height: 104px; }
   /* below the card at the top, not over it */
   #stamp-bar { top: 82px; left: 8px; right: 8px; flex-wrap: nowrap; justify-content: space-between; }
   #stamp-bar button { padding: 4px 8px; }
@@ -215,6 +252,14 @@ textarea {
     <canvas id="donut" aria-label="The world as a hypergraph on a ring. Drag to turn it, zoom with two fingers or the wheel, tap a node to set or unset its cell."></canvas>
     <canvas id="organism" aria-label="One organism of the world with the cells round it, as a piece of the grid of the ring. Tap for the next organism."></canvas>
     <div id="organism-note" hidden><div id="organism-note-title"></div><p id="organism-note-text"></p></div>
+    <div id="cell-view">
+      <svg id="cell-svg" role="img" aria-label="One cell of the organism with its eight neighbours and the relations between them, drawn the way the Wolfram Physics Project draws a hypergraph. Tap a neighbour to go there, tap a relation to hear what it says."></svg>
+    </div>
+    <div id="cell-fate" hidden aria-label="The cell now, and in the coming generation"><span id="cell-where"></span><span id="cell-now"></span><span id="cell-next"></span></div>
+    <div id="cell-pick">
+      <div id="cell-map-box" title="The organism. Tap a cell to look at it."><canvas id="cell-map" width="8" height="8" role="img" aria-label="The organism, with the cell shown and its eight neighbours framed. Tap a cell to look at it."></canvas></div>
+      <button type="button" id="cell-follow" aria-label="What the picture does when the organism moves on or the cell dies"></button>
+    </div>
     <div id="organism-fate" hidden aria-label="What the coming generation does to this organism">
       <div class="fate" title="Alive now and in the coming generation: a face in a frame"><i class="mark framed"><b data-colour="young"></b></i><span id="fate-stay"></span></div>
       <div class="fate" title="Alive now, dead in the coming generation: a faint face without a frame"><i class="mark"><b class="faint" data-colour="young"></b></i><span id="fate-die"></span></div>
@@ -276,7 +321,7 @@ textarea {
           <button type="button" id="faster" aria-label="Faster" title="Faster (key +)" data-icon="add"></button>
         </span>
       </div>
-      <p class="note">On the third screen, Organism, the world plays at one generation a second at most, so that it can be followed.</p>
+      <p class="note">On the third and the fourth screen, Organism and Cell, the world plays at one generation a second at most, so that it can be followed.</p>
     </section>
     <section>
       <h3 data-px="MAPS"></h3>
@@ -348,8 +393,16 @@ textarea {
         <li><i class="swatch hollow"></i><span>a <b>grey rock</b> is a dead cell that stays dead</span></li>
       </ul>
       <p>The numbers at the bottom left count them. A coloured line that comes in from the edge is the signal of another organism nearby, and the faint light it starts from is that organism's cell. The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down), and so does a tap on the picture; on the small map, which shows the whole world, tap an organism to look at it. The world plays slowly on this screen, one generation a second at most. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the piece shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
+      <p><b>Cell</b> <span lang="ja">(セル)</span> shows one cell of that organism as the hypergraph really is, drawn the way the Wolfram Physics Project draws one. There are nine nodes: the cell (with the accent ring) and its eight neighbours, placed by forces, so their places mean nothing. Between them lie 36 relations: the 20 of the cell itself, the eight lines that come in from its neighbours, and the eight relations that say whether each neighbour is alive or dead.</p>
+      <ul class="legend">
+        <li><span>An <b>arrow</b> is a relation that runs from one node to the next; a relation of several nodes is a chain of arrows over a <b>faint shape</b>.</span></li>
+        <li><span>A <b>circle that starts and ends at a node</b> is a place where a relation names that node twice in a row. A dead cell is the relation that names it five times: four circles. "Ready" names it six times: five circles.</span></li>
+        <li><span>A <b>ring round a node</b> is the relation of one node: the cell is alive. An alive node also has the colour of its age.</span></li>
+        <li><span>A <b>coloured arrow</b> is a line out of an alive cell: it will carry "alive" when the next generation begins. A <b>red, thicker</b> mark is what the last generation made: the state of a cell that was just born or has just died.</span></li>
+      </ul>
+      <p>The lines at the bottom left say where the cell lies on the map, what it is, how many of its neighbours are alive, and what it is next. Tap a neighbour in the picture to go there, or a cell on the map of the organism at the top right (the frame there shows the nine cells of the picture). Tap an arrow or a circle to hear which relation it is. The button under the map says what the picture does when the world moves on: <b>Stay near</b> keeps the cell while the organism is at it and moves on with the organism when it has left (a blinker's cell is watched as it blinks, a glider is followed); <b>Stay on life</b> moves to the nearest alive cell as soon as the cell dies, a newly born one first; <b>Stay put</b> never moves.</p>
       <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on exactly this hypergraph, cell for cell. This game turns that round. It computes with the ordinary rule, which is far faster, and shows the hypergraph that the 17 rules would hold at that moment. Tests hold the two equal, relation for relation, between every two generations.</p>
-      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ organisms · A add · S settings · R F turn/mirror · 0 show all</p>
+      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3 4) · ↑ ↓ organisms · A add · S settings · R F turn/mirror · 0 show all</p>
     </section>
   </aside>
 </div>
@@ -781,7 +834,9 @@ textarea {
 //   {s,r,r,r}        the line from cell s to cell r is empty
 //
 // The screen ORGANISM shows a piece of that hypergraph: one organism (alive cells whose
-// signals meet) with the cells next to it and the cells next to those.
+// signals meet) with the cells next to it and the cells next to those. The screen CELL
+// shows one cell of it: the 36 relations that name the cell and its eight neighbours'
+// states (cellScope).
 //
 // No drawing and no page in here (it also runs in Node, tests/harness.cjs).
 (function (root) {
@@ -897,10 +952,11 @@ textarea {
     return relation[0] === cell ? "line out" : "line in";
   }
 
-  // One cell for its picture: the cell and its eight neighbours (clockwise from the one
-  // above), and 36 relations in the order of the table: the cell's state, its ready mark,
-  // its eight lines out, the eight lines in, the states of its eight neighbours, its round
-  // (nine relations) and its neighbourhood.
+  // One cell for its picture (the screen CELL): the cell and its eight neighbours
+  // (clockwise from the one above), and 36 relations in the order of the table: the cell's
+  // state, its ready mark, its eight lines out, the eight lines in, the states of its eight
+  // neighbours, its round (nine relations) and its neighbourhood. Also how many of the
+  // neighbours are alive, and what the cell is after the coming generation (`next`).
   function cellScope(cells, width, height, index) {
     const node = FIRST_NODE + index;
     const around = neighbours(width, height, index).map((n) => n + FIRST_NODE);
@@ -919,10 +975,12 @@ textarea {
       return { node: n, cell: at, row: Math.floor(at / width) + 1, column: at % width + 1, alive: cells[at] ? 1 : 0 };
     };
     const nodes = [node, ...around].map(where);
+    const aliveNeighbours = nodes.slice(1).reduce((sum, n) => sum + n.alive, 0);
     return {
       ...where(node),
       nodes,
-      aliveNeighbours: nodes.slice(1).reduce((sum, n) => sum + n.alive, 0),
+      aliveNeighbours,
+      next: aliveNeighbours === 3 || (cells[index] && aliveNeighbours === 2) ? 1 : 0,
       relations,
     };
   }
@@ -2328,6 +2386,9 @@ void main() {
 // The small map (a canvas of its own beside the buttons of this screen) shows the whole
 // world with this organism marked, and a frame round the piece.
 //
+// For the screen CELL this file also draws the map of the piece (drawPieceMap): the
+// organism alone, a square per cell, with the chosen cell and its eight neighbours framed.
+//
 // Nothing about Life or the model is computed here: which cells, how many signals reach a
 // cell and what it is next come from hypergraph.js (organismOf).
 (function (root) {
@@ -2346,6 +2407,8 @@ void main() {
   const FADING_UP_TO = 700;  // signals up to which each one fades along its way
   const GLIDE = 0.22;        // of the way to where it should be, the camera goes per picture
   const MAP_SIDE = 192;      // pixels of the small map at most (larger worlds are made smaller)
+  const PIECE_SIDE = 132;    // pixels of the map of a piece (a larger piece: a pixel per cell)
+  const PIECE_NEAR = 8;      // a chosen cell this near to the piece is shown on its map
   const STAR_EVERY = 2400;   // pixels of the canvas per star
   const LINKS = [2, 3, 4, 5];  // of graph.DIRECTIONS: right, below right, below, below left
 
@@ -2812,6 +2875,99 @@ void main() {
       };
     }
 
+    // The map of the piece, for the screen CELL: the organism alone on a canvas of its
+    // own (`target`), a square per cell: alive cells in the colour of their age, the cells
+    // round them as ground a shade lighter, so that the whole organism can be looked over.
+    // The chosen cell (`chosen`, a cell of the world or -1) has a frame, and a larger one
+    // goes round it and its eight neighbours: the nine nodes the screen draws. A chosen
+    // cell that is not of the piece is shown while it lies near it.
+    const pieceMaps = new WeakMap();
+    function drawPieceMap(target, scene, chosen) {
+      const { world, organism, theme } = scene;
+      const c = target.getContext("2d");
+      const side = Math.max(40, target.parentNode.clientWidth || PIECE_SIDE);
+      if (!organism) {
+        pieceMaps.delete(target);
+        target.width = target.height = 8;
+        target.style.width = target.style.height = side + "px";
+        c.fillStyle = theme.field;
+        c.fillRect(0, 0, 8, 8);
+        return;
+      }
+      const piece = place(world, organism);
+      const { width, height } = world;
+      let x0 = piece.x0 - 1, x1 = piece.x1 + 1, y0 = piece.y0 - 1, y1 = piece.y1 + 1;
+      let at = null;  // where the chosen cell lies on the grid of the piece
+      if (chosen >= 0) {
+        const k = state.at[chosen];
+        if (k >= 0) at = [piece.xs[k], piece.ys[k]];
+        else {
+          const column = chosen % width, row = Math.floor(chosen / width);
+          const x = column + width * Math.round(((piece.x0 + piece.x1) / 2 - column) / width);
+          const y = row + height * Math.round(((piece.y0 + piece.y1) / 2 - row) / height);
+          if (x >= piece.x0 - PIECE_NEAR && x <= piece.x1 + PIECE_NEAR && y >= piece.y0 - PIECE_NEAR && y <= piece.y1 + PIECE_NEAR) at = [x, y];
+        }
+        if (at) {
+          x0 = Math.min(x0, at[0] - 2); x1 = Math.max(x1, at[0] + 2);
+          y0 = Math.min(y0, at[1] - 2); y1 = Math.max(y1, at[1] + 2);
+        }
+      }
+      const columns = x1 - x0 + 1, rows = y1 - y0 + 1;
+      const unit = Math.max(1, Math.floor(PIECE_SIDE / Math.max(columns, rows)));
+      target.width = columns * unit;
+      target.height = rows * unit;
+      target.style.width = Math.max(1, Math.round((side * columns) / Math.max(columns, rows))) + "px";
+      target.style.height = Math.max(1, Math.round((side * rows) / Math.max(columns, rows))) + "px";
+      c.fillStyle = theme.field;
+      c.fillRect(0, 0, target.width, target.height);
+      const gap = unit >= 4 ? 1 : 0;
+      const colours = render.shadeColours(theme).map((rgb) => rgb && css(rgb, 1));
+      const { cells, xs, ys } = piece;
+      c.fillStyle = theme.grid;
+      for (let k = organism.alive.length; k < cells.length; k++) c.fillRect((xs[k] - x0) * unit, (ys[k] - y0) * unit, unit - gap, unit - gap);
+      for (let k = 0; k < organism.alive.length; k++) {
+        c.fillStyle = colours[Math.max(1, Math.min(AGE_CAP, world.shade[cells[k]]))];
+        c.fillRect((xs[k] - x0) * unit, (ys[k] - y0) * unit, unit - gap, unit - gap);
+      }
+      if (at) {
+        const line = Math.max(1, Math.round(unit / 5));
+        c.lineWidth = line;
+        c.strokeStyle = theme.border;
+        c.globalAlpha = 0.75;
+        c.strokeRect((at[0] - 1 - x0) * unit - line / 2, (at[1] - 1 - y0) * unit - line / 2, 3 * unit - gap + line, 3 * unit - gap + line);
+        c.globalAlpha = 1;
+        c.strokeStyle = theme.seal;
+        c.strokeRect((at[0] - x0) * unit - line / 2, (at[1] - y0) * unit - line / 2, unit - gap + line, unit - gap + line);
+      }
+      pieceMaps.set(target, { x0, y0, columns, rows, world });
+    }
+
+    // the cell of the world under a point of the map of the piece (pixels of the window),
+    // or -1
+    function pieceCell(target, clientX, clientY) {
+      const map = pieceMaps.get(target);
+      if (!map) return -1;
+      const box = target.getBoundingClientRect();
+      const x = map.x0 + Math.floor(((clientX - box.left) / Math.max(1, box.width)) * map.columns);
+      const y = map.y0 + Math.floor(((clientY - box.top) / Math.max(1, box.height)) * map.rows);
+      const { width, height } = map.world;
+      return (((y % height) + height) % height) * width + (((x % width) + width) % width);
+    }
+
+    // the middle of a cell on the map of the piece (pixels of the window), or null when
+    // the map does not show it
+    function piecePoint(target, cell) {
+      const map = pieceMaps.get(target);
+      if (!map) return null;
+      const { width, height } = map.world;
+      const box = target.getBoundingClientRect();
+      const column = cell % width, row = Math.floor(cell / width);
+      const x = column + width * Math.round((map.x0 + map.columns / 2 - column) / width);
+      const y = row + height * Math.round((map.y0 + map.rows / 2 - row) / height);
+      if (x < map.x0 || y < map.y0 || x >= map.x0 + map.columns || y >= map.y0 + map.rows) return null;
+      return { x: box.left + ((x - map.x0 + 0.5) / map.columns) * box.width, y: box.top + ((y - map.y0 + 0.5) / map.rows) * box.height };
+    }
+
     // where a cell of the piece is drawn (pixels of the screen from the corner of the
     // canvas), or null when it is not in the picture
     function pointOf(scene, cell) {
@@ -2826,7 +2982,7 @@ void main() {
       };
     }
 
-    return { draw, resize, pointOf, mapPoint };
+    return { draw, resize, pointOf, mapPoint, drawPieceMap, pieceCell, piecePoint, looksFor };
   }
 
   root.RetroLife = root.RetroLife || {};
@@ -2835,11 +2991,375 @@ void main() {
 
 </script>
 <script>
-// Retro Life, the page: what a touch does, the play loop, the three screens, the sheets.
+// The picture of one chosen cell (the screen CELL): a few relations on a few nodes,
+// drawn the way the Wolfram Physics Project draws a hypergraph (a relation is a line of
+// arrows through its places, in their order), with what the last generation made marked
+// in colour.
+//
+// Taken from experiments/wolframs-game-of-life (web/cell.js, 2026-11-20) and kept as it is
+// there but for three things: the room for loops round a node is given out over all relations
+// a view names (also `view.alternatives`, relations that may come: a cell's mark is a ring
+// when alive and loops when dead, and the picture must not jump when it changes); a
+// relation and a node may bring a colour of their own (`colour`, a CSS colour: the game
+// gives a line out of an alive cell and an alive node the colour of the cell's age); and
+// the names of the page. It was the third screen of the game's first version, parked on
+// 2026-11-21 and brought back on 2026-11-22 as the fourth screen. It knows nothing about Life: no sizes of relations, no kinds, no
+// directions. It gets a view (nodes with their places, the relations, states) and draws
+// any list of relations on any nodes by the same few rules:
+//
+//   1. a relation of one place: a ring round its node;
+//   2. all places the same node: one small circle on a short stalk next to the node, with
+//      the number of loops in it (places - 1) when more than one; every size of such a
+//      relation gets a stalk direction of its own, in the gaps between the node's arrows,
+//      given out smallest size first;
+//   3. otherwise the places are cut into runs (neighbouring places holding the same node):
+//      an arrow from run to run, arrows along the same two nodes side by side in lanes; a
+//      run longer than one is a small circle on the arrow next to it;
+//   4. three or more different nodes: a faint filled shape over them, under everything;
+//   5. relations that never change ("fixed") are faint, and an arrow of theirs between two
+//      nodes in one direction is drawn once however many of them run there;
+//   6. made by the last step: red; removed by the next step: dotted grey; both: red dashed;
+//   7. the nodes on top, with their numbers.
+//
+// The style "project" draws as the project does: every loop a circle of its own through its
+// node (each one larger than the one before), every arrow, nothing faint. Rules 1, 4, 6, 7
+// stay. The colours are CSS (app.css, `.cell-picture`); this file sets classes only.
+(function (root) {
+  "use strict";
+
+  // shares of the unit of the places (the radius of the wheel, or the mean link)
+  const NODE = 0.045;
+  const CHOSEN = 1.35;   // the first node (the chosen cell) is drawn this much larger
+  const SMALL = 0.055;   // a small circle: loops
+  const HEAD = 0.09;     // an arrowhead
+  const LANE = 0.2;      // the distance of two arrows side by side, at their middle
+  const STALK = 0.1;     // between a node and the small circle of its loops: past the arrowheads
+  const GROWTH = 0.22;   // project style: each further loop on a node this much larger
+  const TEXT = 0.058;    // the numbers in small circles
+  const LABEL = 0.068;   // the numbers of the nodes
+  const MARGIN = 0.42;   // room round the outermost nodes, for loops and numbers
+
+  function escapeText(text) {
+    return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  }
+
+  const f = (value) => value.toFixed(1);
+
+  // [[node, how many places in a row], ...]
+  function runsOf(nodes) {
+    const runs = [];
+    for (const node of nodes) {
+      const last = runs[runs.length - 1];
+      if (last && last[0] === node) last[1] += 1; else runs.push([node, 1]);
+    }
+    return runs;
+  }
+
+  // the corners of the smallest convex shape round the points (monotone chain)
+  function hull(points) {
+    const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (list) => {
+      const out = [];
+      for (const p of list) {
+        while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+        out.push(p);
+      }
+      out.pop();
+      return out;
+    };
+    return half(sorted).concat(half(sorted.slice().reverse()));
+  }
+
+  // The angles (radians, 0 = right, clockwise on the screen) at which node k has room for
+  // loops: one per size of relation whose places all hold k, smallest size first,
+  // placed in the gaps between the node's arrows from the top on,
+  // clockwise. Also the direction of the widest gap, and of the gap for its number.
+  function roomsOf(view, where) {
+    const count = view.nodes.length;
+    const number = new Map(view.nodes.map((n, k) => [n.node, k]));
+    const towards = Array.from({ length: count }, () => new Set());
+    const sizes = Array.from({ length: count }, () => []);
+    const all = view.relations.map((relation) => relation.nodes).concat(view.alternatives || []);
+    for (const named of all) {
+      const nodes = named.map((n) => number.get(n));
+      const runs = runsOf(nodes);
+      if (runs.length === 1 && nodes.length > 1) {
+        const k = runs[0][0];
+        if (!sizes[k].includes(nodes.length)) sizes[k].push(nodes.length);
+      }
+      for (let i = 0; i + 1 < runs.length; i++) {
+        towards[runs[i][0]].add(runs[i + 1][0]);
+        towards[runs[i + 1][0]].add(runs[i][0]);
+      }
+    }
+    // smallest first, whatever the order they were named in: the rooms then stay where
+    // they are when a relation is exchanged for its alternative
+    for (const list of sizes) list.sort((a, b) => a - b);
+    const TOP = -Math.PI / 2;
+    const turn = (angle) => ((angle - TOP) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    return where.map((p, k) => {
+      const angles = Array.from(towards[k], (o) => turn(Math.atan2(where[o][1] - p[1], where[o][0] - p[0])))
+        .sort((a, b) => a - b);
+      // gaps as [start, width], from the top clockwise
+      let gaps = [];
+      if (angles.length === 0) {
+        gaps = [[0, 2 * Math.PI]];
+      } else {
+        for (let i = 0; i < angles.length; i++) {
+          const next = i + 1 < angles.length ? angles[i + 1] : angles[0] + 2 * Math.PI;
+          if (next - angles[i] > 1e-6) gaps.push([angles[i], next - angles[i]]);
+        }
+        if (gaps.length === 0) gaps = [[angles[0], 2 * Math.PI]];
+      }
+      const widest = gaps.reduce((a, b) => (b[1] > a[1] + 1e-9 ? b : a));
+      const per = gaps.map(() => []);
+      sizes[k].forEach((size, i) => per[i % gaps.length].push(size));
+      const rooms = new Map();
+      per.forEach((list, g) => list.forEach((size, i) => {
+        rooms.set(size, TOP + gaps[g][0] + gaps[g][1] * (i + 1) / (list.length + 1));
+      }));
+      // the node's number goes into the last gap (the one before the top), or the widest
+      const last = gaps[gaps.length - 1];
+      const label = per[gaps.length - 1].length === 0 || gaps.length === 1 ? last : widest;
+      return {
+        rooms,
+        widest: TOP + widest[0] + widest[1] / 2,
+        label: TOP + label[0] + label[1] * (per[gaps.indexOf(label)].length ? 0.8 : 0.5),
+      };
+    });
+  }
+
+  // From the places (units) to the pixels of a square of `size`.
+  function frameOf(places, size) {
+    const xs = places.map((p) => p[0]);
+    const ys = places.map((p) => p[1]);
+    const low = [Math.min(...xs), Math.min(...ys)];
+    const high = [Math.max(...xs), Math.max(...ys)];
+    const span = Math.max(high[0] - low[0], high[1] - low[1], 1e-9) + 2 * MARGIN;
+    const scale = size / span;
+    const middle = [(low[0] + high[0]) / 2, (low[1] + high[1]) / 2];
+    return {
+      scale,
+      at: (p) => [size / 2 + (p[0] - middle[0]) * scale, size / 2 + (p[1] - middle[1]) * scale],
+    };
+  }
+
+  function arrowMarks(start, bend, end, endRadius, head) {
+    let hx = end[0] - bend[0];
+    let hy = end[1] - bend[1];
+    const length = Math.hypot(hx, hy) || 1;
+    hx /= length;
+    hy /= length;
+    const tip = [end[0] - hx * endRadius, end[1] - hy * endRadius];
+    const left = [tip[0] - hx * head - hy * head * 0.3, tip[1] - hy * head + hx * head * 0.3];
+    const right = [tip[0] - hx * head + hy * head * 0.3, tip[1] - hy * head - hx * head * 0.3];
+    const d = "M" + f(start[0]) + "," + f(start[1]) + " Q" + f(bend[0]) + "," + f(bend[1]) + " " + f(tip[0]) + "," + f(tip[1]);
+    return '<path class="hit" d="' + d + '"/><path class="line" d="' + d + '"/>' +
+      '<polygon class="head" points="' + f(tip[0]) + "," + f(tip[1]) + " " + f(left[0]) + "," + f(left[1]) + " " +
+      f(right[0]) + "," + f(right[1]) + '"/>';
+  }
+
+  function onCurve(start, bend, end, t) {
+    const a = (1 - t) * (1 - t);
+    const b = 2 * (1 - t) * t;
+    const c = t * t;
+    return [a * start[0] + b * bend[0] + c * end[0], a * start[1] + b * bend[1] + c * end[1]];
+  }
+
+  function loopMark(at, radius, loops, textSize) {
+    const text = loops > 1
+      ? '<text x="' + f(at[0]) + '" y="' + f(at[1]) + '" font-size="' + f(textSize) + '">' + loops + "</text>"
+      : "";
+    return '<circle class="loop" cx="' + f(at[0]) + '" cy="' + f(at[1]) + '" r="' + f(radius) + '"/>' + text;
+  }
+
+  // How each relation of a state is drawn: "fixed", "made", "removed", "made removed" or
+  // "plain". Made and removed are counted, so of two equal relations only as many are
+  // marked as the step made or removes.
+  function classesOf(view, state, project) {
+    const made = new Map();
+    const removed = new Map();
+    for (const r of state.made) made.set(r, (made.get(r) || 0) + 1);
+    for (const r of state.removed || []) removed.set(r, (removed.get(r) || 0) + 1);
+    return state.relations.map((r) => {
+      if (view.relations[r].fixed) return project ? "plain" : "fixed";
+      const isMade = (made.get(r) || 0) > 0;
+      const isRemoved = (removed.get(r) || 0) > 0;
+      if (isMade) made.set(r, made.get(r) - 1);
+      if (isRemoved) removed.set(r, removed.get(r) - 1);
+      if (isMade && isRemoved) return "made removed";
+      if (isMade) return "made";
+      return isRemoved ? "removed" : "plain";
+    });
+  }
+
+  // Draws state number `at` of `view` into `svg`. options: style ("counted" or "project"),
+  // placing (a key of view.places). The SVG gets one <g class="rel" data-relation="i"> per
+  // relation drawn (i: its number in view.relations) and one <g class="node" data-node="k">
+  // per node (k: its number in view.nodes).
+  function draw(svg, view, at, options) {
+    const project = options.style === "project";
+    const size = Math.max(160, Math.round(svg.clientWidth || svg.parentNode.clientWidth || 400));
+    const places = view.places[options.placing] || view.places.wheel;
+    const frame = frameOf(places, size);
+    const unit = frame.scale;
+    const where = places.map(frame.at);
+    const rooms = roomsOf(view, where);
+    const number = new Map(view.nodes.map((n, k) => [n.node, k]));
+    const radiusOf = (k) => NODE * unit * (k === 0 ? CHOSEN : 1);
+    const small = SMALL * unit;
+    const head = HEAD * unit;
+    const state = view.states[at];
+    const classes = classesOf(view, state, project);
+
+    const shapes = [];
+    const marks = [];
+    const tops = [];  // the marks on a node (rules 1 and 2) go over the arrows
+    const lanes = new Map();
+    const fixedSeen = new Set();
+    const loopsAt = new Map();  // project style: loops drawn on a node so far
+
+    const laneBend = (a, b, start, end) => {
+      const key = Math.min(a, b) + "-" + Math.max(a, b);
+      const lane = lanes.get(key) || 0;
+      lanes.set(key, lane + 1);
+      const low = where[Math.min(a, b)];
+      const high = where[Math.max(a, b)];
+      const along = [high[0] - low[0], high[1] - low[1]];
+      const length = Math.hypot(along[0], along[1]) || 1;
+      const shift = LANE * unit * Math.ceil(lane / 2) * (lane % 2 ? 1 : -1);
+      return [(start[0] + end[0]) / 2 - along[1] / length * shift, (start[1] + end[1]) / 2 + along[0] / length * shift];
+    };
+
+    state.relations.forEach((r, i) => {
+      const relation = view.relations[r];
+      const nodes = relation.nodes.map((n) => number.get(n));
+      const runs = runsOf(nodes);
+      const kind = classes[i];
+      const parts = [];
+      const distinct = Array.from(new Set(nodes));
+      if (distinct.length >= 3) {
+        const corners = hull(distinct.map((k) => where[k]));
+        if (corners.length >= 3) {
+          shapes.push('<polygon class="hull" data-relation="' + r + '" points="' +
+            corners.map((p) => f(p[0]) + "," + f(p[1])).join(" ") + '"/>');
+        }
+      }
+      let onNode = false;
+      if (nodes.length === 1) {
+        // round the node, outside the arrowheads that end at it
+        const p = where[nodes[0]];
+        const radius = radiusOf(nodes[0]) + head + 0.015 * unit;
+        parts.push('<circle class="hit" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(radius) + '"/>' +
+          '<circle class="ring" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(radius) + '"/>');
+        onNode = true;
+      } else if (project) {
+        for (let j = 0; j + 1 < nodes.length; j++) {
+          const a = nodes[j];
+          const b = nodes[j + 1];
+          if (a === b) {
+            const k = loopsAt.get(a) || 0;
+            loopsAt.set(a, k + 1);
+            const radius = small * (1 + GROWTH * k);
+            const angle = rooms[a].widest;
+            const c = [where[a][0] + Math.cos(angle) * radius, where[a][1] + Math.sin(angle) * radius];
+            parts.push('<circle class="hit" cx="' + f(c[0]) + '" cy="' + f(c[1]) + '" r="' + f(radius) + '"/>' +
+              '<circle class="line" cx="' + f(c[0]) + '" cy="' + f(c[1]) + '" r="' + f(radius) + '"/>');
+          } else {
+            const bend = laneBend(a, b, where[a], where[b]);
+            parts.push(arrowMarks(where[a], bend, where[b], radiusOf(b), head));
+          }
+        }
+      } else if (runs.length === 1) {
+        const k = nodes[0];
+        const angle = rooms[k].rooms.get(nodes.length);
+        const direction = [Math.cos(angle), Math.sin(angle)];
+        const from = radiusOf(k);
+        const reach = from + STALK * unit + small;
+        const p = where[k];
+        const c = [p[0] + direction[0] * reach, p[1] + direction[1] * reach];
+        parts.push('<path class="stalk" d="M' + f(p[0] + direction[0] * from) + "," + f(p[1] + direction[1] * from) +
+          " L" + f(p[0] + direction[0] * (reach - small)) + "," + f(p[1] + direction[1] * (reach - small)) + '"/>');
+        parts.push(loopMark(c, small, nodes.length - 1, TEXT * unit));
+        onNode = true;
+      } else {
+        for (let j = 0; j + 1 < runs.length; j++) {
+          const [a, aCount] = runs[j];
+          const [b, bCount] = runs[j + 1];
+          if (relation.fixed && !project && aCount === 1 && bCount === 1) {
+            if (fixedSeen.has(a + ">" + b)) continue;
+            fixedSeen.add(a + ">" + b);
+          }
+          const start = where[a];
+          const end = where[b];
+          const bend = laneBend(a, b, start, end);
+          parts.push(arrowMarks(start, bend, end, radiusOf(b), head));
+          if (aCount > 1 && j === 0) parts.push(loopMark(onCurve(start, bend, end, 0.4), small, aCount - 1, TEXT * unit));
+          if (bCount > 1) parts.push(loopMark(onCurve(start, bend, end, 0.62), small, bCount - 1, TEXT * unit));
+        }
+      }
+      const colour = relation.colour && kind !== "made" ? ' style="color:' + relation.colour + '"' : "";
+      (onNode ? tops : marks).push('<g class="rel ' + kind + (relation.colour ? " coloured" : "") + '" data-relation="' + r + '"' + colour + "><title>" +
+        escapeText(relation.text + ": " + relation.meaning) + "</title>" + parts.join("") + "</g>");
+    });
+
+    // the nodes on top, with their numbers
+    const middle = where[0];
+    const nodes = view.nodes.map((n, k) => {
+      const p = where[k];
+      const radius = radiusOf(k);
+      const title = "node " + n.node + ": the cell in row " + n.row + ", column " + n.column +
+        (k === 0 ? " (the chosen cell)" : " · tap to choose it");
+      const button = k === 0 ? "" : ' role="button" tabindex="0" aria-label="' + escapeText(title) + '"';
+      return '<g class="node' + (k === 0 ? " chosen" : "") + (n.alive ? " alive" : "") + '" data-node="' + k + '"' + button + "><title>" +
+        escapeText(title) + '</title><circle class="hit" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' +
+        f(Math.max(radius * 2, 12)) + '"/><circle class="disk" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' +
+        f(radius) + '"' + (n.colour ? ' style="fill:' + n.colour + '"' : "") + "/></g>";
+    });
+    const labels = view.nodes.map((n, k) => {
+      const p = where[k];
+      const away = Math.hypot(p[0] - middle[0], p[1] - middle[1]);
+      const angle = k === 0 || away < 1e-6 ? rooms[k].label : Math.atan2(p[1] - middle[1], p[0] - middle[0]);
+      const reach = radiusOf(k) + LABEL * unit * 1.1;
+      return '<text class="label" x="' + f(p[0] + Math.cos(angle) * reach) + '" y="' + f(p[1] + Math.sin(angle) * reach) +
+        '" font-size="' + f(LABEL * unit) + '">' + n.node + "</text>";
+    });
+
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.classList.add("cell-picture");
+    svg.classList.toggle("project", project);
+    svg.classList.remove("empty");
+    svg.innerHTML = '<g class="hulls">' + shapes.join("") + '</g><g class="rels">' + marks.join("") + tops.join("") +
+      '</g><g class="nodes">' + nodes.join("") + '</g><g class="labels">' + labels.join("") + "</g>";
+    svg.dataset.relations = String(state.relations.length);
+    svg.dataset.nodes = String(view.nodes.length);
+    svg.dataset.made = String(state.made.length);
+    svg.dataset.removed = String((state.removed || []).length);
+  }
+
+  // Lights the marks of relation `r` (its number in view.relations; -1: none) and pales
+  // the rest.
+  function light(svg, r) {
+    svg.classList.toggle("lit", r >= 0);
+    for (const element of svg.querySelectorAll(".on")) element.classList.remove("on");
+    if (r >= 0) {
+      for (const element of svg.querySelectorAll('[data-relation="' + r + '"]')) element.classList.add("on");
+    }
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.cellPicture = { draw, light };
+})(window);
+
+</script>
+<script>
+// Retro Life, the page: what a touch does, the play loop, the four screens, the sheets.
 //
 // The world and its rule are in life.js, the hypergraph in hypergraph.js, the drawing in
 // render.js (the map), donut.js (the ring), organism.js (one organism as a piece of the
-// ring's grid) and pixel.js (letters, icons, faces). Nothing
+// ring's grid), cellpicture.js (one cell as the Wolfram project draws a hypergraph) and
+// pixel.js (letters, icons, faces). Nothing
 // about Life or the model is decided in this file: it asks those, and it gets its
 // formations and maps as data (#game-data, written by retro_game.page from
 // retro_game.patterns).
@@ -2850,7 +3370,9 @@ void main() {
 // finger turns it, two fingers zoom, a tap sets or unsets the cell of a node. The
 // picture of an organism has two buttons of its own (the organism before, the next one)
 // and a small map on which an organism is chosen; a tap on the picture goes to the next.
-// There the world plays slowly (ORGANISM_RATE), so that it can be followed.
+// The picture of a cell has the map of its organism, on which a cell is chosen (a tap on
+// a neighbour in the picture goes there too), and a button for what the picture does when
+// the organism moves on. On both the world plays slowly (ORGANISM_RATE), to be followed.
 //
 // Drawing happens only when something changed (`requestDraw`); a loop of frames runs only
 // while the world plays or a stamp flashes.
@@ -2859,18 +3381,27 @@ void main() {
 
   const { life, graph, render, donut, pixel } = window.RetroLife;
   const creature = window.RetroLife.organism;
+  const cellPicture = window.RetroLife.cellPicture;
   const data = JSON.parse(document.getElementById("game-data").textContent);
   const $ = (id) => document.getElementById(id);
 
   const SPEEDS = [1, 2, 5, 10, 20, 30, 60, 120, 240, 0];  // generations a second; 0: as fast as it goes
   const FIRST_SPEED = 2;     // 5 generations a second: calm
-  const ORGANISM_RATE = 1;   // generations a second at most while the third screen shows
+  const ORGANISM_RATE = 1;   // generations a second at most while the third or the fourth screen shows
   const FRAME_BUDGET = 12;   // ms a frame may spend on computing generations
   const VIEWS = [
     { key: "map", name: "MAP", kana: "マップ" },
     { key: "donut", name: "DONUT", kana: "ドーナツ" },
     { key: "organism", name: "ORGANISM", kana: "いきもの" },
+    { key: "cell", name: "CELL", kana: "セル" },
   ];
+  // What the picture of a cell does when the world moves on (the fourth screen).
+  const FOLLOWS = [
+    { key: "near", name: "STAY NEAR", says: "Stay near: the picture stays at its cell while the organism is at it, and moves on with the organism when it has left." },
+    { key: "alive", name: "STAY ON LIFE", says: "Stay on life: when the cell dies, the picture moves to the nearest alive cell of the organism, a newly born one first." },
+    { key: "fixed", name: "STAY PUT", says: "Stay put: the picture stays at its cell whatever happens." },
+  ];
+  const SLOW_VIEWS = new Set(["organism", "cell"]);
   const MAX_SCALE = 96;      // pixels per cell at the closest zoom of the map
   const TAP = 10;            // a touch that moved less than this many pixels is a tap
   const SPIN = 0.00012;      // the ring turns by itself while the world plays: radians a ms
@@ -2899,7 +3430,10 @@ void main() {
     signals: true,       // the ring paints the life signals
     spin: true,          // the ring turns by itself while the world plays
     followed: null,      // the organism of the third screen: {world, cells, x, y}
-    pick: 0,             // counts the times another organism was chosen (the picture jumps)
+    pick: 0,             // counts the times another organism came into the picture (it jumps)
+    chosen: 0,           // counts the times the user chose another organism, or a world began
+    cell: -1,            // the cell of the fourth screen
+    follow: "near",      // what its picture does when the world moves on (FOLLOWS)
     view: "map",
     playing: false,
     speed: FIRST_SPEED,
@@ -2935,7 +3469,7 @@ void main() {
   }
 
   function savePrefs() {
-    store(PREFS, { theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin });
+    store(PREFS, { theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin, follow: state.follow });
   }
 
   let hintTimer = 0;
@@ -3147,6 +3681,7 @@ void main() {
   function showAnother(which) {
     looked = describeOrganism(state.world, looked, which);
     state.pick++;
+    state.chosen++;
     requestDraw();
   }
 
@@ -3213,6 +3748,188 @@ void main() {
     }
   }
 
+  // ---- the cell of the fourth screen
+
+  // The fourth screen shows one cell of the organism of the third. Which cell: the one
+  // the user chose (on the map of the organism, or by a tap on a neighbour); to begin
+  // with, and whenever another organism is chosen, the alive cell nearest to the
+  // organism's middle. What happens to the choice when the world moves on is `state.follow`:
+  //
+  //   near   the cell stays while the organism is at it (it is one of its alive cells or
+  //          next to one); when the organism has left it behind, the picture moves on to
+  //          the organism's nearest alive cell. A blinker's cell is watched as it blinks,
+  //          a glider is followed.
+  //   alive  as soon as the cell is dead after a generation, the picture moves to the
+  //          nearest alive cell.
+  //   fixed  the cell stays whatever happens.
+  //
+  // "Nearest" is counted in steps of the grid (a neighbour before anything further away);
+  // among equally near cells one that was just born comes first, as the user proposed.
+  let settled = null;  // for which state of the world the cell was last settled
+
+  function sortedHas(list, value) {
+    let low = 0;
+    let high = list.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      if (list[middle] === value) return true;
+      if (list[middle] < value) low = middle + 1; else high = middle - 1;
+    }
+    return false;
+  }
+
+  // the alive cell of an organism nearest to a place of the world (in cells, the world
+  // wrapping round)
+  function nearestOf(organism, x, y) {
+    const { width, height, shade } = state.world;
+    let best = -1;
+    let bestKey = Infinity;
+    for (const index of organism.alive) {
+      let dx = Math.abs((index % width) + 0.5 - x);
+      let dy = Math.abs(Math.floor(index / width) + 0.5 - y);
+      dx = Math.min(dx, width - dx);
+      dy = Math.min(dy, height - dy);
+      // steps first, then a cell just born, then the straight distance
+      const key = Math.round(Math.max(dx, dy)) * 1e6 + (shade[index] === 1 ? 0 : 5e5) + dx * dx + dy * dy;
+      if (key < bestKey) {
+        bestKey = key;
+        best = index;
+      }
+    }
+    return best;
+  }
+
+  function lookAtCell() {
+    const now = lookAtOrganism();
+    const world = state.world;
+    const same = Boolean(settled) && settled.world === world;
+    if (same && settled.version === world.version && settled.chosen === state.chosen) return state.cell;
+    const organism = now.organism;
+    let cell = same ? state.cell : -1;
+    let moved = false;
+    if (organism) {
+      const leave = state.follow === "alive" ? !world.cells[cell]
+        : state.follow === "near" && !(sortedHas(organism.alive, cell) || sortedHas(organism.around, cell));
+      if (cell < 0 || settled.chosen !== state.chosen) {
+        cell = nearestOf(organism, state.followed.x, state.followed.y);
+      } else if (leave) {
+        cell = nearestOf(organism, (cell % world.width) + 0.5, Math.floor(cell / world.width) + 0.5);
+        moved = true;
+      }
+    }
+    state.cell = cell;
+    settled = { world, version: world.version, chosen: state.chosen };
+    if (moved && state.view === "cell") flash("cell-follow");  // the button says why the picture moved
+    return cell;
+  }
+
+  function chooseCell(index) {
+    if (index < 0 || index >= state.world.cells.length) return;
+    lookAtCell();
+    state.cell = index;
+    requestDraw();
+  }
+
+  function setFollow(key) {
+    const at = Math.max(0, FOLLOWS.findIndex((entry) => entry.key === key));
+    state.follow = FOLLOWS[at].key;
+    setPixels("cell-follow", FOLLOWS[at].name);
+    $("cell-follow").title = FOLLOWS[at].says + " Tap for another way.";
+  }
+
+  const cellSvg = $("cell-svg");
+  let cellShown = "";    // what the picture shows (redrawn only when that changes)
+  let cellScope = null;  // the scope of the cell shown
+  let lit = -1;          // the relation kept lit by a tap
+
+  // Draws the fourth screen: the cell with its eight neighbours and 36 relations as the
+  // Wolfram project draws a hypergraph, the map of the organism, and what comes next.
+  // Returns the milliseconds it took.
+  function showCell() {
+    const begin = performance.now();
+    const world = state.world;
+    const cell = lookAtCell();
+    const theme = renderer.theme();
+    const none = cell < 0 || !looked.organism;  // nothing is alive: no organism, no picture
+    $("organism-note").hidden = !none;
+    $("cell-fate").hidden = none;
+    picture.drawPieceMap($("cell-map"), { world, organism: looked.organism, theme }, cell);
+    if (none) {
+      setPixels("organism-note-title", "NOTHING ALIVE");
+      $("organism-note-text").textContent = "Draw a few cells on the map, or add a formation.";
+      setPixels("hud-nodes", "NO CELL");
+      setPixels("hud-relations", "");
+      cellSvg.innerHTML = "";
+      cellShown = "";
+      cellScope = null;
+      return performance.now() - begin;
+    }
+    // where the picture may lie: a square, clear of the card, the map and the lines below
+    const stage = $("cell-view").getBoundingClientRect();
+    const card = $("hud").getBoundingClientRect();
+    const pick = $("cell-pick").getBoundingClientRect();
+    const fate = $("cell-fate").getBoundingClientRect();
+    let top = Math.max(0, card.bottom - stage.top) + 4;
+    let bottom = stage.height - 4;
+    let wide = stage.width - 8;
+    if (stage.height >= stage.width) {
+      top = Math.max(top, pick.bottom - stage.top + 4);
+      if (fate.height) bottom = fate.top - stage.top - 4;
+    } else if (pick.width) {
+      wide = stage.width - 2 * (stage.right - pick.left) - 8;
+    }
+    const side = Math.max(120, Math.floor(Math.min(wide, bottom - top)));
+    cellSvg.style.width = cellSvg.style.height = side + "px";
+    cellSvg.style.left = Math.round((stage.width - side) / 2) + "px";
+    cellSvg.style.top = Math.round(top + (bottom - top - side) / 2) + "px";
+
+    const scope = graph.cellScope(world.cells, world.width, world.height, cell);
+    const shades = picture.looksFor(theme).shades;
+    const colourOf = (node) => {
+      const rgb = node.alive && shades[Math.max(1, Math.min(life.AGE_CAP, world.shade[node.cell]))];
+      return rgb ? "rgb(" + rgb.join(",") + ")" : "";
+    };
+    // made by the last generation: the state of a cell that was just born or has just died
+    const made = [];
+    scope.nodes.forEach((node, k) => {
+      const shade = world.shade[node.cell];
+      if (world.generation > 0 && (shade === 1 || shade === life.AGE_CAP + 1)) made.push(k === 0 ? 0 : 17 + k);
+    });
+    const colours = scope.nodes.map(colourOf);
+    const key = [world.width, world.height, cell, side, state.theme, colours.join(";"), made.join(",")].join("|");
+    if (key !== cellShown) {
+      cellShown = key;
+      cellScope = scope;
+      lit = -1;
+      cellPicture.draw(cellSvg, {
+        nodes: scope.nodes.map((node, k) => ({ ...node, colour: colours[k] })),
+        places: data.places,
+        // a line that will carry "alive" when the next generation begins has the colour of
+        // the cell that sends: the eight lines out of the cell (2 to 9), and the line in
+        // from each neighbour (10 to 17)
+        relations: scope.relations.map((relation, i) => ({
+          ...relation,
+          colour: i >= 2 && i < 10 ? colours[0] : i >= 10 && i < 18 ? colours[i - 9] : "",
+        })),
+        // what a state can be exchanged for: the room round a node stays where it is
+        alternatives: scope.nodes.flatMap((node) => [graph.alive(node.node), graph.dead(node.node)]),
+        states: [{ relations: scope.relations.map((_, i) => i), made, removed: [] }],
+      }, 0, { style: "project", placing: "forces" });
+      cellSvg.dataset.cell = String(cell);
+    }
+    setPixels("hud-nodes", "NODE " + number(scope.node));
+    setPixels("hud-relations", scope.relations.length + " RELATIONS");
+    setPixels("cell-where", "ROW " + scope.row + " COL " + scope.column);
+    setPixels("cell-now", (scope.alive ? "ALIVE" : "DEAD") + "  " + scope.aliveNeighbours + "/8 ALIVE ROUND IT");
+    setPixels("cell-next", "NEXT: " + (scope.alive ? (scope.next ? "STAYS ALIVE" : "DIES") : scope.next ? "IS BORN" : "STAYS DEAD"));
+    return performance.now() - begin;
+  }
+
+  function lightRelation(index) {
+    lit = index;
+    cellPicture.light(cellSvg, index);
+  }
+
   // ---- drawing
 
   function mapScene(now) {
@@ -3232,9 +3949,9 @@ void main() {
     state.scheduled = 0;
     let again = false;
     if (state.playing) {
-      // on the third screen time runs slowly, so that an organism can be followed
+      // on the third and the fourth screen time runs slowly, so that an organism can be followed
       const set = SPEEDS[state.speed];
-      const rate = state.view === "organism" ? Math.min(set || ORGANISM_RATE, ORGANISM_RATE) : set;
+      const rate = SLOW_VIEWS.has(state.view) ? Math.min(set || ORGANISM_RATE, ORGANISM_RATE) : set;
       const elapsed = Math.min(250, now - state.last);
       state.last = now;
       let steps = Infinity;
@@ -3290,6 +4007,8 @@ void main() {
       took = drawn.took;
       showOrganism();
       if (drawn.moving) requestDraw();  // the camera is still on its way: another picture next frame
+    } else if (state.view === "cell") {
+      took = showCell();
     } else {
       took = renderer.draw(mapScene(now));
     }
@@ -3367,6 +4086,9 @@ void main() {
     state.followed = null;
     looked = null;
     state.pick++;
+    state.chosen++;
+    state.cell = -1;
+    settled = null;
     state.ghost = null;
     state.effects = [];
     for (const button of $("size-list").children) {
@@ -3468,6 +4190,14 @@ void main() {
       if (!hinted.has("organism")) {
         hinted.add("organism");
         hint("One organism, cut out of the ring. A frame means: alive in the next generation. Time runs slowly here.", 6200);
+      }
+    }
+    if (key === "cell") {
+      if (state.stamp) leaveStamping();
+      cellShown = "";
+      if (!hinted.has("cell")) {
+        hinted.add("cell");
+        hint("One cell with its eight neighbours, drawn the Wolfram Physics Project's way. Tap a neighbour to go there.", 7000);
       }
     }
     if (key === "donut") {
@@ -3790,6 +4520,41 @@ void main() {
     pickOrganismAt(at.x, at.y);
   });
 
+  // ---- the picture of a cell: a tap on a neighbour goes there, a tap on a relation
+  // lights it and says what it is; the map of the organism chooses a cell
+
+  cellSvg.addEventListener("click", (event) => {
+    const node = event.target.closest(".node");
+    if (node && cellScope) {
+      const k = Number(node.dataset.node);
+      if (k > 0) chooseCell(cellScope.nodes[k].cell);
+      return;
+    }
+    const relation = event.target.closest(".rel");
+    const index = relation && Number(relation.dataset.relation) !== lit ? Number(relation.dataset.relation) : -1;
+    lightRelation(index);
+    if (index >= 0 && cellScope) hint(cellScope.relations[index].text + ": " + cellScope.relations[index].meaning, 5200);
+  });
+  cellSvg.addEventListener("keydown", (event) => {
+    const node = event.target.closest(".node");
+    if ((event.key === "Enter" || event.key === " ") && node && cellScope && Number(node.dataset.node) > 0) {
+      chooseCell(cellScope.nodes[Number(node.dataset.node)].cell);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+  $("cell-map-box").addEventListener("click", (event) => {
+    const index = picture.pieceCell($("cell-map"), event.clientX, event.clientY);
+    if (index >= 0) chooseCell(index);
+  });
+  $("cell-follow").addEventListener("click", () => {
+    const at = FOLLOWS.findIndex((entry) => entry.key === state.follow);
+    const next = FOLLOWS[(at + 1) % FOLLOWS.length];
+    setFollow(next.key);
+    savePrefs();
+    hint(next.says, 6200);
+  });
+
   // ---- sheets
 
   function closeSheets() {
@@ -3885,6 +4650,9 @@ void main() {
     for (const element of document.querySelectorAll("[data-colour]")) {
       element.style.background = render.THEMES[key][element.dataset.colour];
     }
+    // the fourth screen is night like the ring, in the night of the theme
+    $("cell-view").style.setProperty("--night", render.THEMES[key].space);
+    cellShown = "";
     drawThumbs();
     requestDraw();
   }
@@ -3998,7 +4766,7 @@ void main() {
     else if (key === "ArrowLeft") moveView(-1);
     else if (key === "ArrowRight") moveView(1);
     else if ((key === "ArrowUp" || key === "ArrowDown") && state.view === "organism" && $("shade").hidden) stepOrganism(key === "ArrowUp" ? -1 : 1);
-    else if (key === "1" || key === "2" || key === "3") setView(VIEWS[Number(key) - 1].key);
+    else if (key >= "1" && key <= String(VIEWS.length)) setView(VIEWS[Number(key) - 1].key);
     else if (key === "a") {
       if ($("formations").hidden) openSheet("formations"); else closeSheets();
     } else if (key === "s" || key === "m") {
@@ -4017,6 +4785,7 @@ void main() {
     ring.resize();
     picture.resize();
     if (state.fitted) fit(); else clampCamera();
+    cellShown = "";
     requestDraw();
   }
 
@@ -4031,6 +4800,7 @@ void main() {
   setSpeed(Number.isInteger(prefs.speed) ? prefs.speed : FIRST_SPEED);
   setSignals(prefs.signals !== false);
   setSpin(prefs.spin !== false);
+  setFollow(prefs.follow);
   renderer.resize();
   ring.resize();
   picture.resize();
@@ -4094,6 +4864,20 @@ void main() {
       };
     },
     stepOrganism, pickOrganismAt, organismRate: ORGANISM_RATE,
+    // the cell of the fourth screen: which one, how it is followed, what the picture holds
+    cell() {
+      const index = lookAtCell();
+      const scope = index >= 0 ? graph.cellScope(state.world.cells, state.world.width, state.world.height, index) : null;
+      return {
+        index, follow: state.follow,
+        alive: scope ? scope.alive : 0, aliveNeighbours: scope ? scope.aliveNeighbours : 0, next: scope ? scope.next : 0,
+        nodes: scope ? scope.nodes.map((node) => node.cell) : [],
+        relations: scope ? scope.relations.map((relation) => relation.nodes) : [],
+        drawn: { relations: Number(cellSvg.dataset.relations || 0), nodes: Number(cellSvg.dataset.nodes || 0), made: Number(cellSvg.dataset.made || 0), cell: Number(cellSvg.dataset.cell || -1) },
+      };
+    },
+    chooseCell, setFollow,
+    cellMapPoint: (index) => picture.piecePoint($("cell-map"), index),
     camera: () => ({ ...state.camera }),
     // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
     orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
