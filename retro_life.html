@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#16152b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Retro Life">
 <title>Retro Life</title>
 <style>
 /* Retro Life: pixel art, a little Japanese. The colours of the page come from the theme
@@ -457,6 +460,13 @@ textarea {
       <div class="chips">
         <button type="button" id="learn" data-px="LEARN GAME OF LIFE"></button>
       </div>
+    </section>
+    <section id="screen-part">
+      <h3 data-px="SCREEN"></h3>
+      <div class="chips">
+        <button type="button" id="fullscreen" class="lamp" aria-pressed="false" title="Hide the browser round the game" data-px="FULL SCREEN"></button>
+      </div>
+      <p class="note">So that the game is not left by mistake. Full screen hides the browser round it, and a swipe from the edge then only ends full screen. The way back of the browser (the back button, a swipe from the left edge) first only says so: once more leaves the game. On a tablet or phone, Add to Home Screen in the browser's menu opens the game like an app, without the browser.</p>
     </section>
     <section data-for="map">
       <h3 data-px="TIME"></h3>
@@ -1924,7 +1934,8 @@ textarea {
   // `link` are the screens DONUT and ORGANISM: night in Yoru and Kuroi. Hiru (`day`) is
   // bright on every screen (the developer, 2026-11-22: "make all screens bright ... the
   // donut should have blue background, like during the day, with the sun also"): its
-  // ring lies in a sky of bands (`sky`, from the top down) with a sun (`sun`, `sunRim`),
+  // ring lies in a sky of bands (`sky`, from the top down) with a sun (`sun` in its
+  // middle, `sunRim` at its rim, `sunGlow` in the sky round it),
   // its organism on a pale sky (`space`), and `star` is the ink of those screens.
   const THEMES = {
     yoru: {
@@ -1940,7 +1951,7 @@ textarea {
       born: "#f6a609", young: "#e2596b", old: "#3f8f7b", face: "#3a2a33", light: "#ffffff",
       ghost: "#27364f", seal: "#d93f52",
       space: "#ecf7fd", rock: "#6f7787", star: "#27364f", link: "#bcd5e7",
-      sky: ["#4aa6e4", "#66b8ec", "#86c9f2", "#a9d9f6"], sun: "#ffd84a", sunRim: "#ffa62b",
+      sky: ["#4aa6e4", "#66b8ec", "#86c9f2", "#a9d9f6"], sun: "#fffbe8", sunRim: "#ffc845", sunGlow: "#fff3c8",
     },
     // Asked for by the developer on 2026-11-22: two colours only, black and white, no
     // colour for the age of a cell ("empty cells, not empty cells"), smooth instead of
@@ -2309,8 +2320,8 @@ textarea {
 // Such a line has the colour of the node that sends, strong at that node and fading
 // towards a dead neighbour; between two alive nodes it is strong all the way. Links and
 // signals are drawn for worlds of up to LINKS_UP_TO nodes. Behind it all: stars, which
-// turn with the ring; in the look Hiru (the day) a blue sky in bands with a sun at the
-// top right that stands still while the ring turns, and the lights have no glow.
+// turn with the ring; in the look Hiru (the day) a blue sky in bands with a glowing sun,
+// low on the right, that stands still while the ring turns, and the lights have no glow.
 //
 // It is drawn with WebGL on a canvas of few pixels, shown enlarged with hard edges, so
 // that the picture is pixel art like the rest of the game. Every node is one point: a
@@ -2507,22 +2518,21 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // The colour far lights fade into: the night, or by day the haze of the sky.
   const airOf = (theme) => (theme.sky ? theme.sky[2] : theme.space);
 
-  // What of the sun lies at (dx, dy) pixels from its middle: 1 the disc, 2 its rim and
-  // its eight rays (the straight ones longer), 0 nothing.
-  function sunPart(dx, dy, radius) {
-    const r = Math.hypot(dx, dy);
-    if (r <= radius) return r > radius - 1.5 ? 2 : 1;
-    const step = Math.PI / 4;
-    const angle = Math.atan2(dy, dx);
-    const k = Math.round(angle / step);
-    const reach = (k % 2 === 0 ? 1.95 : 1.65) * radius;
-    if (r >= 1.35 * radius && r <= reach && Math.abs(r * Math.sin(angle - k * step)) <= Math.max(0.8, 0.09 * radius)) return 2;
-    return 0;
-  }
+  // The sun of the day (the user, 2026-11-22: "more realistic in the background, and
+  // bigger, more down, part of the background"): a disc low on the right, whitest in its
+  // middle and golden towards its rim, as the real sun looks, in a glow that lightens the
+  // sky round it and fades out at SUN_GLOW times its radius. Both in a few steps, dithered
+  // (a 4 x 4 Bayer pattern), so that it is pixel art like the rest.
+  const SUN_RADIUS = 0.12;   // of the shorter side of the picture
+  const SUN_AT = [0.8, 0.4]; // its middle, as parts of the width and the height
+  const SUN_GLOW = 3.2;
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+  const mixed = (a, b, t) => [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * t));
 
   // The sky of the day as a picture of width x height pixels: the bands of `theme.sky`
-  // from the top down, each seam dithered in a checker of pixels, and the sun at the top
-  // right. It stands still: nothing in it turns with the ring.
+  // from the top down, each seam dithered in a checker of pixels, and the sun in it. It
+  // stands still: nothing in it turns with the ring.
   function skyPicture(width, height, theme) {
     const picture = document.createElement("canvas");
     picture.width = width;
@@ -2531,20 +2541,23 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const image = c.createImageData(width, height);
     const data = image.data;
     const bands = theme.sky.map(render.rgbOf);
-    const sun = render.rgbOf(theme.sun);
+    const core = render.rgbOf(theme.sun);
     const rim = render.rgbOf(theme.sunRim);
-    const radius = Math.max(5, Math.round(Math.min(width, height) * 0.055));
-    const sx = width - Math.round(2.3 * radius) - 3;
-    const sy = Math.round(2.3 * radius) + 3;
+    const glow = render.rgbOf(theme.sunGlow);
+    const radius = Math.max(6, Math.round(Math.min(width, height) * SUN_RADIUS));
+    const sx = Math.round(width * SUN_AT[0]);
+    const sy = Math.round(height * SUN_AT[1]);
     for (let y = 0; y < height; y++) {
       const f = ((y + 0.5) / height) * bands.length;
       const band = Math.floor(f);
       const seam = f - band > 0.8;
       for (let x = 0; x < width; x++) {
         let rgb = bands[Math.min(bands.length - 1, seam && (x + y) % 2 === 0 ? band + 1 : band)];
-        const part = sunPart(x + 0.5 - sx, y + 0.5 - sy, radius);
-        if (part === 1) rgb = sun;
-        else if (part === 2) rgb = rim;
+        const dither = (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+        const steps = (t, levels) => Math.min(levels, Math.floor(t * levels + dither)) / levels;
+        const r = Math.hypot(x + 0.5 - sx, y + 0.5 - sy) / radius;
+        if (r <= 1) rgb = mixed(rim, core, steps(Math.pow(1 - r * r, 0.35), 4));
+        else if (r < SUN_GLOW) rgb = mixed(rgb, glow, steps(0.9 * ((SUN_GLOW - r) / (SUN_GLOW - 1)) ** 2.2, 6));
         const at = (y * width + x) * 4;
         data[at] = rgb[0];
         data[at + 1] = rgb[1];
@@ -6095,6 +6108,56 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
 
   if (window.ResizeObserver) new ResizeObserver(resized).observe($("stage"));
   window.addEventListener("resize", resized);
+
+  // ---- not leaving the game by mistake (the user, 2026-11-22: "on my tablet I often end
+  // up accidentally quitting the game, add some kind of full screen mode, or some ways
+  // that I don't accidentally quit the game")
+
+  // Full screen, a switch in the part Screen of the settings: no address bar and no tabs,
+  // and a swipe from the edge ends full screen before it could leave the page. Hidden
+  // where the browser cannot show a page in full screen (an iPhone); the note there says
+  // how to get the same from the home screen.
+  const page = document.documentElement;
+  const inFullscreen = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  const canFullscreen = Boolean((page.requestFullscreen || page.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled));
+  const showFullscreen = () => $("fullscreen").setAttribute("aria-pressed", String(inFullscreen()));
+  function toggleFullscreen() {
+    const refused = () => hint("This browser does not allow full screen here.");
+    try {
+      const asked = inFullscreen()
+        ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+        : (page.requestFullscreen || page.webkitRequestFullscreen).call(page, { navigationUI: "hide" });
+      if (asked && asked.catch) asked.catch(refused);
+    } catch (error) {
+      refused();
+    }
+  }
+  $("fullscreen").hidden = !canFullscreen;
+  $("fullscreen").addEventListener("click", toggleFullscreen);
+  document.addEventListener("fullscreenchange", showFullscreen);
+  document.addEventListener("webkitfullscreenchange", showFullscreen);
+
+  // The way back of the browser (its button, a swipe from the edge) lands first on an
+  // entry of the game's own and says so; done once more, it leaves. The entry is made at
+  // a touch or a key, not on its own (browsers skip entries a page made without one), and
+  // made again at the next touch after it was used.
+  let guarded = false;
+  function guardLeaving() {
+    if (guarded) return;
+    try {
+      history.pushState({ retroLife: true }, "");
+      guarded = true;
+    } catch (error) {
+      // a page opened from a file may not keep entries of its own in some browsers
+    }
+  }
+  window.addEventListener("pointerdown", guardLeaving, true);
+  window.addEventListener("keydown", guardLeaving, true);
+  window.addEventListener("popstate", () => {
+    if (!guarded) return;
+    guarded = false;
+    hint("Back once more leaves the game.", 3200);
+  });
 
   // ---- start
 
