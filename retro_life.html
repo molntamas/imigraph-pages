@@ -87,9 +87,34 @@ body[data-mode="learn"] #hud { display: none; }
 #lesson-title .px { height: 21px; }
 #lesson p { margin: 0; font-size: 13.5px; line-height: 1.45; }
 #lesson-count { min-height: 14px; color: var(--accent); }
-#lesson-says { min-height: 4.35em; font-weight: 700; }
+#lesson-says { font-weight: 700; }
+/* the lessons as a row of small squares: solved ones filled, the one shown framed in ink */
+#lesson-pips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+#lesson-pips li { width: 10px; height: 10px; border: 2px solid var(--dim); opacity: 0.6; }
+#lesson-pips li.done { background: var(--accent); border-color: var(--accent); opacity: 1; }
+#lesson-pips li.now { border-color: var(--ink); opacity: 1; }
+body[data-theme="kuroi"] #lesson-pips li { border-radius: 50%; }
+/* What a check said. Its room is kept whatever it says (keepRoom in app.js measures it), so
+   that the card keeps its height.
+   A solved lesson is a cheer: a rice ball that jumps for joy, a big word, the panel in the
+   colour of the look (the user, 2026-11-22: "make it more visible that it was successfull"). */
+#lesson-result {
+  display: grid; align-content: start; gap: 5px; font-size: 14px;
+  padding: 6px 8px; border: var(--px) solid transparent;
+}
+#lesson-result p { font-size: inherit; }
+#lesson-result.good { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border-color: var(--accent); }
+#lesson-cheer:not([hidden]) { display: flex; align-items: center; gap: 10px; color: var(--accent); transform-origin: 24px 50%; animation: cheer 0.4s steps(4) 1; }
+#cheer-face { width: 48px; height: 45px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; }
+#cheer-word .px { height: 28px; }
+#lesson-cheer .kana { font-size: 13px; font-weight: 700; }
+@keyframes cheer { 0% { transform: scale(0.4); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { #lesson-cheer:not([hidden]) { animation: none; } }
+body[data-theme="kuroi"] #cheer-face { display: none; }
+body[data-theme="kuroi"] #lesson-result.good { background: transparent; border-radius: 10px; }
+body[data-theme="kuroi"] #cheer-word .plain { font-size: 20px; letter-spacing: 0.14em; }
 .lesson-ways { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; color: var(--dim); font-size: 12px; }
-#lesson-again { min-height: 40px; padding: 4px 12px; }
+#lesson-again, #lesson-leave { min-height: 40px; padding: 4px 12px; }
 .lesson-ways .way { display: inline-flex; align-items: center; gap: 5px; }
 .lesson-ways .way .px { height: 12px; }
 body[data-theme="kuroi"] #lesson { border-radius: 10px; }
@@ -107,14 +132,24 @@ body[data-mode="learn"] #organism-fate { left: calc(var(--learn-left, 0px) + 12p
 body[data-mode="learn"] #stamp-bar { top: calc(var(--learn-top, 0px) + 10px); }
 /* the menu in its lesson: all of it to look at, only the maps to use */
 .sheet section[inert] { opacity: 0.4; }
+/* a narrow screen (a phone held upright): without the reminders of the buttons (the words of
+   a lesson name them), and a smaller cheer, so that the world keeps its room under the card */
+@media (max-width: 480px) {
+  .lesson-ways .way { display: none; }
+  #cheer-face { width: 32px; height: 30px; }
+  #cheer-word .px { height: 21px; }
+}
 /* a low screen (a phone held sideways): the card smaller, without the reminders of the buttons */
 @media (max-height: 480px) {
   #lesson { gap: 4px; padding: 7px 10px 8px; width: min(300px, calc(100% - 20px)); }
   #lesson p { font-size: 12px; line-height: 1.35; }
   #lesson-title .px { height: 14px; }
-  #lesson-says { min-height: 2.7em; }
+  #lesson-result { font-size: 12px; gap: 4px; padding: 3px 6px; }
+  #cheer-face { width: 32px; height: 30px; }
+  #cheer-word .px { height: 14px; }
+  #lesson-pips li { width: 8px; height: 8px; }
   .lesson-ways .way { display: none; }
-  #lesson-again { min-height: 40px; }
+  #lesson-again, #lesson-leave { min-height: 40px; }
 }
 
 /* a button is a block with a hard shadow that it sinks into when pressed */
@@ -401,6 +436,7 @@ textarea {
 
     <div id="lesson" hidden>
       <div class="lesson-head"><span id="lesson-step"></span><span id="lesson-title"></span></div>
+      <ol id="lesson-pips" title="The lessons: filled ones are solved"></ol>
       <p id="lesson-text"></p>
       <ul id="lesson-colours" class="legend" hidden>
         <li><i class="swatch" data-colour="born"></i><span>just born</span></li>
@@ -408,12 +444,15 @@ textarea {
         <li><i class="swatch" data-colour="old"></i><span>old</span></li>
       </ul>
       <div id="lesson-count"></div>
-      <p id="lesson-says" role="status" aria-live="polite"></p>
+      <div id="lesson-result">
+        <div id="lesson-cheer" hidden><canvas id="cheer-face" width="16" height="15" aria-hidden="true"></canvas><span id="cheer-word"></span><span class="kana" lang="ja">やった!</span></div>
+        <p id="lesson-says" role="status" aria-live="polite"></p>
+      </div>
       <div class="lesson-ways">
         <button type="button" id="lesson-again" title="This lesson once more, from its start" data-px="AGAIN"></button>
+        <button type="button" id="lesson-leave" title="Back to the game (Esc)" data-px="LEAVE"></button>
         <span class="way"><i data-icon="step"></i>check</span>
-        <span class="way"><i data-icon="right"></i>next</span>
-        <span class="way"><i data-icon="left"></i>back to the game</span>
+        <span class="way"><i data-icon="left"></i><i data-icon="right"></i>lessons</span>
       </div>
     </div>
 
@@ -456,7 +495,7 @@ textarea {
     <header><h2><span data-px="SETTINGS"></span><span class="kana" lang="ja">せってい</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
     <section>
       <h3 data-px="LEARN"></h3>
-      <p class="note">New to the Game of Life? Small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one; then the buttons of the game and its other screens. Your world waits until you come back.</p>
+      <p class="note">New to the Game of Life? Small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one; then the buttons of the game and its other screens. Your world waits until you come back. The arrows go from lesson to lesson; solved ones stay open. To send the lessons to someone: the address of this page with <b>#learn</b> at its end.</p>
       <div class="chips">
         <button type="button" id="learn" data-px="LEARN GAME OF LIFE"></button>
       </div>
@@ -1863,6 +1902,12 @@ textarea {
     wow: [
       "................", ".......WW.......", "......WWWW......", ".....WWWWWW.....", "....WWWWWWWW....",
       "....WWeWWeWW....", "...WWWeWWeWWW...", "...WWWWWWWWWW...", "..WpWWWmmWWWpW..", "..WWWWWmmWWWWW..",
+      ".WWWWNNNNNNWWWW.", ".WWWWNNNNNNWWWW.", ".WWWWNNNNNNWWWW.", "..WWWNNNNNNWWW..",
+    ],
+    // a lesson solved: eyes closed with joy, a wide open smile, sparkles (z)
+    joy: [
+      ".z............z.", "zzz....WW....zzz", ".z....WWWW....z.", ".....WWWWWW.....", "....WWWWWWWW....",
+      "....WWWWWWWW....", "...WWeWWWWeWW...", "...WeWeWWeWeW...", "..WpWWmmmmWWpW..", "..WWWWWmmWWWWW..",
       ".WWWWNNNNNNWWWW.", ".WWWWNNNNNNWWWW.", ".WWWWNNNNNNWWWW.", "..WWWNNNNNNWWW..",
     ],
   };
@@ -4193,6 +4238,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     store(PREFS, {
       theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin,
       mode: state.mode, placing: state.placing, lesson: state.lessonAt || 0, menu: state.menuOpened || 0,
+      learned: Array.from(state.learned || []),
     });
   }
 
@@ -5070,8 +5116,21 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // heart of the end, which is played; and the button to press next blinks (`blinking`:
   // "some times it is unclear which button to press ... Make it blink, not only write
   // it").
+  //
+  // The fifteenth round (the same day) added: the arrows go from lesson to lesson ("make
+  // it possible to step back in the tutorial"; the arrow to the left on the first lesson,
+  // the button LEAVE on the card and Esc go back to the game), and a lesson once solved
+  // stays open (`state.learned`, remembered with the settings), so that one can go back
+  // and forward through what one has done; a link straight into the tutorial (#learn,
+  // or #learn-5 for a lesson) "so I can send the link of the tutorial to somebody"; and a
+  // solved lesson is a cheer ("make it more visible that it was successfull ... Maybe a
+  // smiling face and a bit bigger text, or more visible color"): a rice ball that jumps
+  // for joy, a big word, the panel in the colour of the look, and a filled square in the
+  // row of lessons. Nothing of it moves after its first moment.
 
   const learn = window.RetroLife.learn;
+  const CHEERS = ["GREAT!", "NICE!", "YES!", "SUPER!"];  // the word of a solved lesson, by its number
+  const LEARN_LINK = /^#learn(?:-(\d+))?$/i;  // the address of the tutorial: #learn, or #learn-5 for the fifth lesson
   const LEARN_RATE = 2;      // generations a second while a lesson of the rule plays
   const LEARN_FAST = 5;      // ... while a formation, a map or the heart of the end plays: as the game opens
   const LEARN_BLINKS = 5;    // openings of the menu for which its button Learn Game of Life blinks
@@ -5094,7 +5153,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     pause();
     if (state.stamp) leaveStamping();
     state.learn = {
-      index: 0, steps: 0, stepped: false, solved: false, touched: false, guesses: new Set(), checked: null, says: "", good: false,
+      index: 0, steps: 0, stepped: false, solved: false, touched: false, guesses: new Set(), checked: null, says: "", good: false, cheer: false,
       home: {
         world: state.world, camera: { ...state.camera }, fitted: state.fitted, view: state.view,
         mode: state.mode, across: state.across, orbit: { turn: state.orbit.turn, zoom: state.orbit.zoom },
@@ -5103,12 +5162,37 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     document.body.dataset.mode = "learn";
     $("hint").classList.remove("on");  // a hint of the screen one came from is not for here
     $("lesson").hidden = false;
-    $("prev").title = "Back to the game (Esc)";
-    $("prev").setAttribute("aria-label", "Back to the game");
     $("next").title = "The next lesson (right arrow key)";
     $("next").setAttribute("aria-label", "The next lesson");
+    const pips = $("lesson-pips");
+    if (!pips.children.length) {
+      for (const lesson of data.learn.lessons) {
+        const pip = document.createElement("li");
+        pip.dataset.key = lesson.key;
+        pips.append(pip);
+      }
+    }
+    setAddress("#learn");  // the address bar holds the link to the tutorial
     const most = data.learn.lessons.length - 1;
     showLesson(Math.max(0, Math.min(most, Number.isInteger(index) ? index : state.lessonAt || 0)));
+  }
+
+  // The address of the page without its reload: "#learn" in the tutorial, nothing outside it.
+  function setAddress(hash) {
+    try {
+      const url = location.href.split("#")[0] + hash;
+      if (url !== location.href) history.replaceState(history.state, "", url);
+    } catch (error) {
+      // a page opened from a file may not change its address in some browsers
+    }
+  }
+
+  // The lesson a link asks for: its index, -1 for "#learn" alone (where one stopped), or
+  // null for an address that is not the tutorial's.
+  function linkedLesson() {
+    const found = LEARN_LINK.exec(location.hash || "");
+    if (!found) return null;
+    return found[1] ? Math.max(0, Number(found[1]) - 1) : -1;
   }
 
   function leaveLearning() {
@@ -5131,6 +5215,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     $("prev").setAttribute("aria-label", "The screen to the left");
     $("next").title = "The screen to the right (right arrow key)";
     $("next").setAttribute("aria-label", "The screen to the right");
+    setAddress("");
     newWorld(home.world);
     state.camera = home.camera;
     state.fitted = home.fitted;
@@ -5158,6 +5243,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     one.checked = null;
     one.says = "";
     one.good = false;
+    one.cheer = false;
     $("hint").classList.remove("on");  // what a hint said belongs to the lesson before
     const lesson = lessonNow();
     const rows = lesson ? lesson.rows : data.learn.endRows;
@@ -5169,12 +5255,14 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     state.lessonAt = lesson ? index : 0;
     savePrefs();
     showLessonCard();  // its words first: the size of the card decides where the world lies
+    keepRoom();
     setView(lesson ? lesson.view : "map");
     fitLesson();
     if (lesson && lesson.kind === "look") {
       // nothing to do but look: the way on is open, and the world plays
       one.solved = one.good = true;
       one.says = lesson.done;
+      learned(lesson);  // (no cheer: nothing was done)
       if (lesson.view === "donut") state.orbit = { turn: donut.turnOf(...RING_VIEWS.tilted), zoom: 1 };
       showLessonCard();
       play();
@@ -5183,16 +5271,77 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     requestDraw();
   }
 
+  // A lesson is open to go on from when it is solved now or was solved before.
+  const isOpen = (lesson) => state.learn.solved || state.learned.has(lesson.key);
+
   function nextLesson() {
     const one = state.learn;
     if (!one) return;
     if (!lessonNow()) return leaveLearning();  // the end: back to the game
-    if (!one.solved) {
+    if (!isOpen(lessonNow())) {
       const which = blinking();  // not yet: what there is to do first
       if (which) flash(which);
       return;
     }
     showLesson(one.index + 1);
+  }
+
+  // The lesson before; from the first one, back to the game. (From the end: the last lesson.)
+  function lessonBefore() {
+    const one = state.learn;
+    if (!one) return;
+    if (one.index === 0) return leaveLearning();
+    showLesson(one.index - 1);
+  }
+
+  // A lesson met its goal by what one did: the cheer, and it stays open from now on.
+  function cheer(lesson) {
+    const one = state.learn;
+    one.solved = one.good = one.cheer = true;
+    one.says = lesson.done;
+    learned(lesson);
+    const theme = renderer.theme();
+    const face = pixel.sprite(pixel.RICE_BALL.joy.concat(["................"]),
+      { W: "#fffaf0", N: "#2a2433", e: "#2a2433", m: "#2a2433", p: theme.young, z: theme.born }, "#2a2433");
+    const c = $("cheer-face").getContext("2d");
+    c.clearRect(0, 0, 16, 15);
+    c.drawImage(face, 0, 0);
+  }
+
+  // The room of what a check says, kept free from the start of a lesson so that the card
+  // keeps its height: as high as the highest of what this lesson can say (its cheer, and
+  // in a lesson of the rule the reasons of a try that did not meet the goal), measured.
+  function keepRoom() {
+    const lesson = lessonNow();
+    const box = $("lesson-result");
+    const says = $("lesson-says");
+    const cheerBox = $("lesson-cheer");
+    const was = { text: says.textContent, cheer: cheerBox.hidden };
+    box.style.minHeight = "";
+    const tries = [];
+    if (lesson) {
+      tries.push([lesson.done, true]);
+      if (!["watch", "add", "map", "look"].includes(lesson.kind)) {
+        for (const reason of Object.values(data.learn.reasons)) {
+          tries.push([reason.replace("{count}", "8").replace("{extra}", "88") + " Press Again.", false]);
+        }
+      }
+    }
+    let most = 0;
+    for (const [text, cheered] of tries) {
+      says.textContent = text;
+      cheerBox.hidden = !cheered;
+      most = Math.max(most, box.getBoundingClientRect().height);
+    }
+    says.textContent = was.text;
+    cheerBox.hidden = was.cheer;
+    if (most) box.style.minHeight = Math.ceil(most) + "px";
+  }
+
+  function learned(lesson) {
+    if (state.learned.has(lesson.key)) return;
+    state.learned.add(lesson.key);
+    savePrefs();
   }
 
   // The button to press next in a lesson, or "" when the next thing is a tap on the map
@@ -5236,14 +5385,26 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     }
     setPixels("lesson-count", counted);
     $("lesson-says").textContent = one.says;
-    $("lesson-says").style.color = one.good ? "var(--accent)" : "";
+    $("lesson-says").style.color = one.good && !one.cheer ? "var(--accent)" : "";
+    // a lesson solved: the cheer (its word by the number of the lesson, so that they vary)
+    $("lesson-result").classList.toggle("good", one.cheer);
+    $("lesson-cheer").hidden = !one.cheer;
+    if (one.cheer) setPixels("cheer-word", CHEERS[one.index % CHEERS.length]);
+    for (const pip of $("lesson-pips").children) {
+      pip.classList.toggle("done", state.learned.has(pip.dataset.key));
+      pip.classList.toggle("now", pip.dataset.key === (lesson ? lesson.key : ""));
+    }
+    // the arrow to the left: the lesson before, or from the first one the game
+    const first = Boolean(lesson) && one.index === 0;
+    $("prev").title = first ? "Back to the game (left arrow key, Esc)" : "The lesson before (left arrow key)";
+    $("prev").setAttribute("aria-label", first ? "Back to the game" : "The lesson before");
     // a world that only plays (a shape was added, a map loaded, a screen is looked at,
     // the heart of the end) can be played and stepped once there is something in it
     const plays = kind === "add" || kind === "map" || kind === "look" || kind === "end";
     $("lesson-again").disabled = kind === "look";  // (at the end it brings the heart back)
     $("prev").disabled = false;
-    $("next").disabled = Boolean(lesson) && !one.solved;
-    $("next").classList.toggle("primary", !lesson || one.solved);  // the way on, once it is open
+    $("next").disabled = Boolean(lesson) && !isOpen(lesson);
+    $("next").classList.toggle("primary", !lesson || isOpen(lesson));  // the way on, once it is open
     $("step").disabled = plays ? kind !== "end" && !one.solved : one.stepped && !one.solved && kind !== "watch";
     $("play").disabled = !(kind === "watch" || kind === "end" || one.solved);
     $("add").disabled = kind !== "add";  // the plus and the wheel are open in their own lessons only
@@ -5351,9 +5512,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     } else {
       life.step(world);
       one.stepped = true;
-      one.solved = verdict.solved;
-      one.good = verdict.solved;
-      one.says = verdict.solved ? lesson.done : sayWhy(verdict) + " Press Again.";
+      if (verdict.solved) cheer(lesson);
+      else {
+        one.solved = one.good = false;
+        one.says = sayWhy(verdict) + " Press Again.";
+      }
     }
     showLessonCard();
     requestDraw();
@@ -5365,10 +5528,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const lesson = lessonNow();
     one.steps += generations;
     if (lesson && lesson.kind === "watch" && !one.solved && learn.judge(lesson, state.world.cells, state.world.width, state.world.height, [], one.steps).solved) {
-      one.solved = true;
       one.stepped = true;
-      one.good = true;
-      one.says = lesson.done;
+      cheer(lesson);
     }
     showLessonCard();
     requestDraw();
@@ -5382,8 +5543,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (!one || !lesson || one.solved || (lesson.kind !== "add" && lesson.kind !== "map")) return;
     const world = state.world;
     if (!learn.judge(lesson, world.cells, world.width, world.height, [], 0).solved) return;
-    one.solved = one.good = true;
-    one.says = lesson.done;
+    cheer(lesson);
     showLessonCard();
     requestDraw();
   }
@@ -5433,7 +5593,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   }
 
   function moveView(by) {
-    if (state.learn) return by < 0 ? leaveLearning() : nextLesson();
+    if (state.learn) return by < 0 ? lessonBefore() : nextLesson();
     const at = VIEWS.findIndex((entry) => entry.key === state.view) + by;
     if (at >= 0 && at < VIEWS.length) setView(VIEWS[at].key);
   }
@@ -5827,6 +5987,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   $("lesson-again").addEventListener("click", () => {
     if (state.learn) showLesson(state.learn.index);
   });
+  $("lesson-leave").addEventListener("click", () => leaveLearning());
 
   // ---- sheets
 
@@ -6101,7 +6262,10 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     renderer.resize();
     ring.resize();
     picture.resize();
-    if (state.learn) fitLesson(); else if (state.fitted) fit(); else clampCamera();
+    if (state.learn) {
+      keepRoom();  // the card may be wider or narrower now
+      fitLesson();
+    } else if (state.fitted) fit(); else clampCamera();
     ringsShown = "";
     requestDraw();
   }
@@ -6170,6 +6334,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   setPlacing(prefs.placing);
   state.lessonAt = Number.isInteger(prefs.lesson) ? prefs.lesson : 0;
   state.menuOpened = Number.isInteger(prefs.menu) ? prefs.menu : 0;
+  state.learned = new Set(Array.isArray(prefs.learned) ? prefs.learned.filter((key) => data.learn.lessons.some((lesson) => lesson.key === key)) : []);
   setMode(prefs.mode || (prefs.forecast === true ? "numbers" : "normal"));
   renderer.resize();
   ring.resize();
@@ -6179,6 +6344,10 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   setView("map");
   loadMap(data.start, true);
   play();
+  // a link straight into the tutorial: retro_life.html#learn (where one stopped; the first
+  // lesson for someone new) or #learn-5 (the fifth lesson)
+  const linked = linkedLesson();
+  if (linked !== null) startLearning(linked >= 0 ? linked : undefined);
   document.body.dataset.ready = "1";
 
   // For docker/check-page.py and for looking from the console. Nothing in the page uses it.
@@ -6263,6 +6432,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       index: state.learn.index, key: lessonNow() ? lessonNow().key : "end", solved: state.learn.solved, stepped: state.learn.stepped,
       steps: state.learn.steps, guesses: Array.from(state.learn.guesses).sort((a, b) => a - b), says: state.learn.says,
       view: state.view, blink: blinking(), oneColour: Boolean(lessonNow()) && !lessonNow().ages, rate: learnRate(),
+      cheer: state.learn.cheer, learned: Array.from(state.learned),
       home: state.learn.home.world === state.world ? "same" : "kept",
     } : null),
     camera: () => ({ ...state.camera }),
