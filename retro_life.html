@@ -70,6 +70,35 @@ body[data-theme="kuroi"] :is(#organism-map, #cell-map-box, #hint, textarea) { bo
 body[data-theme="kuroi"] .sheet h3::before { border-radius: 50%; }
 body[data-theme="kuroi"] #bar { border-top-width: 1px; }
 
+/* Learn Game of Life: the card of a lesson, over the map */
+#lesson {
+  position: absolute; z-index: 3; left: 10px; top: 10px; width: min(318px, calc(100% - 20px)); max-height: calc(100% - 20px); overflow: auto;
+  display: grid; gap: 7px; padding: 10px 12px 11px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: 0 var(--px) 0 var(--shadow);
+}
+@media (orientation: portrait) { #lesson { width: calc(100% - 20px); } }
+body[data-mode="learn"] #hud { display: none; }
+.lesson-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+#lesson-step { color: var(--dim); }
+#lesson-title { color: var(--accent); }
+#lesson-title .px { height: 21px; }
+#lesson p { margin: 0; font-size: 13.5px; line-height: 1.45; }
+#lesson-count { min-height: 14px; color: var(--accent); }
+#lesson-says { min-height: 4.35em; font-weight: 700; }
+.lesson-ways { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; color: var(--dim); font-size: 12px; }
+#lesson-again { min-height: 40px; padding: 4px 12px; }
+.lesson-ways .way { display: inline-flex; align-items: center; gap: 5px; }
+.lesson-ways .way .px { height: 12px; }
+body[data-theme="kuroi"] #lesson { border-radius: 10px; }
+/* a low screen (a phone held sideways): the card smaller, without the reminders of the buttons */
+@media (max-height: 480px) {
+  #lesson { gap: 4px; padding: 7px 10px 8px; width: min(300px, calc(100% - 20px)); }
+  #lesson p { font-size: 12px; line-height: 1.35; }
+  #lesson-title .px { height: 14px; }
+  #lesson-says { min-height: 2.7em; }
+  .lesson-ways .way { display: none; }
+  #lesson-again { min-height: 40px; }
+}
+
 /* a button is a block with a hard shadow that it sinks into when pressed */
 button {
   font: inherit; color: var(--ink); background: var(--surface); border: var(--px) solid var(--ink);
@@ -348,6 +377,19 @@ textarea {
       <canvas id="organism-map" width="24" height="24" role="img" aria-label="The whole world, with the organism shown marked. Tap an organism to look at it."></canvas>
     </div>
 
+    <div id="lesson" hidden>
+      <div class="lesson-head"><span id="lesson-step"></span><span id="lesson-title"></span></div>
+      <p id="lesson-text"></p>
+      <div id="lesson-count"></div>
+      <p id="lesson-says" role="status" aria-live="polite"></p>
+      <div class="lesson-ways">
+        <button type="button" id="lesson-again" title="This lesson once more, from its start" data-px="AGAIN"></button>
+        <span class="way"><i data-icon="step"></i>check</span>
+        <span class="way"><i data-icon="right"></i>next</span>
+        <span class="way"><i data-icon="left"></i>back to the game</span>
+      </div>
+    </div>
+
     <div id="hud">
       <canvas id="mascot" width="16" height="15" aria-hidden="true"></canvas>
       <div class="hud-text">
@@ -385,6 +427,13 @@ textarea {
 
   <aside id="settings" class="sheet" hidden role="dialog" aria-label="Settings">
     <header><h2><span data-px="SETTINGS"></span><span class="kana" lang="ja">せってい</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
+    <section>
+      <h3 data-px="LEARN"></h3>
+      <p class="note">New to the Game of Life? Nine small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one. Your world waits until you come back.</p>
+      <div class="chips">
+        <button type="button" id="learn" data-px="LEARN GAME OF LIFE"></button>
+      </div>
+    </section>
     <section data-for="map">
       <h3 data-px="TIME"></h3>
       <div class="chips time">
@@ -517,12 +566,13 @@ textarea {
       <p>Where a node lies means nothing in a graph. The picture is <b>tidy</b>: every ring a regular octagon, the rings as the cells lie on the map. Cell, further up in these settings, can also place the nodes of the nine cells <b>by forces</b>, the way the Wolfram project draws its graphs: every arrow pulls its two nodes together, all nodes push each other away; that nine cells lie three by three then comes out of the arrows alone. Either way the picture stands still; only faces, cords and hearts change.</p>
       <p>The lines at the bottom left say where the cell lies on the map, what it is, how many of its neighbours are alive, and what it is next. Tap the ring of a neighbour to go there, or a cell on the map of the organism at the top right (the frame there shows the nine cells of the picture). Tap an arrow of the cell, a line or its heart to hear which arrow it is. The button under the map says what the picture does when the world moves on: <b>Stay near</b> keeps the cell while the organism is at it and moves on with the organism when it has left (a blinker's cell is watched as it blinks, a glider is followed); <b>Stay on life</b> moves to the nearest alive cell as soon as the cell dies, a newly born one first; <b>Stay put</b> never moves.</p>
       <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on the hypergraph of the donut, cell for cell, and a second one, also of 17 rules, on the graph of arrows of the fourth screen. This game turns that round. It computes with the ordinary rule, which is far faster, and shows what the rules would hold at that moment. Tests hold them equal, relation for relation and arrow for arrow, between every two generations.</p>
+      <p><b>Learn Game of Life</b>, at the top of these settings, is a tutorial of nine small lessons on a map of 9 x 9 cells: you keep a cell alive, let one be born, say what the next generation will be, and build a shape that stays and one that blinks. The button One generation is the check. The tutorial has its own world; the arrow to the left brings you back to yours, as you left it.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3 4) · ↑ ↓ organisms · A add · S settings · R F turn/mirror · 0 show all</p>
     </section>
   </aside>
 </div>
 
-<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"places":{"forces":[[0.0092,-1.558],[1.3233,-1.2925],[1.5284,0.0626],[1.3355,1.4089],[0.0194,1.4933],[-1.2839,1.2268],[-1.513,-0.1152],[-1.3176,-1.4435],[0.0298,-4.2529],[0.8365,-4.0549],[1.4387,-3.2961],[1.2804,-2.2187],[0.0033,-2.2163],[-1.2774,-2.3047],[-1.4734,-3.3106],[-0.7074,-3.7494],[2.7587,-4.5781],[3.2607,-4.6438],[3.9313,-4.2507],[3.8834,-3.3875],[3.3232,-2.4512],[2.2914,-2.3048],[2.2427,-3.3197],[2.6044,-4.0995],[3.2576,-1.4054],[3.6952,-0.4497],[3.5657,0.5808],[3.768,1.314],[3.1839,1.8769],[2.1999,1.4486],[2.1867,0.1182],[2.2355,-1.1975],[3.319,2.7396],[4.0887,3.4203],[4.4184,4.0705],[3.7928,4.1685],[3.4897,4.7285],[2.8171,4.3478],[2.203,3.5761],[2.2632,2.5279],[-0.0317,2.1347],[1.1981,2.3449],[1.2681,3.4249],[0.3802,3.9435],[-0.605,3.8914],[-1.5057,3.3026],[-1.6752,2.8205],[-1.2896,2.0098],[-3.1989,2.6653],[-2.2306,2.2591],[-2.1687,3.1667],[-1.9645,3.9315],[-2.5262,4.7226],[-3.093,4.9907],[-3.7373,4.5707],[-3.7107,3.6745],[-3.3018,-1.7279],[-2.276,-1.414],[-2.1994,-0.1371],[-2.2108,1.1486],[-3.0629,1.6711],[-3.2605,0.8858],[-3.87,0.0385],[-3.8905,-0.912],[-3.4503,-4.7164],[-2.8948,-4.3263],[-2.3273,-3.5296],[-2.2813,-2.5106],[-3.2871,-2.7352],[-3.7807,-3.6752],[-3.9348,-4.4896],[-4.0928,-4.6323]],"tidy":[[0.0,-1.0],[0.7071,-0.7071],[1.0,-0.0],[0.7071,0.7071],[0.0,1.0],[-0.7071,0.7071],[-1.0,0.0],[-0.7071,-0.7071],[0.0,-4.4],[0.7071,-4.1071],[1.0,-3.4],[0.7071,-2.6929],[0.0,-2.4],[-0.7071,-2.6929],[-1.0,-3.4],[-0.7071,-4.1071],[3.4,-4.4],[4.1071,-4.1071],[4.4,-3.4],[4.1071,-2.6929],[3.4,-2.4],[2.6929,-2.6929],[2.4,-3.4],[2.6929,-4.1071],[3.4,-1.0],[4.1071,-0.7071],[4.4,-0.0],[4.1071,0.7071],[3.4,1.0],[2.6929,0.7071],[2.4,0.0],[2.6929,-0.7071],[3.4,2.4],[4.1071,2.6929],[4.4,3.4],[4.1071,4.1071],[3.4,4.4],[2.6929,4.1071],[2.4,3.4],[2.6929,2.6929],[0.0,2.4],[0.7071,2.6929],[1.0,3.4],[0.7071,4.1071],[0.0,4.4],[-0.7071,4.1071],[-1.0,3.4],[-0.7071,2.6929],[-3.4,2.4],[-2.6929,2.6929],[-2.4,3.4],[-2.6929,4.1071],[-3.4,4.4],[-4.1071,4.1071],[-4.4,3.4],[-4.1071,2.6929],[-3.4,-1.0],[-2.6929,-0.7071],[-2.4,-0.0],[-2.6929,0.7071],[-3.4,1.0],[-4.1071,0.7071],[-4.4,0.0],[-4.1071,-0.7071],[-3.4,-4.4],[-2.6929,-4.1071],[-2.4,-3.4],[-2.6929,-2.6929],[-3.4,-2.4],[-4.1071,-2.6929],[-4.4,-3.4],[-4.1071,-4.1071],[0.0,-7.8],[0.7071,-7.5071],[1.0,-6.8],[0.7071,-6.0929],[0.0,-5.8],[-0.7071,-6.0929],[-1.0,-6.8],[-0.7071,-7.5071],[3.4,-7.8],[4.1071,-7.5071],[4.4,-6.8],[4.1071,-6.0929],[3.4,-5.8],[2.6929,-6.0929],[2.4,-6.8],[2.6929,-7.5071],[6.8,-7.8],[7.5071,-7.5071],[7.8,-6.8],[7.5071,-6.0929],[6.8,-5.8],[6.0929,-6.0929],[5.8,-6.8],[6.0929,-7.5071],[6.8,-4.4],[7.5071,-4.1071],[7.8,-3.4],[7.5071,-2.6929],[6.8,-2.4],[6.0929,-2.6929],[5.8,-3.4],[6.0929,-4.1071],[6.8,-1.0],[7.5071,-0.7071],[7.8,-0.0],[7.5071,0.7071],[6.8,1.0],[6.0929,0.7071],[5.8,0.0],[6.0929,-0.7071],[6.8,2.4],[7.5071,2.6929],[7.8,3.4],[7.5071,4.1071],[6.8,4.4],[6.0929,4.1071],[5.8,3.4],[6.0929,2.6929],[6.8,5.8],[7.5071,6.0929],[7.8,6.8],[7.5071,7.5071],[6.8,7.8],[6.0929,7.5071],[5.8,6.8],[6.0929,6.0929],[3.4,5.8],[4.1071,6.0929],[4.4,6.8],[4.1071,7.5071],[3.4,7.8],[2.6929,7.5071],[2.4,6.8],[2.6929,6.0929],[0.0,5.8],[0.7071,6.0929],[1.0,6.8],[0.7071,7.5071],[0.0,7.8],[-0.7071,7.5071],[-1.0,6.8],[-0.7071,6.0929],[-3.4,5.8],[-2.6929,6.0929],[-2.4,6.8],[-2.6929,7.5071],[-3.4,7.8],[-4.1071,7.5071],[-4.4,6.8],[-4.1071,6.0929],[-6.8,5.8],[-6.0929,6.0929],[-5.8,6.8],[-6.0929,7.5071],[-6.8,7.8],[-7.5071,7.5071],[-7.8,6.8],[-7.5071,6.0929],[-6.8,2.4],[-6.0929,2.6929],[-5.8,3.4],[-6.0929,4.1071],[-6.8,4.4],[-7.5071,4.1071],[-7.8,3.4],[-7.5071,2.6929],[-6.8,-1.0],[-6.0929,-0.7071],[-5.8,-0.0],[-6.0929,0.7071],[-6.8,1.0],[-7.5071,0.7071],[-7.8,0.0],[-7.5071,-0.7071],[-6.8,-4.4],[-6.0929,-4.1071],[-5.8,-3.4],[-6.0929,-2.6929],[-6.8,-2.4],[-7.5071,-2.6929],[-7.8,-3.4],[-7.5071,-4.1071],[-6.8,-7.8],[-6.0929,-7.5071],[-5.8,-6.8],[-6.0929,-6.0929],[-6.8,-5.8],[-7.5071,-6.0929],[-7.8,-6.8],[-7.5071,-7.5071],[-3.4,-7.8],[-2.6929,-7.5071],[-2.4,-6.8],[-2.6929,-6.0929],[-3.4,-5.8],[-4.1071,-6.0929],[-4.4,-6.8],[-4.1071,-7.5071],[0.0,-11.2],[0.7071,-10.9071],[1.0,-10.2],[0.7071,-9.4929],[0.0,-9.2],[-0.7071,-9.4929],[-1.0,-10.2],[-0.7071,-10.9071],[3.4,-11.2],[4.1071,-10.9071],[4.4,-10.2],[4.1071,-9.4929],[3.4,-9.2],[2.6929,-9.4929],[2.4,-10.2],[2.6929,-10.9071],[6.8,-11.2],[7.5071,-10.9071],[7.8,-10.2],[7.5071,-9.4929],[6.8,-9.2],[6.0929,-9.4929],[5.8,-10.2],[6.0929,-10.9071],[10.2,-11.2],[10.9071,-10.9071],[11.2,-10.2],[10.9071,-9.4929],[10.2,-9.2],[9.4929,-9.4929],[9.2,-10.2],[9.4929,-10.9071],[10.2,-7.8],[10.9071,-7.5071],[11.2,-6.8],[10.9071,-6.0929],[10.2,-5.8],[9.4929,-6.0929],[9.2,-6.8],[9.4929,-7.5071],[10.2,-4.4],[10.9071,-4.1071],[11.2,-3.4],[10.9071,-2.6929],[10.2,-2.4],[9.4929,-2.6929],[9.2,-3.4],[9.4929,-4.1071],[10.2,-1.0],[10.9071,-0.7071],[11.2,-0.0],[10.9071,0.7071],[10.2,1.0],[9.4929,0.7071],[9.2,0.0],[9.4929,-0.7071],[10.2,2.4],[10.9071,2.6929],[11.2,3.4],[10.9071,4.1071],[10.2,4.4],[9.4929,4.1071],[9.2,3.4],[9.4929,2.6929],[10.2,5.8],[10.9071,6.0929],[11.2,6.8],[10.9071,7.5071],[10.2,7.8],[9.4929,7.5071],[9.2,6.8],[9.4929,6.0929],[10.2,9.2],[10.9071,9.4929],[11.2,10.2],[10.9071,10.9071],[10.2,11.2],[9.4929,10.9071],[9.2,10.2],[9.4929,9.4929],[6.8,9.2],[7.5071,9.4929],[7.8,10.2],[7.5071,10.9071],[6.8,11.2],[6.0929,10.9071],[5.8,10.2],[6.0929,9.4929],[3.4,9.2],[4.1071,9.4929],[4.4,10.2],[4.1071,10.9071],[3.4,11.2],[2.6929,10.9071],[2.4,10.2],[2.6929,9.4929],[0.0,9.2],[0.7071,9.4929],[1.0,10.2],[0.7071,10.9071],[0.0,11.2],[-0.7071,10.9071],[-1.0,10.2],[-0.7071,9.4929],[-3.4,9.2],[-2.6929,9.4929],[-2.4,10.2],[-2.6929,10.9071],[-3.4,11.2],[-4.1071,10.9071],[-4.4,10.2],[-4.1071,9.4929],[-6.8,9.2],[-6.0929,9.4929],[-5.8,10.2],[-6.0929,10.9071],[-6.8,11.2],[-7.5071,10.9071],[-7.8,10.2],[-7.5071,9.4929],[-10.2,9.2],[-9.4929,9.4929],[-9.2,10.2],[-9.4929,10.9071],[-10.2,11.2],[-10.9071,10.9071],[-11.2,10.2],[-10.9071,9.4929],[-10.2,5.8],[-9.4929,6.0929],[-9.2,6.8],[-9.4929,7.5071],[-10.2,7.8],[-10.9071,7.5071],[-11.2,6.8],[-10.9071,6.0929],[-10.2,2.4],[-9.4929,2.6929],[-9.2,3.4],[-9.4929,4.1071],[-10.2,4.4],[-10.9071,4.1071],[-11.2,3.4],[-10.9071,2.6929],[-10.2,-1.0],[-9.4929,-0.7071],[-9.2,-0.0],[-9.4929,0.7071],[-10.2,1.0],[-10.9071,0.7071],[-11.2,0.0],[-10.9071,-0.7071],[-10.2,-4.4],[-9.4929,-4.1071],[-9.2,-3.4],[-9.4929,-2.6929],[-10.2,-2.4],[-10.9071,-2.6929],[-11.2,-3.4],[-10.9071,-4.1071],[-10.2,-7.8],[-9.4929,-7.5071],[-9.2,-6.8],[-9.4929,-6.0929],[-10.2,-5.8],[-10.9071,-6.0929],[-11.2,-6.8],[-10.9071,-7.5071],[-10.2,-11.2],[-9.4929,-10.9071],[-9.2,-10.2],[-9.4929,-9.4929],[-10.2,-9.2],[-10.9071,-9.4929],[-11.2,-10.2],[-10.9071,-10.9071],[-6.8,-11.2],[-6.0929,-10.9071],[-5.8,-10.2],[-6.0929,-9.4929],[-6.8,-9.2],[-7.5071,-9.4929],[-7.8,-10.2],[-7.5071,-10.9071],[-3.4,-11.2],[-2.6929,-10.9071],[-2.4,-10.2],[-2.6929,-9.4929],[-3.4,-9.2],[-4.1071,-9.4929],[-4.4,-10.2],[-4.1071,-10.9071]]}}</script>
+<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"places":{"forces":[[0.0092,-1.558],[1.3233,-1.2925],[1.5284,0.0626],[1.3355,1.4089],[0.0194,1.4933],[-1.2839,1.2268],[-1.513,-0.1152],[-1.3176,-1.4435],[0.0298,-4.2529],[0.8365,-4.0549],[1.4387,-3.2961],[1.2804,-2.2187],[0.0033,-2.2163],[-1.2774,-2.3047],[-1.4734,-3.3106],[-0.7074,-3.7494],[2.7587,-4.5781],[3.2607,-4.6438],[3.9313,-4.2507],[3.8834,-3.3875],[3.3232,-2.4512],[2.2914,-2.3048],[2.2427,-3.3197],[2.6044,-4.0995],[3.2576,-1.4054],[3.6952,-0.4497],[3.5657,0.5808],[3.768,1.314],[3.1839,1.8769],[2.1999,1.4486],[2.1867,0.1182],[2.2355,-1.1975],[3.319,2.7396],[4.0887,3.4203],[4.4184,4.0705],[3.7928,4.1685],[3.4897,4.7285],[2.8171,4.3478],[2.203,3.5761],[2.2632,2.5279],[-0.0317,2.1347],[1.1981,2.3449],[1.2681,3.4249],[0.3802,3.9435],[-0.605,3.8914],[-1.5057,3.3026],[-1.6752,2.8205],[-1.2896,2.0098],[-3.1989,2.6653],[-2.2306,2.2591],[-2.1687,3.1667],[-1.9645,3.9315],[-2.5262,4.7226],[-3.093,4.9907],[-3.7373,4.5707],[-3.7107,3.6745],[-3.3018,-1.7279],[-2.276,-1.414],[-2.1994,-0.1371],[-2.2108,1.1486],[-3.0629,1.6711],[-3.2605,0.8858],[-3.87,0.0385],[-3.8905,-0.912],[-3.4503,-4.7164],[-2.8948,-4.3263],[-2.3273,-3.5296],[-2.2813,-2.5106],[-3.2871,-2.7352],[-3.7807,-3.6752],[-3.9348,-4.4896],[-4.0928,-4.6323]],"tidy":[[0.0,-1.0],[0.7071,-0.7071],[1.0,-0.0],[0.7071,0.7071],[0.0,1.0],[-0.7071,0.7071],[-1.0,0.0],[-0.7071,-0.7071],[0.0,-4.4],[0.7071,-4.1071],[1.0,-3.4],[0.7071,-2.6929],[0.0,-2.4],[-0.7071,-2.6929],[-1.0,-3.4],[-0.7071,-4.1071],[3.4,-4.4],[4.1071,-4.1071],[4.4,-3.4],[4.1071,-2.6929],[3.4,-2.4],[2.6929,-2.6929],[2.4,-3.4],[2.6929,-4.1071],[3.4,-1.0],[4.1071,-0.7071],[4.4,-0.0],[4.1071,0.7071],[3.4,1.0],[2.6929,0.7071],[2.4,0.0],[2.6929,-0.7071],[3.4,2.4],[4.1071,2.6929],[4.4,3.4],[4.1071,4.1071],[3.4,4.4],[2.6929,4.1071],[2.4,3.4],[2.6929,2.6929],[0.0,2.4],[0.7071,2.6929],[1.0,3.4],[0.7071,4.1071],[0.0,4.4],[-0.7071,4.1071],[-1.0,3.4],[-0.7071,2.6929],[-3.4,2.4],[-2.6929,2.6929],[-2.4,3.4],[-2.6929,4.1071],[-3.4,4.4],[-4.1071,4.1071],[-4.4,3.4],[-4.1071,2.6929],[-3.4,-1.0],[-2.6929,-0.7071],[-2.4,-0.0],[-2.6929,0.7071],[-3.4,1.0],[-4.1071,0.7071],[-4.4,0.0],[-4.1071,-0.7071],[-3.4,-4.4],[-2.6929,-4.1071],[-2.4,-3.4],[-2.6929,-2.6929],[-3.4,-2.4],[-4.1071,-2.6929],[-4.4,-3.4],[-4.1071,-4.1071],[0.0,-7.8],[0.7071,-7.5071],[1.0,-6.8],[0.7071,-6.0929],[0.0,-5.8],[-0.7071,-6.0929],[-1.0,-6.8],[-0.7071,-7.5071],[3.4,-7.8],[4.1071,-7.5071],[4.4,-6.8],[4.1071,-6.0929],[3.4,-5.8],[2.6929,-6.0929],[2.4,-6.8],[2.6929,-7.5071],[6.8,-7.8],[7.5071,-7.5071],[7.8,-6.8],[7.5071,-6.0929],[6.8,-5.8],[6.0929,-6.0929],[5.8,-6.8],[6.0929,-7.5071],[6.8,-4.4],[7.5071,-4.1071],[7.8,-3.4],[7.5071,-2.6929],[6.8,-2.4],[6.0929,-2.6929],[5.8,-3.4],[6.0929,-4.1071],[6.8,-1.0],[7.5071,-0.7071],[7.8,-0.0],[7.5071,0.7071],[6.8,1.0],[6.0929,0.7071],[5.8,0.0],[6.0929,-0.7071],[6.8,2.4],[7.5071,2.6929],[7.8,3.4],[7.5071,4.1071],[6.8,4.4],[6.0929,4.1071],[5.8,3.4],[6.0929,2.6929],[6.8,5.8],[7.5071,6.0929],[7.8,6.8],[7.5071,7.5071],[6.8,7.8],[6.0929,7.5071],[5.8,6.8],[6.0929,6.0929],[3.4,5.8],[4.1071,6.0929],[4.4,6.8],[4.1071,7.5071],[3.4,7.8],[2.6929,7.5071],[2.4,6.8],[2.6929,6.0929],[0.0,5.8],[0.7071,6.0929],[1.0,6.8],[0.7071,7.5071],[0.0,7.8],[-0.7071,7.5071],[-1.0,6.8],[-0.7071,6.0929],[-3.4,5.8],[-2.6929,6.0929],[-2.4,6.8],[-2.6929,7.5071],[-3.4,7.8],[-4.1071,7.5071],[-4.4,6.8],[-4.1071,6.0929],[-6.8,5.8],[-6.0929,6.0929],[-5.8,6.8],[-6.0929,7.5071],[-6.8,7.8],[-7.5071,7.5071],[-7.8,6.8],[-7.5071,6.0929],[-6.8,2.4],[-6.0929,2.6929],[-5.8,3.4],[-6.0929,4.1071],[-6.8,4.4],[-7.5071,4.1071],[-7.8,3.4],[-7.5071,2.6929],[-6.8,-1.0],[-6.0929,-0.7071],[-5.8,-0.0],[-6.0929,0.7071],[-6.8,1.0],[-7.5071,0.7071],[-7.8,0.0],[-7.5071,-0.7071],[-6.8,-4.4],[-6.0929,-4.1071],[-5.8,-3.4],[-6.0929,-2.6929],[-6.8,-2.4],[-7.5071,-2.6929],[-7.8,-3.4],[-7.5071,-4.1071],[-6.8,-7.8],[-6.0929,-7.5071],[-5.8,-6.8],[-6.0929,-6.0929],[-6.8,-5.8],[-7.5071,-6.0929],[-7.8,-6.8],[-7.5071,-7.5071],[-3.4,-7.8],[-2.6929,-7.5071],[-2.4,-6.8],[-2.6929,-6.0929],[-3.4,-5.8],[-4.1071,-6.0929],[-4.4,-6.8],[-4.1071,-7.5071],[0.0,-11.2],[0.7071,-10.9071],[1.0,-10.2],[0.7071,-9.4929],[0.0,-9.2],[-0.7071,-9.4929],[-1.0,-10.2],[-0.7071,-10.9071],[3.4,-11.2],[4.1071,-10.9071],[4.4,-10.2],[4.1071,-9.4929],[3.4,-9.2],[2.6929,-9.4929],[2.4,-10.2],[2.6929,-10.9071],[6.8,-11.2],[7.5071,-10.9071],[7.8,-10.2],[7.5071,-9.4929],[6.8,-9.2],[6.0929,-9.4929],[5.8,-10.2],[6.0929,-10.9071],[10.2,-11.2],[10.9071,-10.9071],[11.2,-10.2],[10.9071,-9.4929],[10.2,-9.2],[9.4929,-9.4929],[9.2,-10.2],[9.4929,-10.9071],[10.2,-7.8],[10.9071,-7.5071],[11.2,-6.8],[10.9071,-6.0929],[10.2,-5.8],[9.4929,-6.0929],[9.2,-6.8],[9.4929,-7.5071],[10.2,-4.4],[10.9071,-4.1071],[11.2,-3.4],[10.9071,-2.6929],[10.2,-2.4],[9.4929,-2.6929],[9.2,-3.4],[9.4929,-4.1071],[10.2,-1.0],[10.9071,-0.7071],[11.2,-0.0],[10.9071,0.7071],[10.2,1.0],[9.4929,0.7071],[9.2,0.0],[9.4929,-0.7071],[10.2,2.4],[10.9071,2.6929],[11.2,3.4],[10.9071,4.1071],[10.2,4.4],[9.4929,4.1071],[9.2,3.4],[9.4929,2.6929],[10.2,5.8],[10.9071,6.0929],[11.2,6.8],[10.9071,7.5071],[10.2,7.8],[9.4929,7.5071],[9.2,6.8],[9.4929,6.0929],[10.2,9.2],[10.9071,9.4929],[11.2,10.2],[10.9071,10.9071],[10.2,11.2],[9.4929,10.9071],[9.2,10.2],[9.4929,9.4929],[6.8,9.2],[7.5071,9.4929],[7.8,10.2],[7.5071,10.9071],[6.8,11.2],[6.0929,10.9071],[5.8,10.2],[6.0929,9.4929],[3.4,9.2],[4.1071,9.4929],[4.4,10.2],[4.1071,10.9071],[3.4,11.2],[2.6929,10.9071],[2.4,10.2],[2.6929,9.4929],[0.0,9.2],[0.7071,9.4929],[1.0,10.2],[0.7071,10.9071],[0.0,11.2],[-0.7071,10.9071],[-1.0,10.2],[-0.7071,9.4929],[-3.4,9.2],[-2.6929,9.4929],[-2.4,10.2],[-2.6929,10.9071],[-3.4,11.2],[-4.1071,10.9071],[-4.4,10.2],[-4.1071,9.4929],[-6.8,9.2],[-6.0929,9.4929],[-5.8,10.2],[-6.0929,10.9071],[-6.8,11.2],[-7.5071,10.9071],[-7.8,10.2],[-7.5071,9.4929],[-10.2,9.2],[-9.4929,9.4929],[-9.2,10.2],[-9.4929,10.9071],[-10.2,11.2],[-10.9071,10.9071],[-11.2,10.2],[-10.9071,9.4929],[-10.2,5.8],[-9.4929,6.0929],[-9.2,6.8],[-9.4929,7.5071],[-10.2,7.8],[-10.9071,7.5071],[-11.2,6.8],[-10.9071,6.0929],[-10.2,2.4],[-9.4929,2.6929],[-9.2,3.4],[-9.4929,4.1071],[-10.2,4.4],[-10.9071,4.1071],[-11.2,3.4],[-10.9071,2.6929],[-10.2,-1.0],[-9.4929,-0.7071],[-9.2,-0.0],[-9.4929,0.7071],[-10.2,1.0],[-10.9071,0.7071],[-11.2,0.0],[-10.9071,-0.7071],[-10.2,-4.4],[-9.4929,-4.1071],[-9.2,-3.4],[-9.4929,-2.6929],[-10.2,-2.4],[-10.9071,-2.6929],[-11.2,-3.4],[-10.9071,-4.1071],[-10.2,-7.8],[-9.4929,-7.5071],[-9.2,-6.8],[-9.4929,-6.0929],[-10.2,-5.8],[-10.9071,-6.0929],[-11.2,-6.8],[-10.9071,-7.5071],[-10.2,-11.2],[-9.4929,-10.9071],[-9.2,-10.2],[-9.4929,-9.4929],[-10.2,-9.2],[-10.9071,-9.4929],[-11.2,-10.2],[-10.9071,-10.9071],[-6.8,-11.2],[-6.0929,-10.9071],[-5.8,-10.2],[-6.0929,-9.4929],[-6.8,-9.2],[-7.5071,-9.4929],[-7.8,-10.2],[-7.5071,-10.9071],[-3.4,-11.2],[-2.6929,-10.9071],[-2.4,-10.2],[-2.6929,-9.4929],[-3.4,-9.2],[-4.1071,-9.4929],[-4.4,-10.2],[-4.1071,-10.9071]]},"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8}],"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations."},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Go back to the game: the plus adds famous shapes, and the other screens show the same world as a graph.","endRows":[".........","..##.##..",".#######.",".#######.","..#####..","...###...","....#....",".........","........."]}}</script>
 <script>
 // The Game of Life of the game: a world that wraps round at its borders, played by the
 // ordinary rule (born with 3 alive neighbours, staying alive with 2 or 3).
@@ -1468,6 +1518,94 @@ textarea {
 
 </script>
 <script>
+// "Learn Game of Life", the small tutorial of the game: whether an arrangement meets the
+// goal of a lesson, and if not, why.
+//
+// A lesson is a small world, a text, sometimes a marked cell, and a goal (the lessons
+// come as data from retro_game.lessons). The kinds of goal:
+//
+//   watch    press "one generation" (or play) until `steps` generations have passed
+//   survive  the marked cell is alive, and alive after the coming generation
+//   born     the marked place is empty, and alive after the coming generation
+//   predict  mark exactly the places that are alive after the coming generation
+//   still    some cells, and the coming generation changes nothing
+//   period   some cells that change, and are back after two generations
+//
+// `judge` is retro_game.lessons.judge, held equal by tests/test_js_learn.py. No drawing
+// and no page in here (it also runs in Node, tests/harness.cjs).
+(function (root) {
+  "use strict";
+
+  const graph = root.RetroLife.graph;
+
+  const same = (a, b) => {
+    for (let i = 0; i < a.length; i++) if ((a[i] ? 1 : 0) !== (b[i] ? 1 : 0)) return false;
+    return true;
+  };
+
+  // lesson: {kind, target, steps}; cells: the world before the check; guesses: the cells
+  // marked in a "predict" lesson; steps: the generations passed in a "watch" lesson.
+  // Returns {solved, why, count, extra}; `why` is a key of the reasons, "" when solved.
+  function judge(lesson, cells, width, height, guesses, steps) {
+    const verdict = (solved, why, count, extra) => ({ solved, why, count: count || 0, extra: extra || 0 });
+    const { reaching, next } = graph.forecast(cells, width, height);
+    const target = lesson.target;
+    let alive = 0;
+    for (let i = 0; i < cells.length; i++) if (cells[i]) alive++;
+    if (lesson.kind === "watch") return (steps || 0) >= lesson.steps ? verdict(true, "") : verdict(false, "watching");
+    if (lesson.kind === "survive") {
+      const count = reaching[target];
+      if (!cells[target]) return verdict(false, "gone", count);
+      if (count < 2) return verdict(false, "lonely", count);
+      if (count > 3) return verdict(false, "crowded", count);
+      return verdict(true, "", count);
+    }
+    if (lesson.kind === "born") {
+      const count = reaching[target];
+      if (cells[target]) return verdict(false, "placed", count);
+      if (count !== 3) return verdict(false, count < 3 ? "few" : "many", count);
+      return verdict(true, "", count);
+    }
+    if (lesson.kind === "predict") {
+      const marked = new Set(guesses || []);
+      let wanted = 0;
+      let missed = 0;
+      let hit = 0;
+      for (let i = 0; i < next.length; i++) {
+        if (!next[i]) continue;
+        wanted++;
+        if (marked.has(i)) hit++; else missed++;
+      }
+      if (marked.size === 0) return verdict(false, "none", wanted);
+      const extra = marked.size - hit;
+      if (missed || extra) return verdict(false, "wrong", missed, extra);
+      return verdict(true, "");
+    }
+    if (lesson.kind === "still") {
+      if (!alive) return verdict(false, "empty");
+      return same(next, cells) ? verdict(true, "") : verdict(false, "changes");
+    }
+    if (lesson.kind === "period") {
+      if (!alive) return verdict(false, "empty");
+      if (same(next, cells)) return verdict(false, "rests");
+      return same(graph.forecast(next, width, height).next, cells) ? verdict(true, "") : verdict(false, "lost");
+    }
+    throw new Error("no goal of the kind " + lesson.kind);
+  }
+
+  // The world of a lesson at its start, as 0 and 1, row by row.
+  function cellsOf(lesson) {
+    const cells = [];
+    for (const row of lesson.rows) for (const mark of row) cells.push(mark === "#" ? 1 : 0);
+    return cells;
+  }
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.learn = { judge, cellsOf };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
 // Pixel art of the page, all of it drawn from small tables in this file: the letters, the
 // icons of the buttons, the faces of the cells, the rice ball in the corner and the wave
 // pattern behind the map. The page loads no font and no picture.
@@ -1947,6 +2085,49 @@ textarea {
         }
         c.globalAlpha = 1;
       }
+      // marks on cells (a lesson): the marked cell, the eight places round it, guesses
+      for (const mark of scene.marks || []) {
+        const x = Math.round(ox + (mark.index % world.width) * s);
+        const y = Math.round(oy + Math.floor(mark.index / world.width) * s);
+        const side = Math.round(s);
+        const line = Math.max(2, Math.round(s * 0.07));
+        c.setLineDash([]);
+        c.globalAlpha = 1;
+        if (mark.kind === "around") {
+          // the eight places round the marked cell: a dotted frame round all nine
+          c.strokeStyle = theme.border;
+          c.globalAlpha = 0.55;
+          c.lineWidth = Math.max(1, Math.round(line / 2));
+          c.setLineDash([line * 2, line * 2]);
+          c.strokeRect(x - side + 0.5, y - side + 0.5, 3 * side, 3 * side);
+        } else if (mark.kind === "target") {
+          c.strokeStyle = theme.seal;
+          c.lineWidth = line + 1;
+          c.strokeRect(x + line / 2, y + line / 2, side - line, side - line);
+        } else if (mark.kind === "guess") {
+          c.strokeStyle = theme.ghost;
+          c.lineWidth = line;
+          c.strokeRect(x + line * 1.5, y + line * 1.5, side - 3 * line, side - 3 * line);
+        } else if (mark.kind === "missed") {
+          // alive, and not marked: a dotted frame in the colour of the seal
+          c.strokeStyle = theme.seal;
+          c.lineWidth = line;
+          c.setLineDash([line, line]);
+          c.strokeRect(x + line * 1.5, y + line * 1.5, side - 3 * line, side - 3 * line);
+        } else if (mark.kind === "extra") {
+          // marked, and empty: a cross
+          c.strokeStyle = theme.seal;
+          c.lineWidth = line;
+          c.beginPath();
+          c.moveTo(x + side * 0.28, y + side * 0.28);
+          c.lineTo(x + side * 0.72, y + side * 0.72);
+          c.moveTo(x + side * 0.72, y + side * 0.28);
+          c.lineTo(x + side * 0.28, y + side * 0.72);
+          c.stroke();
+        }
+      }
+      c.setLineDash([]);
+      c.globalAlpha = 1;
       // a stamp just made: a red seal round it, fading
       for (const effect of effects || []) {
         const progress = (scene.now - effect.start) / effect.lasts;
@@ -3714,7 +3895,7 @@ void main() {
   function savePrefs() {
     store(PREFS, {
       theme: state.theme, speed: state.speed, signals: state.signals, spin: state.spin, follow: state.follow,
-      forecast: state.forecast, cellPlacing: state.placing, reach: state.reach,
+      forecast: state.forecast, cellPlacing: state.placing, reach: state.reach, lesson: state.lessonAt || 0,
     });
   }
 
@@ -4288,7 +4469,10 @@ void main() {
   // ---- drawing
 
   function mapScene(now) {
-    return { world: state.world, camera: state.camera, ghost: state.ghost, effects: state.effects, now: now || performance.now() };
+    return {
+      world: state.world, camera: state.camera, ghost: state.ghost, effects: state.effects, now: now || performance.now(),
+      marks: state.learn ? learnMarks() : null,
+    };
   }
 
   function ringScene() {
@@ -4306,7 +4490,7 @@ void main() {
     if (state.playing) {
       // on the third and the fourth screen time runs slowly, so that an organism can be followed
       const set = SPEEDS[state.speed];
-      const rate = SLOW_VIEWS.has(state.view) ? Math.min(set || ORGANISM_RATE, ORGANISM_RATE) : set;
+      const rate = state.learn ? LEARN_RATE : SLOW_VIEWS.has(state.view) ? Math.min(set || ORGANISM_RATE, ORGANISM_RATE) : set;
       const elapsed = Math.min(250, now - state.last);
       state.last = now;
       let steps = Infinity;
@@ -4323,6 +4507,7 @@ void main() {
       }
       if (rate && done < steps) state.owed = 0;  // cannot keep up: nothing is piled up
       if (done) state.dirty = true;
+      if (done && state.learn) learnPassed(done);
       if (state.view === "donut" && state.spin && !state.held) {
         state.orbit.turn = donut.spun(state.orbit.turn, elapsed * SPIN);
         state.dirty = true;
@@ -4392,6 +4577,7 @@ void main() {
 
   function play() {
     if (state.playing) return;
+    if (state.learn && $("play").disabled) return;
     state.playing = true;
     state.last = performance.now();
     state.owed = 1;  // the first generation at once
@@ -4408,6 +4594,7 @@ void main() {
 
   function stepOnce() {
     pause();
+    if (state.learn) return learnStep();
     life.step(state.world);
     requestDraw();
   }
@@ -4526,6 +4713,240 @@ void main() {
     return true;
   }
 
+  // ---- Learn Game of Life: a tutorial of small lessons on a map of its own
+  //
+  // Asked for by the user on 2026-11-22: "some kind of tutorial, like a game, to
+  // understand the game of life and its rule ... Only use the Map view ... you are
+  // disconnected from the main game, but you can navigate back." While it runs,
+  // `state.learn` holds the lesson and `state.world` is the lesson's world; the world of
+  // the game waits in `state.learn.home` and comes back untouched. The lessons and their
+  // words are data (retro_game.lessons); whether a lesson is solved is learn.judge.
+  // The six buttons keep their places: the arrow to the left goes back to the game,
+  // one generation is the check, the arrow to the right the next lesson.
+
+  const learn = window.RetroLife.learn;
+  const LEARN_RATE = 2;  // generations a second while a lesson plays
+
+  const lessonNow = () => (state.learn ? data.learn.lessons[state.learn.index] || null : null);
+
+  function startLearning(index) {
+    if (state.learn) return;
+    closeSheets();
+    pause();
+    if (state.stamp) leaveStamping();
+    state.learn = {
+      index: 0, steps: 0, stepped: false, solved: false, guesses: new Set(), checked: null, says: "", good: false,
+      home: { world: state.world, camera: { ...state.camera }, fitted: state.fitted, view: state.view },
+    };
+    document.body.dataset.mode = "learn";
+    $("hint").classList.remove("on");  // a hint of the screen one came from is not for here
+    setView("map");
+    $("lesson").hidden = false;
+    for (const id of ["add", "settings-button"]) $(id).disabled = true;
+    $("prev").title = "Back to the game (Esc)";
+    $("prev").setAttribute("aria-label", "Back to the game");
+    $("next").title = "The next lesson (right arrow key)";
+    $("next").setAttribute("aria-label", "The next lesson");
+    const most = data.learn.lessons.length - 1;
+    showLesson(Math.max(0, Math.min(most, Number.isInteger(index) ? index : state.lessonAt || 0)));
+  }
+
+  function leaveLearning() {
+    if (!state.learn) return;
+    pause();
+    const home = state.learn.home;
+    state.learn = null;
+    delete document.body.dataset.mode;
+    $("lesson").hidden = true;
+    for (const id of ["add", "settings-button", "play", "step"]) $(id).disabled = false;
+    $("next").classList.remove("primary");
+    $("prev").title = "The screen to the left (left arrow key)";
+    $("prev").setAttribute("aria-label", "The screen to the left");
+    $("next").title = "The screen to the right (right arrow key)";
+    $("next").setAttribute("aria-label", "The screen to the right");
+    newWorld(home.world);
+    state.camera = home.camera;
+    state.fitted = home.fitted;
+    if (state.fitted) fit();
+    setView(home.view);
+    savePrefs();
+    requestDraw();
+  }
+
+  // A lesson from its start (also AGAIN). The number after the last lesson is the end.
+  function showLesson(index) {
+    const one = state.learn;
+    pause();
+    one.index = index;
+    one.steps = 0;
+    one.stepped = false;
+    one.solved = false;
+    one.guesses = new Set();
+    one.checked = null;
+    one.says = "";
+    one.good = false;
+    const lesson = lessonNow();
+    const side = data.learn.side;
+    const world = life.createWorld(side, side);
+    life.setCells(world, learn.cellsOf(lesson || { rows: data.learn.endRows }));
+    const home = one.home;
+    newWorld(world);
+    one.home = home;
+    state.lessonAt = lesson ? index : 0;
+    savePrefs();
+    showLessonCard();
+    fitLesson();
+    requestDraw();
+  }
+
+  function nextLesson() {
+    const one = state.learn;
+    if (!one) return;
+    if (!lessonNow()) return leaveLearning();  // the end: back to the game
+    if (!one.solved) return flash("step");  // not yet: the check comes first
+    showLesson(one.index + 1);
+  }
+
+  // The words of the card, and which buttons can be pressed.
+  function showLessonCard() {
+    const one = state.learn;
+    const lesson = lessonNow();
+    const count = data.learn.lessons.length;
+    setPixels("lesson-step", lesson ? "LESSON " + (one.index + 1) + " OF " + count : "THE END");
+    setPixels("lesson-title", lesson ? lesson.title : "WELL DONE");
+    $("lesson-text").textContent = lesson ? lesson.text : data.learn.end;
+    // the neighbours of the marked cell, counted as the cells are set
+    let counted = "";
+    if (lesson && lesson.target >= 0 && !one.stepped && lesson.kind !== "watch") {
+      const found = graph.forecast(state.world.cells, state.world.width, state.world.height);
+      counted = "NEIGHBOURS: " + found.reaching[lesson.target];
+    } else if (lesson && lesson.kind === "predict" && !one.stepped) {
+      counted = "MARKED: " + one.guesses.size;
+    } else if (lesson && lesson.kind === "watch" && lesson.steps > 1) {
+      counted = "GENERATION " + Math.min(one.steps, lesson.steps) + " OF " + lesson.steps;
+    }
+    setPixels("lesson-count", counted);
+    $("lesson-says").textContent = one.says;
+    $("lesson-says").style.color = one.good ? "var(--accent)" : "";
+    $("lesson-again").disabled = !lesson;
+    $("prev").disabled = false;
+    $("next").disabled = Boolean(lesson) && !one.solved;
+    $("next").classList.toggle("primary", !lesson || one.solved);  // the way on, once it is open
+    $("step").disabled = !lesson || (one.stepped && !one.solved && lesson.kind !== "watch");
+    $("play").disabled = !lesson || !(lesson.kind === "watch" || one.solved);
+    document.body.dataset.lesson = lesson ? lesson.key : "end";
+    document.body.dataset.solved = one.solved ? "1" : "0";
+  }
+
+  // The small world beside its card (a wide screen) or under it (a tall one), as large
+  // as the room allows. The card keeps its height while a lesson runs, so the world
+  // stands still.
+  function fitLesson() {
+    if (!state.learn) return;
+    const { width, height } = renderer.size();
+    const side = state.world.width;
+    const card = $("lesson").getBoundingClientRect();
+    const stage = $("stage").getBoundingClientRect();
+    const below = card.bottom - stage.top + 10;
+    const beside = card.right - stage.left + 10;
+    const tall = height - below >= width - beside;  // more room under the card than beside it
+    const roomX = tall ? width - 16 : width - beside - 12;
+    const roomY = tall ? height - below - 12 : height - 16;
+    const scale = Math.max(4, Math.min(MAX_SCALE, Math.floor(Math.min(roomX, roomY) / side)));
+    const middleX = tall ? width / 2 : beside + roomX / 2;
+    const middleY = tall ? below + roomY / 2 : height / 2;
+    state.camera = { scale, x: side / 2 - (middleX - width / 2) / scale, y: side / 2 - (middleY - height / 2) / scale };
+    state.fitted = false;
+  }
+
+  // What the map marks in a lesson: the marked cell and the places round it, the
+  // guesses, and after the check of a guess what was missed and what was too much.
+  function learnMarks() {
+    const one = state.learn;
+    const lesson = lessonNow();
+    if (!one || !lesson) return null;
+    const marks = [];
+    if (lesson.target >= 0) {
+      if (!one.stepped) marks.push({ index: lesson.target, kind: "around" });
+      marks.push({ index: lesson.target, kind: "target" });
+    }
+    if (lesson.kind === "predict") {
+      const { cells } = state.world;
+      for (const index of one.guesses) marks.push({ index, kind: one.stepped && !cells[index] ? "extra" : "guess" });
+      if (one.stepped) {
+        for (let index = 0; index < cells.length; index++) if (cells[index] && !one.guesses.has(index)) marks.push({ index, kind: "missed" });
+      }
+    }
+    return marks;
+  }
+
+  // A tap on a cell of a lesson: set or unset it, or mark a guess.
+  function learnTap(cell) {
+    const one = state.learn;
+    const lesson = lessonNow();
+    if (!lesson || !cell.inside) return;
+    if (lesson.kind === "watch") return flash(lesson.steps > 1 ? "play" : "step");
+    if (one.stepped) return flash(one.solved ? "next" : "lesson-again");
+    if (lesson.kind === "predict") {
+      if (one.guesses.has(cell.index)) one.guesses.delete(cell.index); else one.guesses.add(cell.index);
+    } else if (cell.index === lesson.target) {
+      one.says = lesson.kind === "born" ? data.learn.reasons.placed : data.learn.reasons.gone;
+      one.good = false;
+    } else {
+      life.setCell(state.world, cell.index, state.world.cells[cell.index] ? 0 : 1);
+      one.says = "";
+    }
+    showLessonCard();
+    requestDraw();
+  }
+
+  const sayWhy = (verdict) => data.learn.reasons[verdict.why].replace("{count}", verdict.count).replace("{extra}", verdict.extra);
+
+  // One generation in a lesson: the check. The world moves on, so that what the rule
+  // does is seen; AGAIN brings the lesson back.
+  function learnStep() {
+    const one = state.learn;
+    const lesson = lessonNow();
+    if (!lesson) return;
+    const world = state.world;
+    if (lesson.kind === "watch" || one.solved) {
+      life.step(world);
+      learnPassed(1);
+      return;
+    }
+    if (one.stepped) return flash("lesson-again");
+    const verdict = learn.judge(lesson, world.cells, world.width, world.height, Array.from(one.guesses), 0);
+    if (verdict.why === "none" || verdict.why === "empty") {
+      // nothing to check yet: the world stays as it is
+      one.says = sayWhy(verdict);
+      one.good = false;
+    } else {
+      life.step(world);
+      one.stepped = true;
+      one.solved = verdict.solved;
+      one.good = verdict.solved;
+      one.says = verdict.solved ? lesson.done : sayWhy(verdict) + " Press Again.";
+    }
+    showLessonCard();
+    requestDraw();
+  }
+
+  // Generations passed in a lesson (by the button or by playing).
+  function learnPassed(generations) {
+    const one = state.learn;
+    const lesson = lessonNow();
+    if (!lesson) return;
+    one.steps += generations;
+    if (lesson.kind === "watch" && !one.solved && learn.judge(lesson, state.world.cells, state.world.width, state.world.height, [], one.steps).solved) {
+      one.solved = true;
+      one.stepped = true;
+      one.good = true;
+      one.says = lesson.done;
+    }
+    showLessonCard();
+    requestDraw();
+  }
+
   // ---- screens
 
   const hinted = new Set();
@@ -4533,6 +4954,7 @@ void main() {
   function setView(key) {
     const at = VIEWS.findIndex((entry) => entry.key === key);
     if (at < 0) return;
+    if (state.learn && key !== "map") return;  // a lesson is on the map and nowhere else
     state.view = key;
     state.owed = 0;  // the screens play at their own pace
     document.body.dataset.view = key;
@@ -4570,6 +4992,7 @@ void main() {
   }
 
   function moveView(by) {
+    if (state.learn) return by < 0 ? leaveLearning() : nextLesson();
     const at = VIEWS.findIndex((entry) => entry.key === state.view) + by;
     if (at >= 0 && at < VIEWS.length) setView(VIEWS[at].key);
   }
@@ -4698,6 +5121,7 @@ void main() {
   }
 
   function movePinch() {
+    if (state.learn) return;
     const [a, b] = Array.from(pointers.values());
     const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
     if (state.view === "donut") {
@@ -4736,6 +5160,12 @@ void main() {
     if (!down(event, view)) return;
     const point = pointers.get(event.pointerId);
     const cell = cellUnder(point);
+    if (state.learn) {
+      // a lesson: a tap sets, unsets or marks one cell; nothing is drawn, moved or zoomed
+      gesture = { kind: "rest" };
+      if (event.button === 0 || event.pointerType !== "mouse") learnTap(cell);
+      return;
+    }
     if (event.button === 1 || event.button === 2) {
       gesture = { kind: "pan", last: point };
     } else if (state.stamp) {
@@ -4810,6 +5240,7 @@ void main() {
   const wheelFactor = (event) => Math.exp(-event.deltaY * (event.deltaMode === 1 ? 30 : 1) * (event.ctrlKey ? 0.01 : 0.0016));
   view.addEventListener("wheel", (event) => {
     event.preventDefault();
+    if (state.learn) return;
     const point = pointOf(event, view);
     zoomAt(point.x, point.y, wheelFactor(event));
   }, { passive: false });
@@ -4984,6 +5415,10 @@ void main() {
     setForecast(!state.forecast);
     savePrefs();
   });
+  $("learn").addEventListener("click", () => startLearning());
+  $("lesson-again").addEventListener("click", () => {
+    if (state.learn && lessonNow()) showLesson(state.learn.index);
+  });
   $("cell-follow").addEventListener("click", () => {
     const at = FOLLOWS.findIndex((entry) => entry.key === state.follow);
     const next = FOLLOWS[(at + 1) % FOLLOWS.length];
@@ -5007,6 +5442,7 @@ void main() {
   // The settings open at the part that belongs to the screen one comes from (on the
   // map: at the top), and that part is marked.
   function openSheet(id) {
+    if (state.learn) return;
     closeSheets();
     const sheet = $(id);
     sheet.hidden = false;
@@ -5202,8 +5638,10 @@ void main() {
     if (event.target.closest && event.target.closest("textarea")) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (state.learn && !["Escape", " ", ".", "n", "ArrowLeft", "ArrowRight"].includes(key)) return;
     if (key === "Escape") {
-      if (!$("shade").hidden) closeSheets();
+      if (state.learn) leaveLearning();
+      else if (!$("shade").hidden) closeSheets();
       else if (state.stamp) leaveStamping();
     } else if (key === " ") {
       if (event.target.closest && event.target.closest("button")) return;  // the button does its own
@@ -5234,7 +5672,7 @@ void main() {
     renderer.resize();
     ring.resize();
     picture.resize();
-    if (state.fitted) fit(); else clampCamera();
+    if (state.learn) fitLesson(); else if (state.fitted) fit(); else clampCamera();
     cellShown = "";
     requestDraw();
   }
@@ -5252,6 +5690,7 @@ void main() {
   setSpin(prefs.spin !== false);
   setFollow(prefs.follow);
   setPlacing(prefs.cellPlacing);
+  state.lessonAt = Number.isInteger(prefs.lesson) ? prefs.lesson : 0;
   setReach(prefs.reach);
   setForecast(prefs.forecast === true);
   renderer.resize();
@@ -5341,6 +5780,13 @@ void main() {
       };
     },
     chooseCell, setFollow, setPlacing, setReach,
+    // the tutorial: start it (at a lesson), leave it, and what it shows
+    startLearning, leaveLearning,
+    lesson: () => (state.learn ? {
+      index: state.learn.index, key: lessonNow() ? lessonNow().key : "end", solved: state.learn.solved, stepped: state.learn.stepped,
+      steps: state.learn.steps, guesses: Array.from(state.learn.guesses).sort((a, b) => a - b), says: state.learn.says,
+      home: state.learn.home.world === state.world ? "same" : "kept",
+    } : null),
     cellMapPoint: (index) => picture.piecePoint($("cell-map"), index),
     camera: () => ({ ...state.camera }),
     // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
