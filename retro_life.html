@@ -82,10 +82,9 @@ body[data-view="organism"] #organism-fate { display: grid; }
 .mark { flex: none; width: 18px; height: 18px; display: grid; place-items: center; border: 2px solid transparent; }
 .mark.framed { border-color: var(--space-ink); }
 .mark b { display: block; width: 10px; height: 10px; }
-.mark b.faint { opacity: 0.4; }
-.mark b.seed { width: 6px; height: 6px; }
+.mark b.rock { width: 4px; height: 4px; background: var(--space-ink); opacity: 0.5; }
 .legend .mark { background: #0e0d1c; outline: 2px solid #0e0d1c; }  /* as on the screen, where it is night */
-body[data-theme="sumi"] .mark b:not(.seed) { box-shadow: 0 0 0 1px rgba(244, 238, 225, 0.75); }
+body[data-theme="sumi"] .mark b:not(.rock) { box-shadow: 0 0 0 1px rgba(244, 238, 225, 0.75); }
 body[data-view="organism"] #hint { bottom: 128px; }  /* above the legend and the small map */
 @media (orientation: landscape) { body[data-view="organism"] #hint { bottom: 12px; max-width: calc(100% - 500px); } }  /* between them */
 /* the fourth screen: one cell as the Wolfram project draws a hypergraph; night, like the ring */
@@ -262,8 +261,8 @@ textarea {
     </div>
     <div id="organism-fate" hidden aria-label="What the coming generation does to this organism">
       <div class="fate" title="Alive now and in the coming generation: a face in a frame"><i class="mark framed"><b data-colour="young"></b></i><span id="fate-stay"></span></div>
-      <div class="fate" title="Alive now, dead in the coming generation: a faint face without a frame"><i class="mark"><b class="faint" data-colour="young"></b></i><span id="fate-die"></span></div>
-      <div class="fate" title="Dead now, alive in the coming generation: a seed in a frame"><i class="mark framed"><b class="seed" data-colour="born"></b></i><span id="fate-born"></span></div>
+      <div class="fate" title="Alive now, dead in the coming generation: a face without a frame"><i class="mark"><b data-colour="young"></b></i><span id="fate-die"></span></div>
+      <div class="fate" title="Dead now, alive in the coming generation: a frame round a rock"><i class="mark framed"><b class="rock"></b></i><span id="fate-born"></span></div>
     </div>
     <div id="organism-pick">
       <div class="steps">
@@ -388,11 +387,11 @@ textarea {
       <p><b>What the coming generation does</b> is shown by frames: a frame round a node says "alive in the coming generation". So the frames together are the shape of the next generation.</p>
       <ul class="legend">
         <li><i class="mark framed"><b data-colour="young"></b></i><span>a <b>face in a frame</b> stays alive: two or three coloured lines reach it</span></li>
-        <li><i class="mark"><b class="faint" data-colour="young"></b></i><span>a <b>faint face without a frame</b> dies: fewer than two coloured lines reach it, or more than three</span></li>
-        <li><i class="mark framed"><b class="seed" data-colour="born"></b></i><span>a <b>seed in a frame</b> is a dead cell that is born: exactly three coloured lines reach it</span></li>
+        <li><i class="mark"><b data-colour="young"></b></i><span>a <b>face without a frame</b> dies: fewer than two coloured lines reach it, or more than three</span></li>
+        <li><i class="mark framed"><b class="rock"></b></i><span>a <b>frame round a rock</b> is a dead cell that is born: exactly three coloured lines reach it</span></li>
         <li><i class="swatch hollow"></i><span>a <b>grey rock</b> is a dead cell that stays dead</span></li>
       </ul>
-      <p>The numbers at the bottom left count them. A coloured line that comes in from the edge is the signal of another organism nearby, and the faint light it starts from is that organism's cell. The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down), and so does a tap on the picture; on the small map, which shows the whole world, tap an organism to look at it. The world plays slowly on this screen, one generation a second at most. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the piece shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
+      <p>The numbers at the bottom left count them. A coloured line that comes in from the edge is the signal of another organism nearby, and the faint light it starts from is that organism's cell. The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down), and so does a tap on the picture; on the small map, which shows the whole world, tap an organism to look at it. The world plays slowly on this screen, one generation a second at most. A large organism is drawn small: first the faces become blocks, then the frames and the lines are left out. What the piece shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
       <p><b>Cell</b> <span lang="ja">(セル)</span> shows one cell of that organism as the hypergraph really is, drawn the way the Wolfram Physics Project draws one. There are nine nodes: the cell (with the accent ring) and its eight neighbours, placed by forces, so their places mean nothing. Between them lie 36 relations: the 20 of the cell itself, the eight lines that come in from its neighbours, and the eight relations that say whether each neighbour is alive or dead.</p>
       <ul class="legend">
         <li><span>An <b>arrow</b> is a relation that runs from one node to the next; a relation of several nodes is a chain of arrows over a <b>faint shape</b>.</span></li>
@@ -2373,12 +2372,16 @@ void main() {
 //     line that comes in from outside the piece is the signal of another organism
 //     nearby; the faint light it starts from is that organism's cell;
 //   - a frame round a node says: alive in the coming generation. A face in a frame
-//     stays; a face without a frame, drawn faint, dies; a frame with a seed in it is a
-//     cell that is born. So the frames together are the shape of the next generation.
+//     stays, a face without a frame dies, a frame round a rock is a cell that is born. So
+//     the frames together are the shape of the next generation. Nothing else marks it:
+//     a cell that dies is drawn as strongly as one that stays (the user, 2026-11-22: "we
+//     kind of overdid showing which cells are dying and being born ... now the current
+//     formation is not visible"), and a cell that is born has no mark of its own.
 //
 // A small organism is drawn large, a large one small: below FACES_FROM pixels from node to
-// node the faces are plain blocks, below LINES_FROM the lines are left out, and a very
-// large organism is a pixel or less per cell. Nothing is too big to draw.
+// node the faces are plain blocks, below FRAMES_FROM the frames are left out (such a
+// picture shows the organism as it is, not what comes), below LINES_FROM the lines, and a
+// very large organism is a pixel or less per cell. Nothing is too big to draw.
 //
 // The picture stands still while the organism fits into it: the camera moves (and the
 // scale changes) only when the piece no longer fits, or lies small in a wide room.
@@ -2459,7 +2462,6 @@ void main() {
         rock: render.rgbOf(theme.rock),
         shades: render.shadeColours(theme).map((rgb) => rgb && seen(rgb)),
         tile: css(render.rgbOf(theme.field), 1),
-        born: seen(render.rgbOf(theme.born)),
         faces: {
           born: face(pixel.CELLS.born, theme.born),
           young: face(pixel.CELLS.young, theme.young),
@@ -2669,23 +2671,16 @@ void main() {
       const { next } = organism;
 
       if (p < LINES_FROM) {
-        // a large organism: blocks only. What dies is faint, what is born is a small seed.
+        // a large organism: blocks only, the organism as it is
         if (p >= ROCKS_FROM) {
           ctx.fillStyle = css(looks.rock, 0.3);
-          for (let k = aliveCount; k < cells.length; k++) {
-            if (!next[k]) ctx.fillRect(Math.round(ox + xs[k] * p), Math.round(oy + ys[k] * p), 1, 1);
-          }
+          for (let k = aliveCount; k < cells.length; k++) ctx.fillRect(Math.round(ox + xs[k] * p), Math.round(oy + ys[k] * p), 1, 1);
         }
         const side = Math.max(1, p * 0.84);
-        const colours = looks.shades.map((rgb) => rgb && [css(rgb, 1), css(rgb, 0.45)]);
+        const colours = looks.shades.map((rgb) => rgb && css(rgb, 1));
         for (let k = 0; k < aliveCount; k++) {
-          ctx.fillStyle = colours[shadeOf(cells[k])][next[k] ? 0 : 1];
+          ctx.fillStyle = colours[shadeOf(cells[k])];
           ctx.fillRect(ox + xs[k] * p - side / 2, oy + ys[k] * p - side / 2, side, side);
-        }
-        const seed = Math.max(1, p * 0.45);
-        ctx.fillStyle = css(looks.born, 0.75);
-        for (let k = aliveCount; k < cells.length; k++) {
-          if (next[k]) ctx.fillRect(ox + xs[k] * p - seed / 2, oy + ys[k] * p - seed / 2, seed, seed);
         }
         drawMap(scene, piece);
         return { took: performance.now() - begin, moving, pitch: p };
@@ -2746,21 +2741,14 @@ void main() {
         ctx.fillRect(x - Math.floor(light / 2), y - Math.floor(light / 2), light, light);
       }
 
-      // 3. the dead nodes: rocks, fainter in the outer row; a seed where one is born
+      // 3. the dead nodes: rocks, fainter in the outer row
       const rock = Math.max(1, Math.round(p * 0.14));
-      const seed = Math.max(2, Math.round(p * 0.26));
       for (let k = aliveCount; k < cells.length; k++) {
-        const x = X(xs[k]), y = Y(ys[k]);
-        if (next[k]) {
-          ctx.fillStyle = css(looks.born, 1);
-          ctx.fillRect(x - Math.floor(seed / 2), y - Math.floor(seed / 2), seed, seed);
-        } else {
-          ctx.fillStyle = css(looks.rock, k >= outerFrom ? 0.38 : 0.85);
-          ctx.fillRect(x - Math.floor(rock / 2), y - Math.floor(rock / 2), rock, rock);
-        }
+        ctx.fillStyle = css(looks.rock, k >= outerFrom ? 0.38 : 0.85);
+        ctx.fillRect(X(xs[k]) - Math.floor(rock / 2), Y(ys[k]) - Math.floor(rock / 2), rock, rock);
       }
 
-      // 4. the alive nodes: faces in the colour of their age; faint when they die
+      // 4. the alive nodes: faces in the colour of their age, all as strong as each other
       const faces = p >= FACES_FROM;
       const size = faces ? Math.max(8, 4 * Math.round((p * 0.56) / 4)) : Math.max(2, Math.round(p * 0.6));
       for (let k = 0; k < aliveCount; k++) {
@@ -2770,13 +2758,12 @@ void main() {
         const left = x - Math.floor(size / 2), top = y - Math.floor(size / 2);
         ctx.fillStyle = theme.space;  // the lines end at the node
         ctx.fillRect(left, top, size, size);
-        if (next[k] && faces) {
+        if (faces) {
           ctx.fillStyle = css(rgb, 0.14);
           ctx.fillRect(left - 3, top - 3, size + 6, size + 6);
           ctx.fillStyle = theme.space;
           ctx.fillRect(left, top, size, size);
         }
-        ctx.globalAlpha = next[k] ? 1 : 0.4;
         if (faces) {
           const face = shade === 1 ? looks.faces.born : shade < render.OLD ? looks.faces.young : looks.faces.old;
           if (face.tiled) {
@@ -2788,10 +2775,10 @@ void main() {
           ctx.fillStyle = css(rgb, 1);
           ctx.fillRect(left, top, size, size);
         }
-        ctx.globalAlpha = 1;
       }
 
-      // 5. the frames: alive in the coming generation
+      // 5. the frames: alive in the coming generation (round a face: it stays; round a
+      // rock: it is born). The one mark of what comes.
       if (p >= FRAMES_FROM) {
         const frame = Math.max(5, 2 * Math.round(p * 0.4) + 1);
         const half = (frame - 1) / 2;
