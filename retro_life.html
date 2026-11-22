@@ -12,26 +12,23 @@
 :root {
   --bg: #16152b; --surface: #211f3d; --surface-2: #2a284c; --ink: #f4e9d8; --dim: #a8a1c6;
   --accent: #ff8fab; --accent-ink: #2a1f3d; --shadow: #0b0a18; --seal: #ff5d73;
-  --space-ink: #f4e9d8;
+  --space: #0b0a1a; --space-ink: #f4e9d8;  /* the ground and the ink of the ring and the organism */
   --font: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", system-ui, sans-serif;
   --px: 3px;  /* the size of a "pixel" of the page: borders, shadows */
   color-scheme: dark;
 }
+/* Hiru: the day, bright on every screen (the ring in a blue sky with a sun) */
 body[data-theme="hiru"] {
-  --bg: #f3ead9; --surface: #fffaf0; --surface-2: #efe4d0; --ink: #3a3340; --dim: #857a86;
-  --accent: #e2596b; --accent-ink: #fffaf0; --shadow: #cdbfa6; --seal: #d93f52;
-  color-scheme: light;
-}
-body[data-theme="sumi"] {
-  --bg: #e9e2d3; --surface: #f4eee1; --surface-2: #e4dccb; --ink: #23202a; --dim: #77727f;
-  --accent: #c8372d; --accent-ink: #f4eee1; --shadow: #c4bba8; --seal: #c8372d;
+  --bg: #d3ecfa; --surface: #fffdf7; --surface-2: #e6f4fc; --ink: #27364f; --dim: #687a92;
+  --accent: #e2596b; --accent-ink: #fffdf7; --shadow: #9cc6e0; --seal: #d93f52;
+  --space: #ecf7fd; --space-ink: #27364f;
   color-scheme: light;
 }
 /* Kuroi: black and white, nothing else, and no pixel art: thin lines, round corners, the
    letters of the device (asked for by the developer on 2026-11-22) */
 body[data-theme="kuroi"] {
   --bg: #000000; --surface: #0a0a0a; --surface-2: #1a1a1a; --ink: #ffffff; --dim: #9a9a9a;
-  --accent: #ffffff; --accent-ink: #000000; --shadow: transparent; --seal: #8a8a8a; --space-ink: #ffffff;
+  --accent: #ffffff; --accent-ink: #000000; --shadow: transparent; --seal: #8a8a8a; --space: #000000; --space-ink: #ffffff;
   --px: 1px;
   --font: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "Hiragino Sans", "Noto Sans JP", sans-serif;
   color-scheme: dark;
@@ -200,14 +197,14 @@ body[data-view="organism"][data-shows="numbers"] #organism-fate { display: grid;
 .mark.born { border: 2px solid var(--space-ink); }
 .mark.count { color: var(--space-ink); opacity: 0.6; }
 .mark.count .px { height: 14px; }
-.legend .mark { outline: 4px solid #0e0d1c; background-color: #0e0d1c; margin: 4px; }  /* as on the screen, where it is night */
+.legend .mark { outline: 4px solid var(--space); background-color: var(--space); margin: 4px; }  /* on the ground of the screen */
 .legend .mark.stays { background-color: var(--space-ink); }
 .legend .mark.dies { background-color: var(--seal); }
 body[data-view="organism"] #hint { bottom: 180px; }  /* above the legend and the small map */
 @media (orientation: landscape) { body[data-view="organism"] #hint { bottom: auto; top: 10px; left: auto; right: 10px; transform: none; max-width: min(360px, calc(100% - 330px)); } }  /* at the top right */
 /* the view GRAPH of the third screen: the cells of the window as a piece of a directed
    graph, every cell a ring of eight nodes. Drawn with smooth lines, as graphs are drawn,
-   over the night of the canvas. Every arrow of a kind looks alike, wherever it lies. */
+   over the ground of the canvas. Every arrow of a kind looks alike, wherever it lies. */
 #organism-graph { position: absolute; inset: 0; width: 100%; height: 100%; display: none; pointer-events: none; touch-action: none; --night: #0b0a1a; --line: 1.5px; }
 body[data-view="organism"][data-rings="1"] #organism-graph { display: block; }
 .cell-graph .arrow { color: var(--space-ink); }
@@ -259,7 +256,8 @@ body[data-view="map"] .donut-only { display: none; }  /* the second line: ring a
 body[data-view="organism"] #hud { width: min(350px, calc(100vw - 20px)); }
 body[data-view="organism"] .hud-text { min-width: 0; }
 body[data-view="organism"] .hud-line.donut-only { flex-direction: column; flex-wrap: nowrap; }
-/* on the ring, and on the piece cut out of it, it is night in every theme */
+/* on the ring, and on the piece cut out of it, the card lies open on the night (or, in
+   Hiru, the sky) */
 body[data-view="donut"] #hud, body[data-view="organism"] #hud { background: transparent; border-color: transparent; box-shadow: none; color: var(--space-ink); }
 body[data-view="donut"] #view-kana, body[data-view="organism"] #view-kana { color: var(--space-ink); opacity: 0.7; }
 
@@ -554,11 +552,11 @@ textarea {
       <p>In between, the colour passes step by step from young to old (close up, where cells are faces, the face changes at 12). So a block, which never changes, is soon all old; a glider and everything that blinks keep showing new and young cells; and where something is happening, the colours are mixed. The lights of the ring have the same colours. One look leaves the ages out: in <b>Kuroi</b> (Look, further up in these settings) there is black and white and nothing else, and an alive cell is white however old it is.</p>
       <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> is the same world with its edges joined. The map wraps round: a glider that leaves on the right comes back on the left, one that leaves at the bottom comes back at the top. On the flat map you have to remember that; the donut shows it. Glue the left and right edges of the map together and you get a tube; bend the tube until its two ends meet and you get a ring. The columns of the map go round the ring, the rows round its tube. Nothing about the game changes: every cell keeps its eight neighbours, and the rule is the same. Only the sizes are not true, as on a globe: cells on the inner side of the ring sit closer together than those on the outer side, though on the map they are all the same.</p>
       <p><b>The donut as a hypergraph.</b> The same world can be written as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. A hypergraph knows no places, only which nodes are related. Place the nodes by those relations alone, and because the world wraps round they close into a ring: the same donut as the glued map. Drag to turn the ring any way you like, also to see it from the top (Ring, further up in these settings, has ready views); tap a node to set or unset its cell.</p>
-      <p><b>The lines of the ring.</b> The thin dark lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Ring, in these settings) turns the colours off.</p>
+      <p><b>The lines of the ring.</b> The thin plain lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Ring, in these settings) turns the colours off.</p>
       <p><b>Organism</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the ring, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross. The world plays slowly on this screen, one generation a second at most.</p>
       <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down); on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. <b>Minus and plus</b> (or the wheel, or two fingers) show more of the world or look closer, from a single cell to the whole world; the number between them says how many cells the window shows. When you have zoomed in so far that the organism no longer fits, the window shows one of its cells in the middle and stays with it while the organism is there; tap another cell to go there. Otherwise a tap on the picture goes to the next organism.</p>
       <p>The row <b>Normal, Numbers, Graph</b> at the bottom of that screen changes what the window shows. Nothing moves when you switch.</p>
-      <p><b>Normal</b> shows the organism as it is. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map: an alive cell is a face in the colour of its age, a dead one a grey rock. The thin dark lines and the coloured life signals are those of the ring; the organism shown has the strong lines, others nearby have fainter ones. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
+      <p><b>Normal</b> shows the organism as it is. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map: an alive cell is a face in the colour of its age, a dead one a grey rock. The thin plain lines and the coloured life signals are those of the ring; the organism shown has the strong lines, others nearby have fainter ones. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
       <p><b>Numbers</b> shows what the coming generation does. Every node carries a number: how many of its eight neighbours are alive, its life support. And colours say what comes:</p>
       <ul class="legend">
         <li><i class="mark stays"></i><span>a <b>filled light tile</b> is alive and stays alive: its number is 2 or 3</span></li>
@@ -593,7 +591,7 @@ textarea {
   </aside>
 </div>
 
-<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"ringGap":3.4,"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1,"ages":false,"view":"map","plain":""},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8,"ages":false,"view":"map","plain":""},{"key":"colours","title":"COLOURS","text":"Until now every cell had the same colour. In the game a cell shows its age: one colour when it is just born, one while it is young, one when it is old (alive for 12 generations or more). The colour only tells you how long a cell has lived. It changes nothing: a cell is alive or dead, and the rule counts every alive neighbour alike. Press Start and watch 14 generations.","rows":[".........",".##......",".##......",".........",".........","....###..",".........",".........","........."],"kind":"watch","done":"The block and the middle of the blinker are old now. The ends of the blinker are born again and again, so they never grow old.","target":-1,"steps":14,"ages":true,"view":"map","plain":"Until now every cell looked the same. In the other looks of the game a cell shows its age by its colour: just born, young, or old (alive for 12 generations or more). The look you chose, Kuroi, has no colours, so here every alive cell stays white. Either way the age changes nothing: a cell is alive or dead. Press Start and watch 14 generations."},{"key":"add","title":"ADD","text":"Now the buttons of the game. The plus adds famous shapes. Press the plus (it blinks), pick a shape, the glider for instance, and tap the map where you want it.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"add","done":"There it is. The shape stays on your finger: tap again for another, or the cross to put it away. Press Start to see what it does, or go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"menu","title":"THE MENU","text":"The wheel opens the menu. Everything else is there: the speed and one generation back, ready maps, the size of the world, four looks, saving, and this tutorial. Press the wheel (it blinks) and pick a map.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"map","done":"A new world. In the game a map replaces your world, here only this lesson's. Stop it whenever you like, and go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"donut","title":"DONUT","text":"The game can show the same world in other ways. You do not need to understand them to play. This is the Donut: the map bent into a ring, because what leaves the map on one side comes back on the other. Every light is an alive cell. Drag to turn it.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"In the game the two arrows go from screen to screen. Here the arrow to the right goes on.","target":-1,"steps":0,"ages":true,"view":"donut","plain":""},{"key":"organism","title":"ORGANISM","text":"And this is the Organism: one group of cells close up. The row at the bottom changes what you see: Normal, Numbers (how many neighbours of each cell are alive), Graph. Try them if you like. None of it is needed to play.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"One more step: the arrow to the right.","target":-1,"steps":0,"ages":true,"view":"organism","plain":""}],"old":12,"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations.","nothing":""},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Press Start and watch what the rule does to a heart. The arrow to the right brings you back to the game.","endRows":["........................","........................","........................","........................","........................","........................",".......###...###........","......#####.#####.......",".....#############......",".....#############......",".....#############......","......###########.......",".......#########........","........#######.........",".........#####..........","..........###...........","...........#............","........................","........................","........................","........................","........................","........................","........................"]}}</script>
+<script id="game-data" type="application/json">{"sizes":[16,24,32,64,128,256,512],"soupShare":0.3,"ageCap":32,"fade":8,"relationsPerCell":20,"start":"calm","formations":[{"key":"glider","title":"Glider","group":"Spaceships","kind":"ship","rle":"bo$2bo$3o!","note":"Five cells that walk: one cell down and one to the right every 4 generations."},{"key":"lwss","title":"Light spaceship","group":"Spaceships","kind":"ship","rle":"bo2bo$o$o3bo$4o!","note":"Two cells to the left every 4 generations."},{"key":"mwss","title":"Middle spaceship","group":"Spaceships","kind":"ship","rle":"2bo$o3bo$5bo$o4bo$b5o!","note":"Two cells to the right every 4 generations."},{"key":"hwss","title":"Heavy spaceship","group":"Spaceships","kind":"ship","rle":"2b2o$o4bo$6bo$o5bo$b6o!","note":"The largest of the three classic spaceships."},{"key":"copperhead","title":"Copperhead","group":"Spaceships","kind":"ship","rle":"b2o2b2o$3b2o$3b2o$obo2bobo$o6bo2$o6bo$b2o2b2o$2b4o2$3b2o$3b2o!","note":"A slow one, found in 2016: one cell up every 10 generations."},{"key":"block","title":"Block","group":"Still lifes","kind":"still","rle":"2o$2o!","note":""},{"key":"beehive","title":"Beehive","group":"Still lifes","kind":"still","rle":"b2o$o2bo$b2o!","note":""},{"key":"loaf","title":"Loaf","group":"Still lifes","kind":"still","rle":"b2o$o2bo$bobo$2bo!","note":""},{"key":"boat","title":"Boat","group":"Still lifes","kind":"still","rle":"2o$obo$bo!","note":""},{"key":"tub","title":"Tub","group":"Still lifes","kind":"still","rle":"bo$obo$bo!","note":""},{"key":"pond","title":"Pond","group":"Still lifes","kind":"still","rle":"b2o$o2bo$o2bo$b2o!","note":""},{"key":"eater","title":"Eater","group":"Still lifes","kind":"still","rle":"2o$obo$2bo$2b2o!","note":"Swallows a glider that hits its corner and repairs itself."},{"key":"blinker","title":"Blinker","group":"Oscillators","kind":"oscillator","rle":"3o!","note":""},{"key":"toad","title":"Toad","group":"Oscillators","kind":"oscillator","rle":"b3o$3o!","note":""},{"key":"beacon","title":"Beacon","group":"Oscillators","kind":"oscillator","rle":"2o$2o$2b2o$2b2o!","note":""},{"key":"clock","title":"Clock","group":"Oscillators","kind":"oscillator","rle":"2bo$obo$bobo$bo!","note":""},{"key":"pulsar","title":"Pulsar","group":"Oscillators","kind":"oscillator","rle":"2b3o3b3o2$o4bobo4bo$o4bobo4bo$o4bobo4bo$2b3o3b3o2$2b3o3b3o$o4bobo4bo$o4bobo4bo$o4bobo4bo2$2b3o3b3o!","note":""},{"key":"figure-eight","title":"Figure eight","group":"Oscillators","kind":"oscillator","rle":"3o$3o$3o$3b3o$3b3o$3b3o!","note":""},{"key":"galaxy","title":"Galaxy","group":"Oscillators","kind":"oscillator","rle":"6ob2o$6ob2o$7b2o$2o5b2o$2o5b2o$2o5b2o$2o$2ob6o$2ob6o!","note":"Kok's galaxy: it turns."},{"key":"pentadecathlon","title":"Pentadecathlon","group":"Oscillators","kind":"oscillator","rle":"2bo4bo$2ob4ob2o$2bo4bo!","note":""},{"key":"gosper-gun","title":"Gosper glider gun","group":"Guns","kind":"gun","rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o!","note":"Bill Gosper's gun of 1970: a new glider every 30 generations."},{"key":"simkin-gun","title":"Simkin glider gun","group":"Guns","kind":"gun","rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","note":"Michael Simkin's gun of 2015, the smallest known: a glider every 120 generations."},{"key":"r-pentomino","title":"R-pentomino","group":"Long lives","kind":"long","rle":"b2o$2o$bo!","note":"Five cells that take over a thousand generations to settle."},{"key":"acorn","title":"Acorn","group":"Long lives","kind":"long","rle":"bo$3bo$2o2b3o!","note":"Seven cells, busy for thousands of generations."},{"key":"rabbits","title":"Rabbits","group":"Long lives","kind":"long","rle":"o3b3o$3o2bo$bo!","note":"Nine cells that multiply."},{"key":"diehard","title":"Diehard","group":"Long lives","kind":"long","rle":"6bo$2o$bo3b3o!","note":"Seven cells that change for 130 generations and then leave nothing."},{"key":"pi","title":"Pi","group":"Long lives","kind":"long","rle":"3o$obo$obo!","note":"The pi-heptomino: seven cells, a small explosion."},{"key":"thunderbird","title":"Thunderbird","group":"Long lives","kind":"long","rle":"3o2$bo$bo$bo!","note":""},{"key":"growth-line","title":"A line that grows for ever","group":"Growers","kind":"grower","rle":"8ob5o3b3o6b7ob5o!","note":"One row of cells, and it never stops growing (in a world without borders)."}],"maps":[{"key":"calm","title":"Calm garden","side":24,"soup":false,"rle":"bo$2bo$3o$14b2o$14b2o10$3b2o$3b2o$5b2o$5b2o!","top":2,"left":2,"note":"A glider, a block and a beacon. The glider walks round the world along its diagonal and never meets the other two: after 96 generations all is as it began."},{"key":"gun-and-eater","title":"Gun and eater","side":64,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o15$37b2o$37bobo$39bo$39b2o!","top":6,"left":4,"note":"A glider gun, and an eater in the way of its gliders: shot and swallowed, every 30 generations, for ever."},{"key":"museum","title":"Museum","side":128,"soup":false,"rle":"b2o13b2o14b2o13b2o$b2o12bo2bo12bo2bo12bobo$16b2o14bobo13bo58b2o$33bo73b2o$109b2o$109b2o9$2bo13b2o13b2o52b6ob2o$bobo11bo2bo12bobo51b6ob2o$2bo12bo2bo14bo12b3o43b2o$16b2o15b2o50b2o5b2o$85b2o5b2o$85b2o5b2o$85b2o$85b2ob6o$85b2ob6o6$46b3o$15b2o16bo12b3o$b3o11b2o14bobo12b3o$3o14b2o13bobo14b3o$17b2o13bo16b3o$49b3o21$91b3o$91b3o$91b3o$94b3o$94b3o$94b3o5$5b3o3b3o2$3bo4bobo4bo19b6ob2o$3bo4bobo4bo19b6ob2o$3bo4bobo4bo26b2o$5b3o3b3o21b2o5b2o$35b2o5b2o$5b3o3b3o21b2o5b2o$3bo4bobo4bo19b2o$3bo4bobo4bo19b2ob6o$3bo4bobo4bo19b2ob6o2$5b3o3b3o2$92bo$92bo$91bobo$92bo$92bo$92bo$92bo$91bobo$92bo$92bo3$57b3o3b3o2$55bo4bobo4bo$55bo4bobo4bo$11bo4bo38bo4bobo4bo$9b2ob4ob2o38b3o3b3o$11bo4bo$57b3o3b3o$55bo4bobo4bo$55bo4bobo4bo$55bo4bobo4bo2$57b3o3b3o4$96b3o$95b3o!","top":6,"left":5,"note":"Still lifes and oscillators side by side. All of them together are back where they began every 120 generations."},{"key":"parade","title":"Spaceship parade","side":128,"soup":false,"rle":"7bo2bo$6bo$6bo3bo$6b4o9$38bo$36bo3bo$41bo$36bo4bo$37b5o8$2b2o$o4bo$6bo$o5bo$b6o10$66bo2bo$70bo$66bo3bo$67b4o9$99bo$97bo3bo$96bo$96bo4bo$96b5o8$29b2o$27bo4bo$26bo$26bo5bo$26b6o10$57bo2bo$56bo$56bo3bo$56b4o9$88b2o$86bo4bo$92bo$86bo5bo$87b6o8$19bo$17bo3bo$16bo$16bo4bo$16b5o6$96bo2bo$100bo$96bo3bo$97b4o!","top":8,"left":4,"note":"Ten spaceships, to the right and to the left. The world wraps round, so after 256 generations every one is back at its start."},{"key":"glider-rain","title":"Glider rain","side":128,"soup":false,"rle":"bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$bo15bo15bo15bo15bo15bo15bo15bo$2bo15bo15bo15bo15bo15bo15bo15bo$3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o14$9bo15bo15bo15bo15bo15bo15bo15bo$10bo15bo15bo15bo15bo15bo15bo15bo$8b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o!","top":4,"left":4,"note":"64 gliders falling the same way. Every 128 generations each stands where another one stood, and the picture is the same again."},{"key":"gun-duel","title":"Gun duel","side":128,"soup":false,"rle":"24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4bobo$10bo5bo7bo$11bo3bo$12b2o71$94b2o$92bo3bo$83bo7bo5bo$83bobo4b2obo3bo8b2o$86b2o3bo5bo8b2o$72b2o12b2o4bo3bo$72b2o12b2o6b2o$83bobo$83bo!","top":20,"left":10,"note":"Two glider guns shooting past each other in a world that wraps round. Watch what becomes of it."},{"key":"simkin","title":"Simkin gun","side":128,"soup":false,"rle":"2o5b2o$2o5b2o2$4b2o$4b2o5$22b2ob2o$21bo5bo$21bo6bo2b2o$21b3o3bo3b2o$26bo4$20b2o$20bo$21b3o$23bo!","top":53,"left":47,"note":"The smallest gun known. Its gliders come back round the world and wreck it in the end."},{"key":"r-pentomino","title":"R-pentomino","side":256,"soup":false,"rle":"b2o$2o$bo!","top":126,"left":126,"note":"Five cells in a large empty world."},{"key":"acorn","title":"Acorn","side":256,"soup":false,"rle":"bo$3bo$2o2b3o!","top":126,"left":124,"note":"Seven cells, thousands of generations."},{"key":"rabbits","title":"Rabbits","side":256,"soup":false,"rle":"o3b3o$3o2bo$bo!","top":126,"left":124,"note":"Nine cells that multiply."},{"key":"growth","title":"Growing for ever","side":512,"soup":false,"rle":"8ob5o3b3o6b7ob5o!","top":255,"left":236,"note":"One row of cells that leaves a growing trail behind it, in the largest world. The world wraps round: after some 3,000 generations the trail meets itself and the growing ends."},{"key":"soup-128","title":"Soup 128","side":128,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-256","title":"Soup 256","side":256,"soup":true,"rle":"","top":0,"left":0,"note":"A random world."},{"key":"soup-512","title":"Soup 512","side":512,"soup":true,"rle":"","top":0,"left":0,"note":"A random world of 262,144 cells: 5,242,880 relations in its hypergraph."}],"ringGap":3.4,"learn":{"side":9,"lessons":[{"key":"alone","title":"ALONE","text":"This is a cell, and it is alive. Round it are eight places for neighbours, and all of them are empty. A cell with fewer than 2 neighbours dies. Press the button One generation and see.","rows":[".........",".........",".........",".........","....#....",".........",".........",".........","........."],"kind":"watch","done":"It died: it was alone. That was one generation.","target":40,"steps":1,"ages":false,"view":"map","plain":""},{"key":"friends","title":"FRIENDS","text":"The marked cell has 1 neighbour. With 2 or 3 it stays alive. Tap an empty place next to it to set a second neighbour, then press One generation.","rows":[".........",".........",".........",".........","....##...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive: 2 or 3 neighbours keep a cell alive.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"crowded","title":"TOO MANY","text":"Too many is as bad as too few. The marked cell has 5 neighbours, and with more than 3 a cell dies. Tap neighbours away until 2 or 3 are left, then press One generation.","rows":[".........",".........",".........","...###...","...###...",".........",".........",".........","........."],"kind":"survive","done":"It stayed alive. Fewer than 2 or more than 3 neighbours: a cell dies.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"born","title":"A BIRTH","text":"An empty place with exactly 3 neighbours comes alive. The marked place is empty and has 2 neighbours. Set a third one next to it (not the marked place itself), then press One generation.","rows":[".........",".........",".........","...#.....",".........",".....#...",".........",".........","........."],"kind":"born","done":"A cell was born: exactly 3 neighbours. That is the whole rule of Life.","target":40,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess","title":"YOUR TURN","text":"Three cells in a row. Which places are alive in the next generation? Count the neighbours of every cell and of the empty places beside them. Tap your guesses (a frame marks each), then press One generation.","rows":[".........",".........",".........",".........","...###...",".........",".........",".........","........."],"kind":"predict","done":"Right. The two ends died (1 neighbour), the middle stayed (2), and above and below it a cell was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"guess-again","title":"ONCE MORE","text":"Three cells in a corner. Mark the places that are alive in the next generation, then press One generation.","rows":[".........",".........",".........",".........","....##...","....#....",".........",".........","........."],"kind":"predict","done":"Right. All three stayed (2 neighbours each), and the empty corner between them was born (3).","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"still","title":"STAY","text":"Now build. Set cells that never change: every cell needs 2 or 3 neighbours, and no empty place beside them may have exactly 3. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"still","done":"It stays as it is. Such a shape is called a still life.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"blink","title":"BLINK","text":"Build a shape that changes and is back after 2 generations. You have seen one. Then press One generation.","rows":[".........",".........",".........",".........",".........",".........",".........",".........","........."],"kind":"period","done":"It comes back after 2 generations, again and again. Such a shape is called an oscillator. Press Start to watch it.","target":-1,"steps":0,"ages":false,"view":"map","plain":""},{"key":"walk","title":"WALK","text":"The same rule can walk. These five cells are a glider: after 4 generations the same shape stands one place further down and to the right. Press Start and watch 8 generations.","rows":[".........","..#......","...#.....",".###.....",".........",".........",".........",".........","........."],"kind":"watch","done":"It walked two places. Nothing moved: cells died and were born, by the rule you know.","target":-1,"steps":8,"ages":false,"view":"map","plain":""},{"key":"colours","title":"COLOURS","text":"Until now every cell had the same colour. In the game a cell shows its age: one colour when it is just born, one while it is young, one when it is old (alive for 12 generations or more). The colour only tells you how long a cell has lived. It changes nothing: a cell is alive or dead, and the rule counts every alive neighbour alike. Press Start and watch 14 generations.","rows":[".........",".##......",".##......",".........",".........","....###..",".........",".........","........."],"kind":"watch","done":"The block and the middle of the blinker are old now. The ends of the blinker are born again and again, so they never grow old.","target":-1,"steps":14,"ages":true,"view":"map","plain":"Until now every cell looked the same. In the other looks of the game a cell shows its age by its colour: just born, young, or old (alive for 12 generations or more). The look you chose, Kuroi, has no colours, so here every alive cell stays white. Either way the age changes nothing: a cell is alive or dead. Press Start and watch 14 generations."},{"key":"add","title":"ADD","text":"Now the buttons of the game. The plus adds famous shapes. Press the plus (it blinks), pick a shape, the glider for instance, and tap the map where you want it.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"add","done":"There it is. The shape stays on your finger: tap again for another, or the cross to put it away. Press Start to see what it does, or go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"menu","title":"THE MENU","text":"The wheel opens the menu. Everything else is there: the speed and one generation back, ready maps, the size of the world, three looks, saving, and this tutorial. Press the wheel (it blinks) and pick a map.","rows":["........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................","........................"],"kind":"map","done":"A new world. In the game a map replaces your world, here only this lesson's. Stop it whenever you like, and go on.","target":-1,"steps":0,"ages":true,"view":"map","plain":""},{"key":"donut","title":"DONUT","text":"The game can show the same world in other ways. You do not need to understand them to play. This is the Donut: the map bent into a ring, because what leaves the map on one side comes back on the other. Every light is an alive cell. Drag to turn it.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"In the game the two arrows go from screen to screen. Here the arrow to the right goes on.","target":-1,"steps":0,"ages":true,"view":"donut","plain":""},{"key":"organism","title":"ORGANISM","text":"And this is the Organism: one group of cells close up. The row at the bottom changes what you see: Normal, Numbers (how many neighbours of each cell are alive), Graph. Try them if you like. None of it is needed to play.","rows":["........................","........................","...#....................","....#...................","..###...................","................##......","................##......","........................","........................","........................","........................","........................","........................","........................","........................","........................",".....##.................",".....##.................",".......##...............",".......##...............","........................","........................","........................","........................"],"kind":"look","done":"One more step: the arrow to the right.","target":-1,"steps":0,"ages":true,"view":"organism","plain":""}],"old":12,"reasons":{"watching":"","gone":"The marked cell has to stay: you took it away.","lonely":"Neighbours: {count}. Fewer than 2, so it died: too lonely.","crowded":"Neighbours: {count}. More than 3, so it died: too crowded.","placed":"Leave the marked place empty: the cell has to be born there by itself.","few":"Neighbours: {count}. A cell is born with exactly 3.","many":"Neighbours: {count}. A cell is born with exactly 3, not more.","none":"Tap the places you think are alive in the next generation first.","wrong":"Not quite. Alive but not marked: {count}. Marked but empty: {extra}.","empty":"Set some cells first.","changes":"It changed. In a shape that stays, every cell has 2 or 3 neighbours, and no empty place beside it has exactly 3.","rests":"It does not change at all. It has to change, and come back.","lost":"It did not come back after 2 generations.","nothing":""},"end":"That is all of the Game of Life: a cell is born with 3 neighbours, stays with 2 or 3, and dies otherwise. Press Start and watch what the rule does to a heart. The arrow to the right brings you back to the game.","endRows":["........................","........................","........................","........................","........................","........................",".......###...###........","......#####.#####.......",".....#############......",".....#############......",".....#############......","......###########.......",".......#########........","........#######.........",".........#####..........","..........###...........","...........#............","........................","........................","........................","........................","........................","........................","........................"]}}</script>
 <script>
 // The Game of Life of the game: a world that wraps round at its borders, played by the
 // ordinary rule (born with 3 alive neighbours, staying alive with 2 or 3).
@@ -1923,7 +1921,11 @@ textarea {
 
   // Three looks. The colours of one theme are few and belong together: a ground, an ink,
   // and three colours for the cells (just born, young, old). `space`, `rock`, `star` and
-  // `link` are the screen DONUT, which is night in every theme.
+  // `link` are the screens DONUT and ORGANISM: night in Yoru and Kuroi. Hiru (`day`) is
+  // bright on every screen (the developer, 2026-11-22: "make all screens bright ... the
+  // donut should have blue background, like during the day, with the sun also"): its
+  // ring lies in a sky of bands (`sky`, from the top down) with a sun (`sun`, `sunRim`),
+  // its organism on a pale sky (`space`), and `star` is the ink of those screens.
   const THEMES = {
     yoru: {
       title: "Yoru", japanese: "夜", meaning: "night",
@@ -1933,18 +1935,12 @@ textarea {
       space: "#0b0a1a", rock: "#7d8090", star: "#f4e9d8", link: "#34335c",
     },
     hiru: {
-      title: "Hiru", japanese: "昼", meaning: "day",
-      bg: "#f3ead9", wave: "#e9dec8", field: "#fffaf0", grid: "#efe4d0", border: "#3a3340", shadow: "#cdbfa6",
+      title: "Hiru", japanese: "昼", meaning: "day", day: true,
+      bg: "#d3ecfa", wave: "#bfe1f6", field: "#fffdf7", grid: "#e2eff7", border: "#27364f", shadow: "#9cc6e0",
       born: "#f6a609", young: "#e2596b", old: "#3f8f7b", face: "#3a2a33", light: "#ffffff",
-      ghost: "#3a3340", seal: "#d93f52",
-      space: "#12112a", rock: "#8a8d9c", star: "#fff6ea", link: "#3a3966",
-    },
-    sumi: {
-      title: "Sumi", japanese: "墨", meaning: "ink",
-      bg: "#e9e2d3", wave: "#ded5c2", field: "#f4eee1", grid: "#e4dccb", border: "#23202a", shadow: "#c4bba8",
-      born: "#c8372d", young: "#23202a", old: "#77727f", face: "#f4eee1", light: "#f4eee1",
-      ghost: "#23202a", seal: "#c8372d",
-      space: "#0e0d14", rock: "#85838c", star: "#f4eee1", link: "#35333d",
+      ghost: "#27364f", seal: "#d93f52",
+      space: "#ecf7fd", rock: "#6f7787", star: "#27364f", link: "#bcd5e7",
+      sky: ["#4aa6e4", "#66b8ec", "#86c9f2", "#a9d9f6"], sun: "#ffd84a", sunRim: "#ffa62b",
     },
     // Asked for by the developer on 2026-11-22: two colours only, black and white, no
     // colour for the age of a cell ("empty cells, not empty cells"), smooth instead of
@@ -2313,7 +2309,8 @@ textarea {
 // Such a line has the colour of the node that sends, strong at that node and fading
 // towards a dead neighbour; between two alive nodes it is strong all the way. Links and
 // signals are drawn for worlds of up to LINKS_UP_TO nodes. Behind it all: stars, which
-// turn with the ring.
+// turn with the ring; in the look Hiru (the day) a blue sky in bands with a sun at the
+// top right that stands still while the ring turns, and the lights have no glow.
 //
 // It is drawn with WebGL on a canvas of few pixels, shown enlarged with hard edges, so
 // that the picture is pixel art like the rest of the game. Every node is one point: a
@@ -2488,8 +2485,75 @@ void main() {
   gl_PointSize = aSeed > 0.86 ? 2.0 : 1.0;
 }`;
 
+  // the sky of the day, a picture as large as the canvas, laid over all of it
+  const SKY_VERTEX = `
+attribute vec2 aCorner;
+varying vec2 vAt;
+void main() {
+  vAt = vec2(aCorner.x * 0.5 + 0.5, 0.5 - aCorner.y * 0.5);
+  gl_Position = vec4(aCorner, 0.0, 1.0);
+}`;
+
+  const SKY_FRAGMENT = `
+precision mediump float;
+uniform sampler2D uSky;
+varying vec2 vAt;
+void main() { gl_FragColor = texture2D(uSky, vAt); }`;
+
   function unit(rgb) {
     return rgb.map((value) => value / 255);
+  }
+
+  // The colour far lights fade into: the night, or by day the haze of the sky.
+  const airOf = (theme) => (theme.sky ? theme.sky[2] : theme.space);
+
+  // What of the sun lies at (dx, dy) pixels from its middle: 1 the disc, 2 its rim and
+  // its eight rays (the straight ones longer), 0 nothing.
+  function sunPart(dx, dy, radius) {
+    const r = Math.hypot(dx, dy);
+    if (r <= radius) return r > radius - 1.5 ? 2 : 1;
+    const step = Math.PI / 4;
+    const angle = Math.atan2(dy, dx);
+    const k = Math.round(angle / step);
+    const reach = (k % 2 === 0 ? 1.95 : 1.65) * radius;
+    if (r >= 1.35 * radius && r <= reach && Math.abs(r * Math.sin(angle - k * step)) <= Math.max(0.8, 0.09 * radius)) return 2;
+    return 0;
+  }
+
+  // The sky of the day as a picture of width x height pixels: the bands of `theme.sky`
+  // from the top down, each seam dithered in a checker of pixels, and the sun at the top
+  // right. It stands still: nothing in it turns with the ring.
+  function skyPicture(width, height, theme) {
+    const picture = document.createElement("canvas");
+    picture.width = width;
+    picture.height = height;
+    const c = picture.getContext("2d");
+    const image = c.createImageData(width, height);
+    const data = image.data;
+    const bands = theme.sky.map(render.rgbOf);
+    const sun = render.rgbOf(theme.sun);
+    const rim = render.rgbOf(theme.sunRim);
+    const radius = Math.max(5, Math.round(Math.min(width, height) * 0.055));
+    const sx = width - Math.round(2.3 * radius) - 3;
+    const sy = Math.round(2.3 * radius) + 3;
+    for (let y = 0; y < height; y++) {
+      const f = ((y + 0.5) / height) * bands.length;
+      const band = Math.floor(f);
+      const seam = f - band > 0.8;
+      for (let x = 0; x < width; x++) {
+        let rgb = bands[Math.min(bands.length - 1, seam && (x + y) % 2 === 0 ? band + 1 : band)];
+        const part = sunPart(x + 0.5 - sx, y + 0.5 - sy, radius);
+        if (part === 1) rgb = sun;
+        else if (part === 2) rgb = rim;
+        const at = (y * width + x) * 4;
+        data[at] = rgb[0];
+        data[at + 1] = rgb[1];
+        data[at + 2] = rgb[2];
+        data[at + 3] = 255;
+      }
+    }
+    c.putImageData(image, 0, 0);
+    return picture;
   }
 
   // A small random number maker with a seed, so that rocks and stars stay where they are.
@@ -2565,6 +2629,9 @@ void main() {
       pixel: 3,          // screen pixels per pixel of the picture
       cssWidth: 1,
       cssHeight: 1,
+      sky: null,         // the sky of the day (skyPicture) and what it was made for
+      skyKey: "",
+      skyOnCard: "",     // what the sky on the graphics card was made for
     };
 
     // WebGL is tried on a canvas of its own first: a canvas that once gave a WebGL context
@@ -2573,7 +2640,7 @@ void main() {
     try {
       gl = document.createElement("canvas").getContext("webgl");
       if (gl) {
-        for (const [vertex, fragment] of [[NODE_VERTEX, NODE_FRAGMENT], [LINE_VERTEX, LINE_FRAGMENT], [STAR_VERTEX, LINE_FRAGMENT]]) program(vertex, fragment);
+        for (const [vertex, fragment] of [[NODE_VERTEX, NODE_FRAGMENT], [LINE_VERTEX, LINE_FRAGMENT], [STAR_VERTEX, LINE_FRAGMENT], [SKY_VERTEX, SKY_FRAGMENT]]) program(vertex, fragment);
         gl = canvas.getContext("webgl", { antialias: false, alpha: false, depth: true, preserveDrawingBuffer: true });
       }
     } catch (error) {
@@ -2607,16 +2674,24 @@ void main() {
       return { made, uniforms: names, attributes };
     }
 
-    let nodes, lines, stars, buffers;
+    let nodes, lines, stars, sky, skyTexture, buffers;
     if (gl) {
       nodes = program(NODE_VERTEX, NODE_FRAGMENT);
       lines = program(LINE_VERTEX, LINE_FRAGMENT);
       stars = program(STAR_VERTEX, LINE_FRAGMENT);
+      sky = program(SKY_VERTEX, SKY_FRAGMENT);
       buffers = {
         places: gl.createBuffer(), seeds: gl.createBuffer(), shade: gl.createBuffer(),
         lines: gl.createBuffer(), ends: gl.createBuffer(),
-        stars: gl.createBuffer(), starSeeds: gl.createBuffer(),
+        stars: gl.createBuffer(), starSeeds: gl.createBuffer(), corners: gl.createBuffer(),
       };
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.corners);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      skyTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, skyTexture);
+      for (const [name, value] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) {
+        gl.texParameteri(gl.TEXTURE_2D, name, value);
+      }
       const random = randomMaker(7);
       const where = new Float32Array(STARS * 3);
       const bright = new Float32Array(STARS);
@@ -2754,7 +2829,17 @@ void main() {
       gl.uniform2f(u.uHalf, camera.halfX, camera.halfY);
       if (u.uRadius) gl.uniform1f(u.uRadius, RADIUS);
       if (u.uDepth) gl.uniform1f(u.uDepth, camera.depth);
-      if (u.uBg) gl.uniform3fv(u.uBg, unit(render.rgbOf(theme.space)));
+      if (u.uBg) gl.uniform3fv(u.uBg, unit(render.rgbOf(airOf(theme))));
+    }
+
+    // the sky of the day for this canvas, made again only when its size or look changed
+    function skyOf(theme) {
+      const key = canvas.width + "x" + canvas.height + theme.title;
+      if (state.skyKey !== key) {
+        state.sky = skyPicture(canvas.width, canvas.height, theme);
+        state.skyKey = key;
+      }
+      return state.sky;
     }
 
     function ages(u, theme) {
@@ -2780,14 +2865,29 @@ void main() {
       gl.clearColor(space[0], space[1], space[2], 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.disable(gl.BLEND);
-
-      // the stars, behind everything
       gl.disable(gl.DEPTH_TEST);
-      cameraUniforms(stars, camera, theme);
-      gl.uniform3fv(stars.uniforms.uStar, colour(theme.star));
-      attribute(stars, "aPlace", buffers.stars, 3);
-      attribute(stars, "aSeed", buffers.starSeeds, 1);
-      gl.drawArrays(gl.POINTS, 0, STARS);
+
+      if (theme.sky) {
+        // by day: the sky, behind everything
+        const picture = skyOf(theme);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, skyTexture);
+        if (state.skyOnCard !== state.skyKey) {
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, picture);
+          state.skyOnCard = state.skyKey;
+        }
+        gl.useProgram(sky.made);
+        gl.uniform1i(sky.uniforms.uSky, 0);
+        attribute(sky, "aCorner", buffers.corners, 2);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      } else {
+        // the stars, behind everything
+        cameraUniforms(stars, camera, theme);
+        gl.uniform3fv(stars.uniforms.uStar, colour(theme.star));
+        attribute(stars, "aPlace", buffers.stars, 3);
+        attribute(stars, "aSeed", buffers.starSeeds, 1);
+        gl.drawArrays(gl.POINTS, 0, STARS);
+      }
 
       const pass = (which) => {
         gl.uniform1f(nodes.uniforms.uPass, which);
@@ -2829,9 +2929,11 @@ void main() {
       gl.useProgram(nodes.made);
       pass(ROCKS);
 
-      // the glow of the lights, added on top
-      gl.blendFunc(gl.ONE, gl.ONE);
-      pass(GLOW);
+      // the glow of the lights, added on top (not by day: it would whiten the sky)
+      if (!theme.sky) {
+        gl.blendFunc(gl.ONE, gl.ONE);
+        pass(GLOW);
+      }
       gl.disable(gl.BLEND);
       gl.depthMask(true);
     }
@@ -2844,11 +2946,15 @@ void main() {
       const count = world.width * world.height;
       const colours = render.shadeColours(theme);
       const rock = render.rgbOf(theme.rock);
-      const space = render.rgbOf(theme.space);
+      const space = render.rgbOf(airOf(theme));
       const isAlive = (i) => world.shade[i] >= 1 && world.shade[i] <= AGE_CAP;
       plain.globalAlpha = 1;
-      plain.fillStyle = theme.space;
-      plain.fillRect(0, 0, canvas.width, canvas.height);
+      if (theme.sky) {
+        plain.drawImage(skyOf(theme), 0, 0);
+      } else {
+        plain.fillStyle = theme.space;
+        plain.fillRect(0, 0, canvas.width, canvas.height);
+      }
       if (scene.signals && count <= PLAIN_LINES_UP_TO) {
         plain.lineWidth = 1;
         for (let i = 0; i < count; i++) {
@@ -3050,10 +3156,10 @@ void main() {
       }
     }
 
-    // The colours of a theme for this screen, which is night in every theme, like the
-    // ring. A colour of a cell that is too dark to be seen on the night is made lighter
-    // for lines and blocks, and its face lies on a light tile (the ink of the look Sumi
-    // on its paper).
+    // The colours of a theme for this screen, whose ground is that of the ring: night, or
+    // in the look Hiru a pale sky. A colour of a cell too close to the ground to be seen
+    // is moved towards the ink of the screen (`star`) for lines and blocks, and its face
+    // lies on a tile of the map's field.
     function looksFor(theme) {
       if (state.looks && state.looks.theme === theme) return state.looks;
       const space = render.rgbOf(theme.space);
@@ -3286,7 +3392,7 @@ void main() {
       ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = theme.space;
       ctx.fillRect(0, 0, W, H);
-      drawStars(looks, W, H);
+      if (!theme.day) drawStars(looks, W, H);  // no stars by day
       state.view = null;
       if (!organism) {
         state.camera = null;
@@ -5839,7 +5945,7 @@ void main() {
     for (const element of document.querySelectorAll("[data-border]")) {
       element.style.borderColor = render.THEMES[key][element.dataset.border];
     }
-    // the rings of the view GRAPH lie on the night of the theme, like the ring
+    // the rings of the view GRAPH lie on the ground of the ring's screens (night, or Hiru's pale sky)
     graphSvg.style.setProperty("--night", render.THEMES[key].space);
     graphSvg.style.setProperty("--rock", render.THEMES[key].rock);
     ringsShown = "";
