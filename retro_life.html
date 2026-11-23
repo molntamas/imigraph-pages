@@ -530,6 +530,15 @@ body[data-view="organism"]:not([data-mode="learn"]) #organism-name { display: fl
 #organism-name-title .px { height: 14px; }
 #organism-name-kind { color: var(--dim); }
 #organism-name-kind .px { height: 7px; }
+/* where the corners leave no room at the bottom (a phone held upright): at the top right,
+   beside the words of the card and no lower than it, the picture over the name, without
+   the line of its kind (app.js: showName) */
+#organism-name.top { left: auto; right: 8px; top: 8px; bottom: auto; transform: none; flex-direction: column; gap: 4px; padding: 5px; max-width: none; min-height: 0; }
+#organism-name.top:active { transform: translateY(var(--px)); }
+#organism-name.top .name-text { justify-items: center; }
+#organism-name.top #organism-name-title .px { height: 10.5px; }
+#organism-name.top.long #organism-name-title .px { height: 7px; }
+#organism-name.top #organism-name-kind { display: none; }
 
 /* The book of organisms (いきもの ずかん): two pages side by side, a spine between them and
    a ribbon; one page under the other on a narrow screen. Pages turn at once, without a
@@ -6036,14 +6045,28 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         c.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
-    // room: not on the corners (the views and the zoom on the left, the small map on the right)
+    // room: at the bottom in the middle, not on the corners (the views and the zoom on the
+    // left, the small map on the right)
     plate.hidden = false;
-    const box = plate.getBoundingClientRect();
+    plate.classList.remove("top");
+    let box = plate.getBoundingClientRect();
     const clear = ["organism-ways", "organism-pick"].every((id) => {
       const other = $(id).getBoundingClientRect();
       return !other.width || box.right + 8 <= other.left || box.left >= other.right + 8 || box.bottom <= other.top - 8;
     });
-    plate.hidden = !clear || box.width === 0;
+    if (clear && box.width) return;
+    // Where the corners leave no room at the bottom (a phone held upright): at the top
+    // right, beside the words of the card and no lower than the card, so that the picture,
+    // which keeps clear of the card, does not move for it (the user, 2026-11-23: "on my
+    // screen there would some space for it in the top right of the screen"). Smaller
+    // there: the picture over the name, the letters of a long name smaller still.
+    plate.classList.add("top");
+    plate.classList.toggle("long", (page ? page.title : "AN ORGANISM").length > 8);
+    box = plate.getBoundingClientRect();
+    const card = $("hud").getBoundingClientRect();
+    const words = [...document.querySelectorAll("#hud .hud-title > *, #hud .hud-line > *")].map((word) => word.getBoundingClientRect());
+    const free = words.every((word) => !word.width || word.right + 8 <= box.left || word.bottom <= box.top || word.top >= box.bottom);
+    plate.hidden = !free || box.width === 0 || box.bottom > card.bottom;
   }
 
   // The book: page 0 is the contents, page k the formation k - 1 (the order of the plus).
