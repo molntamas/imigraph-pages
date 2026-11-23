@@ -903,8 +903,8 @@ body[data-rpg] { overflow: hidden; }
       <p class="note">The form of the world: what lies beyond the edges of the map. Up and down on that screen go through them too. The cells stay as they are.</p>
       <div id="form-list" class="row" role="group" aria-label="The form of the world">
         <button type="button" data-form="donut" aria-pressed="true" title="Donut: every edge of the map leads to the opposite edge" data-px="DONUT"></button>
-        <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
         <button type="button" data-form="bottle" aria-pressed="false" title="The same Klein bottle drawn as a hand-blown bottle: the same neighbours, another picture" data-px="BOTTLE"></button>
+        <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
         <button type="button" data-form="two" aria-pressed="false" title="Two donuts: the upper and the lower half of the map, joined at a door" data-px="TWO"></button>
       </div>
       <div id="ring-views" class="chips">
@@ -1024,7 +1024,7 @@ body[data-rpg] { overflow: hidden; }
 (function (root) {
   "use strict";
 
-  const FORMS = ["donut", "klein", "bottle", "two"];  // in the order of up and down
+  const FORMS = ["donut", "bottle", "klein", "two"];  // in the order of up and down
   // How each form is glued, which is all a form says about neighbours: the Klein bottle
   // is there twice (a figure of eight and a hand-blown bottle), one gluing, two pictures.
   const GLUING = { donut: "donut", klein: "klein", bottle: "klein", two: "two" };
@@ -1034,10 +1034,10 @@ body[data-rpg] { overflow: hidden; }
   const MIN_SIDE = 3;
   const MIN_TWO_ROWS = 6;  // two rings of at least three rows each
 
-  // The columns of the door of two donuts: half of them, made even (rounded down, at
+  // The columns of the door of two donuts: a quarter of them, made even (rounded down, at
   // least two), in the middle of the map.
   function doorOf(width) {
-    const size = Math.min(width, Math.max(2, 2 * Math.floor(width / 4)));
+    const size = Math.min(width, Math.max(2, 2 * Math.floor(width / 8)));
     return { first: Math.floor((width - size) / 2), width: size };
   }
 
@@ -2468,7 +2468,7 @@ body[data-rpg] { overflow: hidden; }
     return places;
   }
 
-  const TWO_GAP = 0.4;  // between the two rings of two donuts, in radii of a tube
+  const TWO_GAP = 1.6;  // between the two rings of two donuts, in radii of a tube
   // how far round the two rings are turned: the door (the middle of the map) faces the eye
   // in the view the screen opens with (mapping.TWO_TURN)
   const TWO_TURN = 0.81 - Math.PI;
