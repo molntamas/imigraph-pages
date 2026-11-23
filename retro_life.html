@@ -765,7 +765,8 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       <p class="note">The form of the world: what lies beyond the edges of the map. Up and down on that screen go through them too. The cells stay as they are.</p>
       <div id="form-list" class="row" role="group" aria-label="The form of the world">
         <button type="button" data-form="donut" aria-pressed="true" title="Donut: every edge of the map leads to the opposite edge" data-px="DONUT"></button>
-        <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle: what leaves on the right comes back on the left upside down" data-px="KLEIN"></button>
+        <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
+        <button type="button" data-form="bottle" aria-pressed="false" title="The same Klein bottle drawn as a hand-blown bottle: the same neighbours, another picture" data-px="BOTTLE"></button>
         <button type="button" data-form="two" aria-pressed="false" title="Two donuts: the upper and the lower half of the map, joined at a door" data-px="TWO"></button>
       </div>
       <div id="ring-views" class="chips">
@@ -829,8 +830,8 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> is the same world with its edges joined. The map wraps round: a glider that leaves on the right comes back on the left, one that leaves at the bottom comes back at the top. On the flat map you have to remember that; the donut shows it. Glue the left and right edges of the map together and you get a tube; bend the tube until its two ends meet and you get a ring. The columns of the map go round the ring, the rows round its tube. Nothing about the game changes: every cell keeps its eight neighbours, and the rule is the same. Only the sizes are not true, as on a globe: cells on the inner side of the ring sit closer together than those on the outer side, though on the map they are all the same.</p>
       <p><b>The donut as a hypergraph.</b> The same world can be written as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. A hypergraph knows no places, only which nodes are related. Place the nodes by those relations alone, and because the world wraps round they close into a ring: the same donut as the glued map. Drag to turn the ring any way you like, also to see it from the top (Ring, further up in these settings, has ready views); tap a node to set or unset its cell.</p>
       <p><b>The lines of the ring.</b> The thin plain lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Ring, in these settings) turns the colours off.</p>
-      <p><b>Other forms.</b> Up and down on the second screen, or the row in Ring further up, give the same cells another form: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge. On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
-      <p><b>The other forms as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these forms every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein bottle is drawn as a ring whose tube is a figure of eight, and it has to pass through itself (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
+      <p><b>Other forms.</b> Up and down on the second screen, or the row in Ring further up, give the same cells another form: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge. On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. The Klein bottle comes twice in the list, with the same cells and the same neighbours, only drawn differently on the second screen: <b>Klein eight</b> <span lang="ja">(クライン 8の字)</span>, a ring whose tube is a figure of eight, and <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span>, a hand-blown bottle. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
+      <p><b>The other forms as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these forms every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein eight is a ring whose tube is a figure of eight, and the Klein bottle a hand-blown bottle whose neck, a third as wide as its body, bends back, passes through the wall and opens into the bottom from inside. Both have to pass through themselves (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; on the bottle the nodes of the neck are drawn smaller, because they lie closer together; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
       <p><b>Organism</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the ring, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross. The world plays slowly on this screen, one generation a second at most.</p>
       <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down); on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. <b>Minus and plus</b> (or the wheel, or two fingers) show more of the world or look closer, from a single cell to the whole world; the number between them says how many cells the window shows. When you have zoomed in so far that the organism no longer fits, the window shows one of its cells in the middle and stays with it while the organism is there; tap another cell to go there. Otherwise a tap on the picture goes to the next organism.</p>
       <p>The row <b>Normal, Numbers, Graph</b> at the bottom of that screen changes what the window shows. Nothing moves when you switch.</p>
@@ -885,7 +886,12 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 (function (root) {
   "use strict";
 
-  const FORMS = ["donut", "klein", "two"];  // in the order of up and down
+  const FORMS = ["donut", "klein", "bottle", "two"];  // in the order of up and down
+  // How each form is glued, which is all a form says about neighbours: the Klein bottle
+  // is there twice (a figure of eight and a hand-blown bottle), one gluing, two pictures.
+  const GLUING = { donut: "donut", klein: "klein", bottle: "klein", two: "two" };
+  const gluing = (form) => GLUING[form] || "donut";
+  const isKlein = (form) => GLUING[form] === "klein";
   const DIRECTIONS = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
   const MIN_SIDE = 3;
   const MIN_TWO_ROWS = 6;  // two rings of at least three rows each
@@ -910,7 +916,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
     const [dr, dc] = DIRECTIONS[k];
     let row = r + dr;
     const column = c + dc;
-    if (form === "klein" && (column < 0 || column >= width)) row = height - 1 - row;
+    if (isKlein(form) && (column < 0 || column >= width)) row = height - 1 - row;
     if (form === "two" && dr !== 0) {
       const half = height / 2;
       if (wrap(Math.max(r, row), half) === 0) {  // crosses a line: above row 0, half or height
@@ -985,7 +991,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 
   function planeCell(form, width, height, ring, x, y) {
     const column = wrap(x, width);
-    if (form === "klein" && wrap(Math.floor(x / width), 2) === 1) {
+    if (isKlein(form) && wrap(Math.floor(x / width), 2) === 1) {
       return { cell: wrap(height - 1 - y, height) * width + column, flipped: true };
     }
     if (form === "two") {
@@ -1005,7 +1011,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
     const r = Math.floor(cell / width);
     const c = cell - r * width;
     const near = (value, start, period) => start + period * Math.round((value - start) / period);
-    if (form === "klein") {
+    if (isKlein(form)) {
       const straight = { x: near(x, c, 2 * width), y: near(y, r, height), flipped: false };
       const turned = { x: near(x, c + width, 2 * width), y: near(y, height - 1 - r, height), flipped: true };
       const apart = (p) => (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
@@ -1052,7 +1058,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.forms = {
-    FORMS, DIRECTIONS, doorOf, fits, neighboursInto, neighbours, backDoor, linked, lineRow, besideLines, chart,
+    FORMS, GLUING, gluing, isKlein, DIRECTIONS, doorOf, fits, neighboursInto, neighbours, backDoor, linked, lineRow, besideLines, chart,
     ringOf, planeCell, planeNear, extentOf, chartWindow,
   };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -2138,7 +2144,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
     const column = cell % width;
     return DIRECTIONS.map(([dr, dc], k) => {
       const crossed = column + dc < 0 || column + dc >= width;
-      const turned = flipped !== (form === "klein" && crossed);
+      const turned = flipped !== (forms().isKlein(form) && crossed);
       return [around[k], flipped ? -dr : dr, dc, turned];
     });
   }
@@ -2379,9 +2385,82 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
     return Uint32Array.from(found);
   }
 
+  // A place for every cell of a Klein bottle drawn as a hand-blown bottle (mapping.
+  // bottle_places): the middle line is a path of straight pieces and arcs (BOTTLE_PATH),
+  // a tube of changing radius round it: up the round body, up the neck, over, down
+  // outside, in through the wall, down inside into the bottom. The columns go along it
+  // evenly by length, the rows round the tube; at the seam (the bottom) row r meets row
+  // height - 1 - r, as the table of the Klein bottle says.
+  const BOTTLE_PATH = [
+    ["line", [0, -5.2], [0, 1.5]],
+    ["line", [0, 1.5], [0, 3.5]],
+    ["arc", [2.1, 3.5], 2.1, Math.PI, 0],
+    ["line", [4.2, 3.5], [4.2, -1.0]],
+    ["arc", [2.1, -1.0], 2.1, 0, -Math.PI / 2],
+    ["arc", [2.1, -5.2], 2.1, Math.PI / 2, Math.PI],
+  ];
+  const BOTTLE_BODY = 1.9, BOTTLE_NECK = 0.9, BOTTLE_BOTTOM = 1.6;
+  const BOTTLE_MIDDLE = [0.97, 0.65];
+  const BOTTLE_SCALE = 0.55;
+  const BOTTLE_TURN = 0.81 + Math.PI / 2;
+  const bottlePieces = () => BOTTLE_PATH.map((p) => (p[0] === "line" ? Math.hypot(p[2][0] - p[1][0], p[2][1] - p[1][1]) : Math.abs(p[4] - p[3]) * p[2]));
+
+  // [x, z, nx, nz, radius] at the length s along the middle line
+  function bottleTube(s) {
+    const pieces = bottlePieces();
+    let index = 0;
+    let start = 0;
+    while (index < pieces.length - 1 && s >= start + pieces[index]) start += pieces[index++];
+    const piece = BOTTLE_PATH[index];
+    const t = (s - start) / pieces[index];
+    let x, z, tx, tz;
+    if (piece[0] === "line") {
+      const [[x0, z0], [x1, z1]] = [piece[1], piece[2]];
+      x = x0 + (x1 - x0) * t;
+      z = z0 + (z1 - z0) * t;
+      tx = (x1 - x0) / pieces[index];
+      tz = (z1 - z0) / pieces[index];
+    } else {
+      const [[cx, cz], r, a0, a1] = [piece[1], piece[2], piece[3], piece[4]];
+      const a = a0 + (a1 - a0) * t;
+      x = cx + r * Math.cos(a);
+      z = cz + r * Math.sin(a);
+      const sign = a1 > a0 ? 1 : -1;
+      tx = -sign * Math.sin(a);
+      tz = sign * Math.cos(a);
+    }
+    let radius = BOTTLE_NECK;
+    if (index === 0) radius = BOTTLE_BOTTOM + (BOTTLE_NECK - BOTTLE_BOTTOM) * t + BOTTLE_BODY * Math.pow(Math.sin(Math.PI * t), 1.2);
+    else if (index === pieces.length - 1) radius = BOTTLE_NECK + (BOTTLE_BOTTOM - BOTTLE_NECK) * t * t * (3 - 2 * t);
+    return [x, z, tz, -tx, radius];
+  }
+
+  function bottlePlaces(width, height) {
+    const places = new Float32Array(width * height * 3);
+    const length = bottlePieces().reduce((a, b) => a + b, 0);
+    const tubes = [];
+    for (let column = 0; column < width; column++) tubes.push(bottleTube((length * (column + 0.5)) / width));
+    const turnC = Math.cos(BOTTLE_TURN), turnS = Math.sin(BOTTLE_TURN);
+    for (let row = 0; row < height; row++) {
+      const v = (2 * Math.PI * (row + 0.5)) / height - Math.PI / 2;
+      for (let column = 0; column < width; column++) {
+        const [mx, mz, nx, nz, radius] = tubes[column];
+        const x = mx + radius * nx * Math.cos(v) - BOTTLE_MIDDLE[0];
+        const z = mz + radius * nz * Math.cos(v) - BOTTLE_MIDDLE[1];
+        const out = radius * Math.sin(v);
+        const at = (row * width + column) * 3;
+        places[at] = BOTTLE_SCALE * (x * turnC - out * turnS);
+        places[at + 1] = BOTTLE_SCALE * (x * turnS + out * turnC);
+        places[at + 2] = BOTTLE_SCALE * z;
+      }
+    }
+    return places;
+  }
+
   // The places of a form (mapping.places): a help for the eye, the model has none.
   function places(form, width, height) {
     if (form === "klein") return kleinPlaces(width, height);
+    if (form === "bottle") return bottlePlaces(width, height);
     if (form === "two") return twoPlaces(width, height);
     return torusPlaces(width, height);
   }
@@ -2404,7 +2483,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.graph = {
-    RING_RADIUS, TWO_GAP, fixedPairs, doorPairs, aliveLines, torusPlaces, kleinPlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
+    RING_RADIUS, TWO_GAP, fixedPairs, doorPairs, aliveLines, torusPlaces, kleinPlaces, bottlePlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
     organisms, organismOf, relationsOfOrganism, relationCountOfOrganism, forecast, canonical, shapeKey, layOut,
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
     neighbours, neighboursInto, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
@@ -2927,7 +3006,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       if (!form || form === "donut") return;
       const theme = state.theme;
       const { s, ox, oy } = frame;
-      if (form === "klein") {
+      if (root.RetroLife.forms.isKlein(form)) {
         const k = Math.max(2, Math.min(3, Math.round(Math.min(width, height) / 200)));
         const w = 7 * k;
         const h = 8 * k;
@@ -3326,6 +3405,8 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
   // (graph.reachOf; the donut's is RING_RADIUS + 1, the Klein bottle and two donuts reach
   // a little further). It is set for the form of the world in `prepare`.
   const MARGIN = 0.2;
+  const BOTTLE_SMALLEST = 0.35;  // the size of a node of the bottle's neck against the middle one, at least
+  const BOTTLE_LARGEST = 1.4;    // ... and of its body at most
   const LINKS_UP_TO = 128 * 128; // nodes; larger worlds are drawn without links and signals
   const STARS = 420;
   const PLAIN_UP_TO = 7000;      // without WebGL: nodes drawn at most
@@ -3337,6 +3418,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 attribute vec3 aPlace;
 attribute float aShade;
 attribute float aSeed;
+attribute float aSize;     // how large this node is against the others (1 but on the bottle)
 uniform vec3 uAcross;
 uniform vec3 uUp;
 uniform vec3 uTowards;
@@ -3363,7 +3445,7 @@ void main() {
   float w = uEye - e.z;
   // 1 where the ring is nearest to the eye, 0 where it is furthest
   float near = clamp((e.z + uDepth) / (2.0 * uDepth), 0.0, 1.0);
-  float size = uNode * uFocus / w;
+  float size = uNode * aSize * uFocus / w;
   bool alive = aShade > 0.5 && aShade < uAgeCap + 0.5;
   bool rocks = uPass > 0.5 && uPass < 1.5;
   vSeed = aSeed;
@@ -3724,7 +3806,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       stars = program(STAR_VERTEX, LINE_FRAGMENT);
       sky = program(SKY_VERTEX, SKY_FRAGMENT);
       buffers = {
-        places: gl.createBuffer(), seeds: gl.createBuffer(), shade: gl.createBuffer(),
+        places: gl.createBuffer(), seeds: gl.createBuffer(), sizes: gl.createBuffer(), shade: gl.createBuffer(),
         lines: gl.createBuffer(), ends: gl.createBuffer(),
         stars: gl.createBuffer(), starSeeds: gl.createBuffer(), corners: gl.createBuffer(),
       };
@@ -3772,6 +3854,29 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // the buffers that depend only on the size of the world
     // (and on the form of the world: a switch of form shows the new shape at once, nothing
     // moves from one into the other)
+    // How large every node is. On the ring, the Klein bottle as an eight and two donuts
+    // the nodes lie evenly enough for one size. On the hand-blown bottle the neck is a
+    // third as wide as the body: every node gets a size by its own room (the nearer of
+    // its neighbours to the right and below), against the middle room of all, which sets
+    // the size of a node (`state.step`).
+    function sizeNodes(form) {
+      const count = state.width * state.height;
+      state.sizes = new Float32Array(count).fill(1);
+      state.step = 0;
+      if (form !== "bottle") return;
+      const p = state.places;
+      const room = new Float32Array(count);
+      const around = new Array(8);
+      const apart = (a, b) => Math.hypot(p[a * 3] - p[b * 3], p[a * 3 + 1] - p[b * 3 + 1], p[a * 3 + 2] - p[b * 3 + 2]);
+      for (let i = 0; i < count; i++) {
+        graph.neighboursInto(around, state.width, state.height, i, form);
+        room[i] = Math.min(apart(i, around[2]), apart(i, around[4]));
+      }
+      const sorted = Array.from(room).sort((a, b) => a - b);
+      state.step = sorted[Math.floor(count / 2)];
+      for (let i = 0; i < count; i++) state.sizes[i] = Math.max(BOTTLE_SMALLEST, Math.min(BOTTLE_LARGEST, room[i] / state.step));
+    }
+
     function prepare(world) {
       const form = world.form || "donut";
       if (state.world === world && state.width === world.width && state.height === world.height && state.form === form) return;
@@ -3787,6 +3892,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const random = randomMaker(world.width * 131 + world.height);
       state.seeds = new Float32Array(count);
       for (let i = 0; i < count; i++) state.seeds[i] = random();
+      sizeNodes(form);
       state.linked = count <= LINKS_UP_TO;
       // Up to LINKS_UP_TO nodes every fixed link is drawn. Two donuts draw the links
       // through the door at every size: they are all that joins the two rings, and
@@ -3800,6 +3906,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.bufferData(gl.ARRAY_BUFFER, state.places, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.seeds);
       gl.bufferData(gl.ARRAY_BUFFER, state.seeds, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.sizes);
+      gl.bufferData(gl.ARRAY_BUFFER, state.sizes, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.shade);
       gl.bufferData(gl.ARRAY_BUFFER, count, gl.DYNAMIC_DRAW);
       if (pairs) {
@@ -3846,7 +3954,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       // how large a node is: a good half of the way to the next one where they are nearest
       // (the tube of each of two donuts goes round half of the rows)
       const round = state.form === "two" ? state.height / 2 : state.height;
-      const node = 0.62 * Math.min((2 * Math.PI) / round, (2 * Math.PI * (graph.RING_RADIUS - 1)) / state.width);
+      // (the bottle: from the middle distance of a node to the next, and each node sized by
+      // its own room, `state.sizes`, so that the neck is not a lump)
+      const node = state.step ? 0.62 * state.step : 0.62 * Math.min((2 * Math.PI) / round, (2 * Math.PI * (graph.RING_RADIUS - 1)) / state.width);
       // how far the ring reaches towards the eye and away from it, as it is turned now
       // (another shape: as far as its ball)
       const depth = state.form === "donut" ? graph.RING_RADIUS * Math.hypot(towards[0], towards[1]) + 1 : state.radius;
@@ -3863,7 +3973,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const ey = up[0] * x + up[1] * y + up[2] * z;
       const ez = towards[0] * x + towards[1] * y + towards[2] * z;
       const scale = camera.focus / (EYE - ez);
-      return [camera.halfX + ex * scale, camera.halfY - ey * scale, ez, camera.node * scale];
+      return [camera.halfX + ex * scale, camera.halfY - ey * scale, ez, camera.node * state.sizes[i] * scale];
     }
 
     const nearOf = (camera, ez) => Math.max(0, Math.min(1, (ez + camera.depth) / (2 * camera.depth)));
@@ -3969,6 +4079,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         gl.uniform1f(nodes.uniforms.uPass, which);
         attribute(nodes, "aPlace", buffers.places, 3);
         attribute(nodes, "aSeed", buffers.seeds, 1);
+        attribute(nodes, "aSize", buffers.sizes, 1);
         attribute(nodes, "aShade", buffers.shade, 1, gl.UNSIGNED_BYTE);
         gl.drawArrays(gl.POINTS, 0, count);
       };
@@ -4811,7 +4922,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const x = (i) => ox + (fx + i) * p;
       const y = (j) => oy + (fy + j) * p;
       ctx.fillStyle = ink;
-      if (form === "klein") {
+      if (forms.isKlein(form)) {
         const dash = Math.max(2, Math.min(10, Math.round(p / 3)));
         for (let i = 0; i + 1 < columns; i++) {
           if (((fx + i) % width + width) % width !== width - 1) continue;
@@ -4920,7 +5031,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const form = world.form || "donut";
       if (form === "donut") return;
       c.fillStyle = theme.border;
-      if (form === "klein") {
+      if (forms.isKlein(form)) {
         c.fillRect(0, 0, 1, h);
         c.fillRect(w - 1, 0, 1, h);
         return;
@@ -5386,8 +5497,13 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   const FORM_WORDS = {
     donut: { name: "DONUT", kana: "ドーナツ", row: "DONUT",
       says: "Donut: the map with its edges glued. What leaves on one side comes back on the other." },
-    klein: { name: "KLEIN BOTTLE", kana: "クラインのつぼ", row: "KLEIN",
-      says: "Klein bottle: the same cells. What leaves on the right comes back on the left upside down. In space its tube has to pass through itself.",
+    // The Klein bottle in two pictures, one gluing (the user, 2026-11-23: "Keep both
+    // representations ... as separate surfaces that we can go through with up and down")
+    klein: { name: "KLEIN EIGHT", kana: "クライン 8の字", row: "KLEIN 8",
+      says: "Klein eight: a Klein bottle drawn as a ring whose tube is a figure of eight. What leaves on the right comes back on the left upside down. In space its tube has to pass through itself.",
+      marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut." },
+    bottle: { name: "KLEIN BOTTLE", kana: "クラインのつぼ", row: "BOTTLE",
+      says: "Klein bottle: the same cells, drawn as a hand-blown bottle. Its neck passes through the wall and opens into the bottom from inside. Same neighbours as the Klein eight, only another picture.",
       marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut." },
     two: { name: "TWO DONUTS", kana: "ふたつのドーナツ", row: "TWO",
       says: "Two donuts: the upper and the lower half of the map are a ring each, joined at the door in the middle.",
@@ -7185,8 +7301,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // The first time a form other than the donut is seen on the map, what its marks mean.
   function hintMarks() {
     const form = state.world.form;
-    if (state.learn || form === "donut" || hinted.has("marks-" + form)) return;
-    hinted.add("marks-" + form);
+    // (the two pictures of the Klein bottle have the same marks: said once)
+    if (state.learn || form === "donut" || hinted.has("marks-" + forms.gluing(form))) return;
+    hinted.add("marks-" + forms.gluing(form));
     hint(FORM_WORDS[form].marks, 6400);
   }
 
