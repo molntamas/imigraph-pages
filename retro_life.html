@@ -253,6 +253,9 @@ body[data-theme="kuroi"] #leave-ask h2 .plain { font-size: 18px; letter-spacing:
   #cheer-word .px { height: 56px; }
   #lesson-again, #lesson-leave, #lesson-next { min-height: 64px; }
   #lesson-next [data-icon] > .px { height: 28px; }
+  /* wide enough for the title in these larger pixels (642 px): at 600 px it ran out of the
+     box and took the words and LEAVE with it (the user, 2026-11-23, on a 27 inch monitor) */
+  #leave-ask { width: min(760px, calc(100% - 32px)); }
   #leave-ask h2 .px { height: 42px; }
   #leave-ask p { font-size: 24px; }
   #leave-ask button .px { height: 28px; }
