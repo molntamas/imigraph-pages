@@ -5928,7 +5928,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   }
 
   // The book: page 0 is the contents, page k the formation k - 1 (the order of the plus).
-  let bookAt = 0;
+  // Opened from the menu it shows the page one was at; the first time, the first
+  // organism (the user, 2026-11-23: "instead of opening the Content as a default, open
+  // the first organism's page. I think it is more fun to start with actually checking out
+  // the organism"). The contents are one press of CONTENTS or the arrow to the left away.
+  let bookAt = 1;
 
   function openBook(at) {
     if (state.learn) return;
