@@ -622,6 +622,55 @@ body[data-mode="big"] #big-card { display: grid; }
 #big-only { margin: 2px 0 0; font-size: 12px; }
 #big-working { color: var(--accent); }
 body[data-mode="big"] #hint { bottom: 12px; }
+/* ---- the RPG: another game; smooth, warm paper, no pixel art (own colours, whatever the look) */
+#rpg-root {
+  --paper: #f2e7cf; --paper-2: #fbf3df; --rpg-ink: #4b3a2a; --rpg-accent: #c9604f;
+  position: fixed; inset: 0; z-index: 40; background: var(--paper); color: var(--rpg-ink);
+  font: 16px/1.45 Georgia, "Palatino Linotype", "Times New Roman", serif; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+#rpg-root[hidden] { display: none; }
+#rpg-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#rpg-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); }
+#rpg-place { font-weight: 700; letter-spacing: 0.18em; }
+#rpg-root button {
+  font: inherit; font-weight: 700; letter-spacing: 0.08em; color: var(--rpg-ink); background: var(--paper-2);
+  border: 2px solid var(--rpg-ink); border-radius: 12px; min-height: 44px; padding: 6px 16px; cursor: pointer; box-shadow: 0 3px 0 rgba(75, 58, 42, 0.35);
+}
+#rpg-root button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(75, 58, 42, 0.35); }
+#rpg-pad {
+  position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: 150px; height: 150px; border-radius: 50%;
+  background: rgba(251, 243, 223, 0.85); border: 2px solid var(--rpg-ink); box-shadow: 0 3px 0 rgba(75, 58, 42, 0.35); touch-action: none;
+}
+#rpg-knob { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: var(--rpg-accent); border: 2px solid var(--rpg-ink); pointer-events: none; }
+#rpg-pad::before, #rpg-pad::after { content: ""; position: absolute; background: rgba(75, 58, 42, 0.22); border-radius: 3px; }
+#rpg-pad::before { left: 50%; top: 14px; bottom: 14px; width: 4px; margin-left: -2px; }
+#rpg-pad::after { top: 50%; left: 14px; right: 14px; height: 4px; margin-top: -2px; }
+#rpg-a {
+  position: absolute; right: max(22px, env(safe-area-inset-right)); bottom: max(34px, calc(env(safe-area-inset-bottom) + 16px)); width: 82px; height: 82px; border-radius: 50% !important;
+  font-size: 26px !important; background: var(--rpg-accent) !important; color: #fffaf0 !important;
+}
+#rpg-dialog {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 62px; width: min(560px, calc(100% - 24px)); padding: 12px 18px 14px; cursor: pointer;
+  background: var(--paper-2); border: 2px solid var(--rpg-ink); border-radius: 14px; box-shadow: 0 4px 0 rgba(75, 58, 42, 0.35);
+}
+#rpg-dialog[hidden] { display: none; }
+#rpg-who { display: block; color: var(--rpg-accent); letter-spacing: 0.12em; }
+#rpg-say { margin: 2px 0 0; font-size: 19px; }
+#rpg-dialog i { position: absolute; right: 14px; bottom: 6px; font-style: normal; color: var(--rpg-accent); }
+#rpg-menu, #rpg-inventory {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; display: grid; gap: 10px; padding: 16px;
+  background: var(--paper-2); border: 2px solid var(--rpg-ink); border-radius: 16px; box-shadow: 0 6px 0 rgba(75, 58, 42, 0.35); touch-action: pan-y;
+}
+#rpg-menu[hidden], #rpg-inventory[hidden] { display: none; }
+#rpg-menu h2, #rpg-inventory h2 { margin: 0; letter-spacing: 0.18em; font-size: 18px; text-align: center; }
+#rpg-items { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+#rpg-items li { min-height: 64px; border: 2px dashed rgba(75, 58, 42, 0.35); border-radius: 12px; padding: 8px; }
+#rpg-items li.full { grid-column: 1 / -1; border: 2px solid var(--rpg-ink); background: #fff8e8; }
+#rpg-items li b { display: block; }
+#rpg-items li p { margin: 2px 0 0; font-size: 14px; }
+#rpg-items .icon-book { float: left; width: 34px; height: 42px; margin: 2px 10px 0 0; background: #b4523e; border: 2px solid var(--rpg-ink); border-radius: 3px 6px 6px 3px; box-shadow: inset -5px 0 0 #fbf3df; }
+#rpg-empty { margin: 0; text-align: center; }
+body[data-rpg] { overflow: hidden; }
 
 </style>
 </head>
@@ -729,6 +778,26 @@ body[data-mode="big"] #hint { bottom: 12px; }
     <button type="button" id="next" title="The screen to the right (right arrow key)" aria-label="The screen to the right" data-icon="right"></button>
   </footer>
 
+  <div id="rpg-root" hidden>
+    <canvas id="rpg-canvas" aria-label="The RPG: a small house and a garden. Walk with the pad or the arrow keys, A talks to or searches what you face."></canvas>
+    <div id="rpg-top"><span id="rpg-place"></span><button type="button" id="rpg-menu-button" title="Menu (Esc)">MENU</button></div>
+    <div id="rpg-pad" aria-label="Walk: put a thumb on the pad and push the way you want to go"><span id="rpg-knob"></span></div>
+    <button type="button" id="rpg-a" title="Talk to or search what you face (Space)">A</button>
+    <div id="rpg-dialog" hidden><b id="rpg-who"></b><p id="rpg-say"></p><i>&#9662;</i></div>
+    <aside id="rpg-menu" hidden role="dialog" aria-label="RPG menu">
+      <h2>MENU</h2>
+      <button type="button" id="rpg-show-inventory">INVENTORY</button>
+      <button type="button" id="rpg-leave">BACK TO GAME OF LIFE</button>
+      <button type="button" id="rpg-resume">CLOSE</button>
+    </aside>
+    <aside id="rpg-inventory" hidden role="dialog" aria-label="Inventory">
+      <h2>INVENTORY</h2>
+      <p id="rpg-empty">Nothing yet. Look around the house.</p>
+      <ul id="rpg-items"></ul>
+      <button type="button" id="rpg-inventory-close">BACK</button>
+    </aside>
+  </div>
+
   <div id="shade" hidden></div>
 
   <div id="leave-ask" hidden role="alertdialog" aria-modal="true" aria-labelledby="leave-ask-title" aria-describedby="leave-ask-text">
@@ -759,6 +828,13 @@ body[data-mode="big"] #hint { bottom: 12px; }
 
   <aside id="settings" class="sheet" hidden role="dialog" aria-label="Settings">
     <header><h2><span data-px="SETTINGS"></span><span class="kana" lang="ja">せってい</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
+    <section>
+      <h3 data-px="RPG"></h3>
+      <p class="note">A different little game: walk around a house and its garden, search, talk, and keep what you find. The Game of Life waits; the menu of the RPG brings you back.</p>
+      <div class="chips">
+        <button type="button" id="rpg-open" data-px="RPG"></button>
+      </div>
+    </section>
     <section>
       <h3 data-px="LEARN"></h3>
       <p class="note">New to the Game of Life? Small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one; then the buttons of the game and its other screens. Your world waits until you come back. The arrows go from lesson to lesson; solved ones stay open. To send the lessons to someone: the address of this page with <b>#learn</b> at its end.</p>
@@ -6861,6 +6937,595 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
 })(typeof window !== "undefined" ? window : globalThis);
 
 </script>
+<script id="script-rpg">
+// The RPG, a small Zelda-like game next to the Game of Life: the rules of its world, with no
+// drawing in them (nothing of a browser), so that they run in Node for the tests and in the page.
+//
+// Two places, each one screen (the camera never moves): a HOUSE with a table that holds a
+// book, and a GARDEN outside, with a pig. You walk freely (not step by step on a grid), the
+// way Zelda does: along the four directions and the diagonals between them, stopped by walls
+// one axis at a time so that you slide along them. A button (A) talks to, or searches, what
+// you face. A door takes you to the other place. The garden's border is a hedge and trees,
+// and the position is clamped as well, so that one cannot leave it.
+//
+// Units are tiles; (x, y) is the middle of the character's feet-box.
+(function (root) {
+  "use strict";
+
+  const SPEED = 3.4;  // tiles a second
+  const HALF_W = 0.27;  // the feet-box of the character: 0.54 wide
+  const HALF_H = 0.18;  // and 0.36 deep
+  const REACH = 0.62;  // how far in front of the character A looks
+
+  // What the letters of the maps are. SOLID ones stop the character; the rest is ground.
+  //   # wall   W window (wall)   b bed   S shelf   p plant   T table (a table can be searched)
+  //   h hedge  t tree   H house front   D door   . floor or grass   r rug   w path   f flowers
+  const SOLID = new Set(["#", "W", "b", "S", "p", "T", "h", "t", "H"]);
+
+  const AREAS = {
+    house: {
+      title: "HOUSE",
+      rows: [
+        "####W###W##",
+        "#bb....SS.#",
+        "#bb.......#",
+        "#...TT...p#",
+        "#...rr....#",
+        "#.........#",
+        "#.........#",
+        "#####D#####",
+      ],
+      // where one arrives from the garden: in front of the door, looking into the room
+      arrive: { x: 5.5, y: 6.35, facing: "up" },
+      doors: { "5,7": { to: "garden" } },
+      things: [{ kind: "table", tiles: [[4, 3], [5, 3]] }],
+      people: [],
+    },
+    garden: {
+      title: "GARDEN",
+      rows: [
+        "ttthhhhhhhhhttt",
+        "th...HHHHH...ht",
+        "h....HHHHH....h",
+        "h....HHDHH..f.h",
+        "h.f...www...t.h",
+        "h.....www.....h",
+        "h..........ff.h",
+        "h.t...........h",
+        "h......f..t...h",
+        "h.............h",
+        "hhhhhhhhhhhhhhh",
+      ],
+      arrive: { x: 7.5, y: 4.45, facing: "down" },
+      doors: { "7,3": { to: "house" } },
+      things: [],
+      people: [{ key: "pig", x: 10.5, y: 5.5, facing: "left", halfW: 0.4, halfH: 0.28 }],
+    },
+  };
+  const START = { area: "house", x: 5.5, y: 5.4, facing: "down" };
+
+  const ITEMS = {
+    book: {
+      key: "book",
+      name: "Book",
+      about: "A thick old book with a cover the colour of tea. Its pages are full of small drawings of cells that live, blink and walk. It is the book of organisms of the Game of Life.",
+    },
+  };
+
+  const DIRECTIONS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+  const tileAt = (area, tx, ty) => {
+    const rows = area.rows;
+    if (ty < 0 || ty >= rows.length || tx < 0 || tx >= rows[0].length) return "#";
+    return rows[ty][tx];
+  };
+  const size = (name) => ({ columns: AREAS[name].rows[0].length, rows: AREAS[name].rows.length });
+
+  function createGame() {
+    const game = {
+      area: START.area,
+      x: START.x,
+      y: START.y,
+      facing: START.facing,
+      walking: false,
+      clock: 0,  // seconds spent walking, for the swing of the legs
+      inventory: [],
+      dialog: null,  // { lines: [{ who, text }], at }, while someone talks
+      note: null,  // the last thing that happened (for the page to say and the tests to read)
+      fade: 0,  // seconds left of the dark between two places (no one walks meanwhile)
+      people: {},
+      found: {},  // what was found, by thing
+      talked: 0,  // how many conversations ended
+      visits: { house: 1, garden: 0 },
+    };
+    for (const name of Object.keys(AREAS)) {
+      for (const person of AREAS[name].people) game.people[person.key] = { x: person.x, y: person.y, facing: person.facing };
+    }
+    return game;
+  }
+
+  // Does a box with its middle at (x, y) and the half sizes touch a solid tile or a person?
+  function blocked(game, x, y, halfW, halfH, except) {
+    const area = AREAS[game.area];
+    for (let ty = Math.floor(y - halfH); ty <= Math.floor(y + halfH); ty++) {
+      for (let tx = Math.floor(x - halfW); tx <= Math.floor(x + halfW); tx++) {
+        if (SOLID.has(tileAt(area, tx, ty))) return true;
+      }
+    }
+    for (const person of area.people) {
+      if (person.key === except) continue;
+      const at = game.people[person.key];
+      if (Math.abs(at.x - x) < person.halfW + halfW && Math.abs(at.y - y) < person.halfH + halfH) return true;
+    }
+    return false;
+  }
+
+  // Moves by (dx, dy) tiles: along x first, then along y, so that a wall one runs into
+  // slides one along it instead of stopping one. The border of the place is a wall too.
+  function move(game, dx, dy) {
+    const area = size(game.area);
+    const clamp = (value, most) => Math.min(Math.max(value, HALF_W), most - HALF_W);
+    if (dx) {
+      const x = clamp(game.x + dx, area.columns);
+      if (!blocked(game, x, game.y, HALF_W, HALF_H)) game.x = x;
+    }
+    if (dy) {
+      const y = Math.min(Math.max(game.y + dy, HALF_H), area.rows - HALF_H);
+      if (!blocked(game, game.x, y, HALF_W, HALF_H)) game.y = y;
+    }
+  }
+
+  function enter(game, name) {
+    const arrive = AREAS[name].arrive;
+    game.area = name;
+    game.x = arrive.x;
+    game.y = arrive.y;
+    game.facing = arrive.facing;
+    game.visits[name] += 1;
+    game.fade = 0.3;
+    game.note = "entered " + name;
+  }
+
+  // One tick of `dt` seconds with the direction pressed (dir.x, dir.y each -1 to 1; a
+  // pad may give anything between, which walks slower). While someone talks, or the
+  // place changes, no one walks.
+  function update(game, dt, dir) {
+    game.fade = Math.max(0, game.fade - dt);
+    const x = dir ? dir.x : 0;
+    const y = dir ? dir.y : 0;
+    const length = Math.hypot(x, y);
+    if (game.dialog || game.fade > 0 || length < 0.15) {
+      game.walking = false;
+      return;
+    }
+    const push = Math.min(1, length);
+    const step = Math.min(dt, 0.1) * SPEED * push;
+    game.walking = true;
+    game.clock += dt;
+    // facing: the stronger axis (up and down win a tie); the walk itself may be diagonal
+    game.facing = Math.abs(y) >= Math.abs(x) ? (y < 0 ? "up" : "down") : x < 0 ? "left" : "right";
+    move(game, (x / length) * step, (y / length) * step);
+    const door = AREAS[game.area].doors[Math.floor(game.x) + "," + Math.floor(game.y)];
+    if (door) enter(game, door.to);
+  }
+
+  // What A would do now: the thing or person in front of the character, or null.
+  function facingWhat(game) {
+    const area = AREAS[game.area];
+    const [fx, fy] = DIRECTIONS[game.facing];
+    const px = game.x + fx * REACH;
+    const py = game.y + fy * REACH;
+    for (const person of area.people) {
+      const at = game.people[person.key];
+      if (Math.abs(at.x - px) < person.halfW + 0.12 && Math.abs(at.y - py) < person.halfH + 0.12) return { kind: "person", key: person.key };
+    }
+    for (const thing of area.things) {
+      if (thing.tiles.some(([tx, ty]) => tx === Math.floor(px) && ty === Math.floor(py))) return { kind: thing.kind };
+    }
+    return null;
+  }
+
+  const say = (game, lines, then) => {
+    game.dialog = { lines, at: 0, then: then || null };
+  };
+
+  // The button A: closes the line being said (and the dialog after its last line), else
+  // talks to or searches what is in front.
+  function press(game) {
+    if (game.fade > 0) return;
+    if (game.dialog) {
+      game.dialog.at += 1;
+      if (game.dialog.at >= game.dialog.lines.length) {
+        const then = game.dialog.then;
+        game.dialog = null;
+        if (then === "talked") game.talked += 1;
+      }
+      return;
+    }
+    const what = facingWhat(game);
+    if (!what) return;
+    if (what.kind === "table") {
+      if (!game.found.table) {
+        game.found.table = true;
+        game.inventory.push(ITEMS.book.key);
+        game.note = "found book";
+        say(game, [{ who: "", text: "You look over the table... and find a book!" }, { who: "", text: "The book is in your inventory now." }]);
+      } else {
+        say(game, [{ who: "", text: "Only a plain old table now." }]);
+      }
+    } else if (what.kind === "person" && what.key === "pig") {
+      const pig = game.people.pig;
+      pig.facing = game.facing === "left" ? "right" : game.facing === "right" ? "left" : game.facing === "up" ? "down" : "up";
+      say(game, [{ who: "You", text: "Hello, pig! Nice garden you have." }, { who: "Pig", text: "Oink, oink!" }], "talked");
+    }
+  }
+
+  const items = (game) => game.inventory.map((key) => ITEMS[key]);
+
+  root.RetroLife = root.RetroLife || {};
+  root.RetroLife.rpg = { AREAS, ITEMS, SOLID, START, SPEED, HALF_W, HALF_H, REACH, DIRECTIONS, createGame, update, press, facingWhat, items, size, tileAt };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script id="script-rpgview">
+// The page of the RPG (rules: rpg.js): a canvas with the place drawn as flat shapes on warm
+// paper (not pixel art, no pictures: everything is drawn in code), a pad and a button A for
+// the thumbs, a dialog box, a menu with the inventory, and a way back to the Game of Life.
+// The camera stands still: each place is one screen, scaled to fit.
+(function (root) {
+  "use strict";
+
+  const rpg = root.RetroLife.rpg;
+  const $ = (id) => document.getElementById(id);
+  const INK = "#4b3a2a";
+  const PAPER = "#f2e7cf";
+  const COLOURS = {
+    floor: "#e8d3a8", floorLine: "#d8bf8e", wall: "#b79a73", wallTop: "#9c7f5a", grass: "#bcd08a", grassDark: "#a9c277",
+    hedge: "#7da56a", hedgeDark: "#6a9158", path: "#e6d9b8", roof: "#c9604f", roofDark: "#a94c3f", house: "#efe0bd",
+    wood: "#a8743f", woodDark: "#8a5c30", rug: "#d98a7a", rugLine: "#f0c2b4", bed: "#8fb0d6", pillow: "#fffaf0",
+    pig: "#f3b5b9", pigDark: "#d98a93", cloth: "#4f86a8", skin: "#f7d6b0", hair: "#7a4a2a", book: "#b4523e", bookPage: "#fbf3df",
+  };
+
+  function create(options) {
+    const canvas = $("rpg-canvas");
+    const context = canvas.getContext("2d");
+    const game = rpg.createGame();
+    const held = new Set();  // keys held
+    const pad = { x: 0, y: 0 };  // the thumb on the pad
+    let open = false;
+    let frame = 0;
+    let last = 0;
+    let layout = { scale: 1, left: 0, top: 0 };
+    let background = null;  // the place drawn once per size
+    let backgroundKey = "";
+    let shown = "";  // the dialog line on the page
+
+    const panel = (id) => $(id);
+    const menuOpen = () => !panel("rpg-menu").hidden || !panel("rpg-inventory").hidden;
+
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      const place = rpg.size(game.area);
+      // on a phone held upright the pad lies under the place, so keep room for it
+      const reserve = height > width ? 190 : 0;
+      const side = height > width ? 8 : 176;  // held sideways the pad and A lie beside it
+      const scale = Math.max(8, Math.min((width - 2 * side) / place.columns, (height - reserve - 60) / place.rows));
+      layout = { scale, ratio, left: (width - scale * place.columns) / 2, top: 50 + Math.max(0, (height - reserve - 60 - scale * place.rows) / 2) };
+      background = null;
+    }
+
+    // ---- drawing (everything in tile units; one tile is `scale` pixels)
+    const rect = (c, x, y, w, h, fill, radius) => {
+      c.beginPath();
+      if (radius) c.roundRect(x, y, w, h, radius); else c.rect(x, y, w, h);
+      if (fill) { c.fillStyle = fill; c.fill(); }
+    };
+    const outline = (c, width) => { c.lineWidth = width; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke(); };
+
+    function drawTile(c, s, kind, x, y, area, seed) {
+      const px = x * s;
+      const py = y * s;
+      const line = Math.max(1.5, s / 18);
+      const grassy = area === "garden";
+      if (kind === "#" || kind === "W" || kind === "S" || kind === "b" || kind === "p" || kind === "T" || kind === "r" || kind === "." || kind === "D") {
+        // the floor of the house under everything
+      }
+      if (grassy) {
+        rect(c, px, py, s, s, (x + y) % 2 ? COLOURS.grass : COLOURS.grassDark);
+      } else {
+        rect(c, px, py, s, s, COLOURS.floor);
+        c.beginPath(); c.moveTo(px, py + s); c.lineTo(px + s, py + s); c.strokeStyle = COLOURS.floorLine; c.lineWidth = 1; c.stroke();
+      }
+      if (kind === "w") rect(c, px + 1, py + 1, s - 2, s - 2, COLOURS.path, s * 0.18);
+      if (kind === "f") {
+        for (const [dx, dy, tint] of [[0.3, 0.35, "#f3a6b8"], [0.7, 0.45, "#fbe08a"], [0.45, 0.75, "#ffffff"]]) {
+          c.beginPath(); c.arc(px + dx * s, py + dy * s, s * 0.1, 0, 7); c.fillStyle = tint; c.fill(); outline(c, line * 0.7);
+        }
+      }
+      if (kind === "r") rect(c, px + 2, py + 2, s - 4, s - 4, COLOURS.rug, s * 0.12);
+      if (kind === "#" || kind === "W") {
+        rect(c, px, py, s, s, COLOURS.wall);
+        rect(c, px, py, s, s * 0.35, COLOURS.wallTop);
+        if (kind === "W") {
+          rect(c, px + s * 0.18, py + s * 0.2, s * 0.64, s * 0.62, "#cfe6ee", s * 0.08); outline(c, line);
+          c.beginPath(); c.moveTo(px + s / 2, py + s * 0.2); c.lineTo(px + s / 2, py + s * 0.82); c.moveTo(px + s * 0.18, py + s * 0.51); c.lineTo(px + s * 0.82, py + s * 0.51); c.stroke();
+        }
+      }
+      if (kind === "D") {
+        rect(c, px + s * 0.1, py + s * 0.05, s * 0.8, s * 0.95, COLOURS.wood, s * 0.12); outline(c, line);
+        c.beginPath(); c.arc(px + s * 0.75, py + s * 0.55, s * 0.05, 0, 7); c.fillStyle = "#f3d27a"; c.fill();
+      }
+      if (kind === "h" || kind === "t") {
+        rect(c, px, py, s, s, COLOURS.hedge, s * 0.3); outline(c, line);
+        c.beginPath(); c.arc(px + s * (0.3 + 0.4 * ((seed * 7) % 3) / 2), py + s * 0.45, s * 0.12, 0, 7); c.fillStyle = COLOURS.hedgeDark; c.fill();
+        if (kind === "t") {
+          c.beginPath(); c.arc(px + s / 2, py + s * 0.45, s * 0.58, 0, 7); c.fillStyle = COLOURS.hedge; c.fill(); outline(c, line);
+          c.beginPath(); c.arc(px + s * 0.38, py + s * 0.35, s * 0.14, 0, 7); c.fillStyle = "#97bc80"; c.fill();
+          for (const [dx, dy] of [[0.65, 0.55], [0.45, 0.7]]) { c.beginPath(); c.arc(px + dx * s, py + dy * s, s * 0.07, 0, 7); c.fillStyle = "#d9645a"; c.fill(); }
+        }
+      }
+      if (kind === "b") {
+        rect(c, px + s * 0.06, py + s * 0.06, s * 0.88, s * 0.88, COLOURS.bed, s * 0.1); outline(c, line);
+        rect(c, px + s * 0.14, py + s * 0.14, s * 0.5, s * 0.3, COLOURS.pillow, s * 0.1); outline(c, line * 0.8);
+      }
+      if (kind === "S") {
+        rect(c, px + s * 0.04, py + s * 0.12, s * 0.92, s * 0.76, COLOURS.wood, s * 0.06); outline(c, line);
+        for (const [i, tint] of [[0, "#c96b5a"], [1, "#6b9cc0"], [2, "#e2b74f"], [3, "#7ca86b"]]) rect(c, px + s * (0.14 + i * 0.2), py + s * 0.22, s * 0.14, s * 0.44, tint, 2);
+      }
+      if (kind === "p") {
+        rect(c, px + s * 0.3, py + s * 0.55, s * 0.4, s * 0.35, COLOURS.roof, s * 0.06); outline(c, line);
+        for (const dx of [0.3, 0.5, 0.7]) { c.beginPath(); c.ellipse(px + s * dx, py + s * 0.4, s * 0.12, s * 0.22, (dx - 0.5) * 1.2, 0, 7); c.fillStyle = "#6ea35c"; c.fill(); outline(c, line * 0.8); }
+      }
+    }
+
+    function drawBackground() {
+      const place = rpg.AREAS[game.area];
+      const s = layout.scale;
+      const columns = place.rows[0].length;
+      const rows = place.rows.length;
+      const offscreen = document.createElement("canvas");
+      offscreen.width = Math.ceil(columns * s * layout.ratio);
+      offscreen.height = Math.ceil(rows * s * layout.ratio);
+      const c = offscreen.getContext("2d");
+      c.scale(layout.ratio, layout.ratio);
+      place.rows.forEach((row, y) => [...row].forEach((kind, x) => drawTile(c, s, kind, x, y, game.area, x * 13 + y * 7)));
+      // tables and the house are bigger than a tile
+      for (const thing of place.things) {
+        if (thing.kind !== "table") continue;
+        const [[x0, y0], [x1]] = [thing.tiles[0], thing.tiles[thing.tiles.length - 1]];
+        rect(c, x0 * s + s * 0.05, y0 * s + s * 0.12, (x1 - x0 + 1) * s - s * 0.1, s * 0.8, COLOURS.wood, s * 0.1); outline(c, Math.max(1.5, s / 18));
+        rect(c, x0 * s + s * 0.05, y0 * s + s * 0.12, (x1 - x0 + 1) * s - s * 0.1, s * 0.22, COLOURS.woodDark, s * 0.1);
+        if (!game.found.table) { rect(c, (x0 + 0.55) * s, (y0 + 0.4) * s, s * 0.45, s * 0.3, COLOURS.book, s * 0.05); outline(c, 1.5); rect(c, (x0 + 0.6) * s, (y0 + 0.62) * s, s * 0.35, s * 0.05, COLOURS.bookPage); }
+      }
+      if (game.area === "garden") {
+        const x = 5 * s; const y = 1 * s; const w = 5 * s;
+        rect(c, x, y + s * 0.9, w, s * 2.1, COLOURS.house, s * 0.1); outline(c, Math.max(2, s / 14));
+        c.beginPath(); c.moveTo(x - s * 0.25, y + s * 1.05); c.lineTo(x + w / 2, y - s * 0.25); c.lineTo(x + w + s * 0.25, y + s * 1.05); c.closePath();
+        c.fillStyle = COLOURS.roof; c.fill(); outline(c, Math.max(2, s / 14));
+        c.beginPath(); c.moveTo(x + s * 0.3, y + s * 0.85); c.lineTo(x + w / 2, y + s * 0.0); c.strokeStyle = COLOURS.roofDark; c.lineWidth = s * 0.08; c.stroke();
+        for (const wx of [x + s * 0.55, x + w - s * 1.45]) { rect(c, wx, y + s * 1.45, s * 0.9, s * 0.8, "#cfe6ee", s * 0.08); outline(c, Math.max(1.5, s / 18)); }
+        rect(c, 7 * s + s * 0.1, 3 * s + s * 0.05, s * 0.8, s * 0.95, COLOURS.wood, s * 0.12); outline(c, Math.max(1.5, s / 18));
+        c.beginPath(); c.arc(7 * s + s * 0.75, 3 * s + s * 0.55, s * 0.05, 0, 7); c.fillStyle = "#f3d27a"; c.fill();
+      }
+      background = offscreen;
+      backgroundKey = game.area + ":" + s + (game.found.table ? "f" : "");
+    }
+
+    function drawPerson(c, s, x, y, facing, walking, clock) {
+      const bob = walking ? Math.sin(clock * 14) * s * 0.04 : 0;
+      c.save(); c.translate(x * s, y * s + bob);
+      c.beginPath(); c.ellipse(0, s * 0.08, s * 0.3, s * 0.12, 0, 0, 7); c.fillStyle = "rgba(75,58,42,0.25)"; c.fill();
+      const swing = walking ? Math.sin(clock * 14) * s * 0.07 : 0;
+      for (const side of [-1, 1]) { rect(c, side * s * 0.12 - s * 0.06, -s * 0.12 + side * swing, s * 0.12, s * 0.22, "#6b4a33", s * 0.04); }
+      rect(c, -s * 0.24, -s * 0.62, s * 0.48, s * 0.56, COLOURS.cloth, s * 0.14); outline(c, Math.max(1.5, s / 18));
+      c.beginPath(); c.arc(0, -s * 0.78, s * 0.26, 0, 7); c.fillStyle = COLOURS.skin; c.fill(); outline(c, Math.max(1.5, s / 18));
+      c.beginPath();
+      if (facing === "up") c.arc(0, -s * 0.8, s * 0.27, 0, 7); else c.arc(0, -s * 0.84, s * 0.27, Math.PI, 0);
+      c.fillStyle = COLOURS.hair; c.fill();
+      c.fillStyle = INK;
+      const eye = (dx) => { c.beginPath(); c.arc(dx, -s * 0.76, s * 0.035, 0, 7); c.fill(); };
+      if (facing === "down") { eye(-s * 0.09); eye(s * 0.09); }
+      else if (facing === "left") eye(-s * 0.13);
+      else if (facing === "right") eye(s * 0.13);
+      c.restore();
+    }
+
+    function drawPig(c, s, pig) {
+      const flip = pig.facing === "right" ? -1 : 1;
+      c.save(); c.translate(pig.x * s, pig.y * s); c.scale(flip, 1);
+      const line = Math.max(1.5, s / 18);
+      c.beginPath(); c.ellipse(0, s * 0.18, s * 0.42, s * 0.12, 0, 0, 7); c.fillStyle = "rgba(75,58,42,0.25)"; c.fill();
+      for (const dx of [-0.24, 0.2]) rect(c, s * dx - s * 0.05, s * 0.0, s * 0.1, s * 0.2, COLOURS.pigDark, s * 0.04);
+      c.beginPath(); c.ellipse(0, -s * 0.12, s * 0.4, s * 0.28, 0, 0, 7); c.fillStyle = COLOURS.pig; c.fill(); outline(c, line);
+      c.beginPath(); c.arc(-s * 0.4, -s * 0.16, s * 0.2, 0, 7); c.fillStyle = COLOURS.pig; c.fill(); outline(c, line);
+      c.beginPath(); c.ellipse(-s * 0.56, -s * 0.12, s * 0.1, s * 0.08, 0, 0, 7); c.fillStyle = COLOURS.pigDark; c.fill(); outline(c, line * 0.8);
+      c.beginPath(); c.moveTo(-s * 0.36, -s * 0.32); c.lineTo(-s * 0.26, -s * 0.5); c.lineTo(-s * 0.2, -s * 0.28); c.closePath(); c.fillStyle = COLOURS.pigDark; c.fill(); outline(c, line * 0.8);
+      c.beginPath(); c.arc(-s * 0.44, -s * 0.22, s * 0.03, 0, 7); c.fillStyle = INK; c.fill();
+      c.beginPath(); c.arc(s * 0.42, -s * 0.16, s * 0.07, 0.6, 5.4); c.strokeStyle = COLOURS.pigDark; c.lineWidth = line * 1.2; c.stroke();
+      c.restore();
+    }
+
+    function draw() {
+      const s = layout.scale;
+      context.setTransform(layout.ratio, 0, 0, layout.ratio, 0, 0);
+      context.fillStyle = PAPER;
+      context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      const key = game.area + ":" + s + (game.found.table ? "f" : "");
+      if (!background || key !== backgroundKey) drawBackground();
+      context.save();
+      context.translate(layout.left, layout.top);
+      context.drawImage(background, 0, 0, background.width / layout.ratio, background.height / layout.ratio);
+      const place = rpg.AREAS[game.area];
+      const columns = place.rows[0].length;
+      const rows = place.rows.length;
+      context.beginPath(); context.rect(0, 0, columns * s, rows * s); outline(context, Math.max(2, s / 12));
+      // things that stand and walk, the lower ones in front
+      const drawn = place.people.map((person) => ({ y: game.people[person.key].y, run: () => drawPig(context, s, game.people[person.key]) }));
+      drawn.push({ y: game.y, run: () => drawPerson(context, s, game.x, game.y + 0.18, game.facing, game.walking, game.clock) });
+      drawn.sort((a, b) => a.y - b.y).forEach((entry) => entry.run());
+      // a small mark over what A would do now
+      if (!game.dialog && game.fade <= 0) {
+        const what = rpg.facingWhat(game);
+        if (what) {
+          const person = what.kind === "person" ? game.people[what.key] : null;
+          const mx = person ? person.x : game.x + rpg.DIRECTIONS[game.facing][0] * 0.62;
+          const my = (person ? person.y - 0.7 : game.y + rpg.DIRECTIONS[game.facing][1] * 0.62 - 0.45) + Math.sin(frame / 12) * 0.03;
+          context.beginPath(); context.arc(mx * s, my * s, s * 0.18, 0, 7); context.fillStyle = "#fffaf0"; context.fill(); outline(context, Math.max(1.5, s / 18));
+          context.fillStyle = INK; context.font = "bold " + Math.round(s * 0.24) + "px Georgia, serif"; context.textAlign = "center"; context.textBaseline = "middle"; context.fillText("A", mx * s, my * s + 1);
+        }
+      }
+      context.restore();
+      if (game.fade > 0) { context.fillStyle = "rgba(75,58,42," + Math.min(1, game.fade / 0.3) * 0.85 + ")"; context.fillRect(0, 0, window.innerWidth, window.innerHeight); }
+    }
+
+    // ---- the parts of the page that are not the canvas
+    function sync() {
+      $("rpg-place").textContent = rpg.AREAS[game.area].title;
+      const dialog = game.dialog;
+      $("rpg-dialog").hidden = !dialog;
+      if (dialog) {
+        const line = dialog.lines[dialog.at];
+        $("rpg-who").textContent = line.who;
+        $("rpg-who").hidden = !line.who;
+        const text = line.text;
+        if (text !== shown) { $("rpg-say").textContent = text; shown = text; }
+        $("rpg-dialog").dataset.last = dialog.at === dialog.lines.length - 1 ? "1" : "0";
+      } else shown = "";
+      $("rpg-a").textContent = dialog ? "OK" : "A";
+      $("rpg-root").dataset.talking = dialog ? "1" : "0";
+    }
+
+    function tick(now) {
+      if (!open) return;
+      const dt = Math.min(0.1, (now - last) / 1000 || 0);
+      last = now;
+      frame += 1;
+      let x = pad.x;
+      let y = pad.y;
+      if (held.has("left")) x -= 1;
+      if (held.has("right")) x += 1;
+      if (held.has("up")) y -= 1;
+      if (held.has("down")) y += 1;
+      if (!menuOpen()) rpg.update(game, dt, { x, y });
+      sync();
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    function showInventory() {
+      const list = $("rpg-items");
+      list.textContent = "";
+      const owned = rpg.items(game);
+      for (let k = 0; k < 6; k++) {
+        const slot = document.createElement("li");
+        const item = owned[k];
+        if (item) {
+          slot.className = "full";
+          slot.innerHTML = '<span class="icon-book"></span><b></b><p></p>';
+          slot.querySelector("b").textContent = item.name;
+          slot.querySelector("p").textContent = item.about;
+        } else slot.className = "empty";
+        list.append(slot);
+      }
+      $("rpg-empty").hidden = owned.length > 0;
+      $("rpg-menu").hidden = true;
+      $("rpg-inventory").hidden = false;
+    }
+
+    function closePanels() {
+      $("rpg-menu").hidden = true;
+      $("rpg-inventory").hidden = true;
+    }
+    function toggleMenu() {
+      if (menuOpen()) { closePanels(); return; }
+      pad.x = pad.y = 0;
+      held.clear();
+      $("rpg-menu").hidden = false;
+    }
+    function act() {
+      if (menuOpen()) return;
+      rpg.press(game);
+    }
+
+    // ---- controls: the pad takes any direction (a thumb on it walks that way), keys too
+    const stick = $("rpg-pad");
+    let padId = null;
+    function padMove(event) {
+      const box = stick.getBoundingClientRect();
+      const dx = event.clientX - (box.left + box.width / 2);
+      const dy = event.clientY - (box.top + box.height / 2);
+      const radius = box.width / 2;
+      const length = Math.hypot(dx, dy);
+      const reach = Math.min(1, length / (radius * 0.8));
+      pad.x = length ? (dx / length) * reach : 0;
+      pad.y = length ? (dy / length) * reach : 0;
+      const knob = $("rpg-knob");
+      const k = Math.min(length, radius * 0.6);
+      knob.style.transform = "translate(" + (length ? (dx / length) * k : 0) + "px," + (length ? (dy / length) * k : 0) + "px)";
+    }
+    function padEnd() {
+      padId = null; pad.x = pad.y = 0;
+      $("rpg-knob").style.transform = "";
+    }
+    stick.addEventListener("pointerdown", (event) => { padId = event.pointerId; stick.setPointerCapture(event.pointerId); padMove(event); event.preventDefault(); });
+    stick.addEventListener("pointermove", (event) => { if (event.pointerId === padId) padMove(event); });
+    stick.addEventListener("pointerup", padEnd);
+    stick.addEventListener("pointercancel", padEnd);
+    $("rpg-a").addEventListener("pointerdown", (event) => { act(); event.preventDefault(); });
+    $("rpg-dialog").addEventListener("pointerdown", (event) => { act(); event.preventDefault(); });
+    $("rpg-menu-button").addEventListener("click", toggleMenu);
+    $("rpg-resume").addEventListener("click", closePanels);
+    $("rpg-show-inventory").addEventListener("click", showInventory);
+    $("rpg-inventory-close").addEventListener("click", () => { closePanels(); $("rpg-menu").hidden = false; });
+    $("rpg-leave").addEventListener("click", () => { close(); options.onLeave(); });
+
+    const KEYS = { ArrowUp: "up", w: "up", ArrowDown: "down", s: "down", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right" };
+    window.addEventListener("keydown", (event) => {
+      if (!open || event.ctrlKey || event.metaKey || event.altKey) return;
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+      if (KEYS[key]) { if (!menuOpen()) held.add(KEYS[key]); }
+      else if (key === " " || key === "Enter" || key === "e" || key === "z") { if (!(event.target.closest && event.target.closest("button") && key !== "e")) act(); }
+      else if (key === "Escape" || key === "m") toggleMenu();
+      else if (key === "i") { if (!panel("rpg-inventory").hidden) closePanels(); else showInventory(); }
+      else return;
+      event.preventDefault();
+    });
+    window.addEventListener("keyup", (event) => {
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+      if (KEYS[key]) held.delete(KEYS[key]);
+    });
+    window.addEventListener("blur", () => held.clear());
+    window.addEventListener("resize", () => { if (open) resize(); });
+
+    function openRpg() {
+      open = true;
+      $("rpg-root").hidden = false;
+      document.body.dataset.rpg = "1";
+      closePanels();
+      resize();
+      last = performance.now();
+      requestAnimationFrame(tick);
+    }
+    function close() {
+      open = false;
+      held.clear();
+      $("rpg-root").hidden = true;
+      delete document.body.dataset.rpg;
+    }
+
+    return { open: openRpg, close, isOpen: () => open, game, toggleMenu, showInventory, act };
+  }
+
+  root.RetroLife.rpgView = { create };
+})(window);
+
+</script>
 <script id="script-app">
 // Retro Life, the page: what a touch does, the play loop, the three screens, the sheets.
 //
@@ -6892,6 +7557,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   const { forms, life, graph, render, donut, pixel } = window.RetroLife;
   const creature = window.RetroLife.organism;
   const cellGraph = window.RetroLife.cellGraph;
+  const rpgGame = window.RetroLife.rpgView.create({ onLeave: () => {} });
   const data = JSON.parse(document.getElementById("game-data").textContent);
   const $ = (id) => document.getElementById(id);
 
@@ -9239,6 +9905,13 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     savePrefs();
   });
   $("learn").addEventListener("click", () => startLearning());
+  // The RPG, another game: the Life stops and waits, and its menu leads back.
+  $("rpg-open").addEventListener("click", () => {
+    if (state.learn) return;
+    pause();
+    closeSheets();
+    rpgGame.open();
+  });
   $("lesson-again").addEventListener("click", () => {
     if (state.learn) showLesson(state.learn.index);
   });
@@ -9517,6 +10190,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   });
 
   window.addEventListener("keydown", (event) => {
+    if (rpgGame.isOpen()) return;  // the RPG has its own keys
     if (event.target.closest && event.target.closest("textarea")) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
