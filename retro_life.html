@@ -351,6 +351,17 @@ body[data-view="organism"] #organism-ways { display: flex; }
   body[data-theme="kuroi"] #organism-ways .row .plain { font-size: 11px; letter-spacing: 0.04em; }
   #organism-map { width: 84px; }
 }
+/* the key of the lines of a form: above the legend of NUMBERS, which it never covers */
+#organism-key { position: absolute; left: 12px; bottom: 120px; display: none; flex-direction: column; gap: 6px; color: var(--space-ink); pointer-events: none; font-size: 12.5px; line-height: 1.2; }
+body[data-view="organism"][data-gluing="two"] #organism-key, body[data-view="organism"][data-gluing="klein"] #organism-key { display: flex; }
+body[data-view="organism"][data-shows="numbers"] #organism-key { bottom: 176px; }
+@media (orientation: landscape) { body[data-view="organism"][data-shows="numbers"] #organism-key { bottom: 218px; } }
+body[data-gluing="two"] #organism-key .key:not([data-gluing="two"]), body[data-gluing="klein"] #organism-key .key:not([data-gluing="klein"]) { display: none; }
+#organism-key .key { display: flex; align-items: center; gap: 8px; }
+#organism-key .mark { width: 22px; height: 12px; }
+#organism-key .wall { background: linear-gradient(var(--space-ink), var(--space-ink)) center / 100% 3px no-repeat; }
+#organism-key .door { background: linear-gradient(var(--space-ink), var(--space-ink)) left center / 4px 4px no-repeat, linear-gradient(var(--space-ink), var(--space-ink)) right center / 4px 4px no-repeat; }
+#organism-key .seam { background: repeating-linear-gradient(90deg, var(--space-ink) 0 3px, transparent 3px 6px) center / 100% 3px no-repeat; }
 #organism-fate { position: absolute; left: 12px; bottom: 120px; display: none; gap: 6px 16px; color: var(--space-ink); pointer-events: none; }
 body[data-view="organism"][data-shows="numbers"] #organism-fate { display: grid; }
 @media (orientation: portrait) { #organism-fate { grid-template-columns: auto auto; justify-content: start; } }
@@ -704,6 +715,11 @@ body[data-rpg] { overflow: hidden; }
       <div class="fate" title="Dead now, alive in the coming generation: a hollow tile"><i class="mark born" data-border="born"></i><span id="fate-born"></span></div>
       <div class="fate" title="The number on a node: how many of its eight neighbours are alive"><i class="mark count" data-px="3"></i><span data-px="ALIVE AROUND"></span></div>
     </div>
+    <div id="organism-key" aria-label="What the lines of this form of the world mean">
+      <div class="key" data-gluing="two" title="Two donuts: the line between the two rings. Cells on its two sides are not neighbours, except at the door."><i class="mark wall"></i><span>Wall between the two rings</span></div>
+      <div class="key" data-gluing="two" title="Two donuts: the gap in the wall. Through it the cells of the two rings are neighbours."><i class="mark door"></i><span>Door: open to the other ring</span></div>
+      <div class="key" data-gluing="klein" title="Klein bottle: the line where the map is glued to itself with a twist."><i class="mark seam"></i><span>Seam: across it, upside down</span></div>
+    </div>
     <div id="organism-ways">
       <div class="zoom" role="group" aria-label="How much of the world the window shows">
         <button type="button" id="organism-out" title="Show more of the world (or turn the wheel, or pinch with two fingers)" aria-label="Show more of the world" data-icon="minus"></button>
@@ -829,7 +845,7 @@ body[data-rpg] { overflow: hidden; }
 
   <aside id="formations" class="sheet" hidden role="dialog" aria-label="Add a formation">
     <header><h2><span data-px="ADD"></span><span class="kana" lang="ja">ついか</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
-    <p class="note">Pick one, then tap the map to place it. It stays on your finger until you tap the cross.</p>
+    <p class="note">Pick one, then tap the map (or, on the third screen, the picture of the organism) to place it. It stays on your finger until you tap the cross.</p>
     <div id="formation-list"></div>
   </aside>
 
@@ -4679,6 +4695,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       close: false,   // the window is too small for the organism: it shows the named cell
       piece: null,    // the organism placed on the grid (place)
       view: null,     // the window the picture shows: {fx, fy, columns, rows}
+      whole: false,   // the window shows the whole world, cell for cell (scene.across at its most)
       at: null,       // per cell of the world: its number in the piece, or -1
       looks: null,    // colours and faces of a theme
       stars: null,
@@ -4933,6 +4950,18 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const size = { x: piece.x1 - piece.x0 - 3, y: piece.y1 - piece.y0 - 3 };
       const middle = { x: low.x + (size.x - 1) / 2, y: low.y + (size.y - 1) / 2 };
       const across = scene.across || 0;
+      if (across >= Math.max(world.width, world.height)) {
+        // The whole world, as the map has it (the user, 2026-11-24: "zoom it out totally"): every
+        // cell in its place, nothing wrapped, nothing repeated, the scale that fits the room.
+        // The camera stays in the middle of the world and nothing moves, whatever the organism does.
+        const fit = Math.min(wide / world.width, high / world.height);
+        const mx = (world.width - 1) / 2, my = (world.height - 1) / 2;
+        state.camera = { x: mx, y: my, tx: mx, ty: my, pitch: fit >= 4 ? Math.floor(fit) : fit };
+        state.pick = scene.pick;
+        state.across = across;
+        state.close = false;
+        return { columns: world.width, rows: world.height, moving: false, close: false, whole: true };
+      }
       const most = Math.max(16, Math.min(Math.round(PITCH / Math.sqrt(state.pixel)), Math.floor(Math.min(wide, high) / ACROSS)));
       const want = across ? Math.min(wide, high) / across : Math.min(most, wide / (size.x + 2 * MARGIN), high / (size.y + 2 * MARGIN));
       const whole = (pitch) => (pitch >= 4 ? Math.floor(pitch) : pitch);
@@ -5014,11 +5043,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       if (!organism) {
         state.camera = null;
         drawMap(scene);
-        return { took: performance.now() - begin, moving: false, close: false, pitch: 0, columns: 0, rows: 0, x: 0, y: 0, top: 0, left: 0, rings: false, at: null, step: 0 };
+        return { took: performance.now() - begin, moving: false, close: false, pitch: 0, columns: 0, rows: 0, x: 0, y: 0, top: 0, left: 0, rings: false, at: null, step: 0, whole: false };
       }
       const piece = place(world, organism);
       const room = roomOf(scene);
-      const { columns, rows, moving, close } = cameraFor(scene, piece, room);
+      const { columns, rows, moving, close, whole } = cameraFor(scene, piece, room);
+      state.whole = Boolean(whole);
       const camera = state.camera;
       const p = camera.pitch;
       const ox = (room.left + room.right) / 2 - camera.x * p;
@@ -5036,7 +5066,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const wrapY = (y) => ((y % height) + height) % height;
       let cellAt = (i, j) => wrapY(fy + j) * width + wrapX(fx + i);
       let chart = null;  // another form: the cells of the window and which are upside down
-      if (form !== "donut") {
+      if (whole) {
+        // the map itself: place (i, j) is the cell in column i, row j; the lines of the form lie where they do on the map
+        cellAt = (i, j) => j * width + i;
+        if (form !== "donut" && rings) chart = { cells: Array.from({ length: width * height }, (_, k) => k), flipped: new Array(width * height).fill(false) };
+      } else if (form !== "donut") {
         chart = forms.chartWindow(form, width, height, piece.ring, fx, fy, columns, rows);
         cellAt = (i, j) => chart.cells[j * columns + i];
       }
@@ -5047,15 +5081,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const vx = Math.round(camera.tx - (columns - 1) / 2), vy = Math.round(camera.ty - (rows - 1) / 2);
       state.view = {
         fx: vx, fy: vy, columns, rows,
-        cells: form === "donut" ? null : forms.chartWindow(form, width, height, piece.ring, vx, vy, columns, rows).cells,
+        cells: form === "donut" || whole ? null : forms.chartWindow(form, width, height, piece.ring, vx, vy, columns, rows).cells,
       };
       const done = () => {
-        drawFormLines(scene, piece, ox, oy, p, fx, fy, columns, rows, looks);
+        drawFormLines(scene, piece, ox, oy, p, fx, fy, columns, rows, looks, whole);
+        drawGhost(scene, ox, oy, p, fx, fy, columns, rows, looks);
         drawMap(scene);
         return {
           took: performance.now() - begin, moving, close, pitch: p, columns, rows, x: camera.tx, y: camera.ty, top: fy, left: fx, rings,
           at: { x: (ox + fx * p) * state.pixel, y: (oy + fy * p) * state.pixel }, step: p * state.pixel,
-          form, ring: piece.ring, chart,
+          form, ring: piece.ring, chart, whole: Boolean(whole),
         };
       };
       if (rings) return done();  // the page draws the rings on this ground
@@ -5233,7 +5268,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // dashed line between the columns where the picture turns over), the walls of two
     // donuts (between the rows where a ring ends, open over the door, with a post at each
     // end of the opening). Between the nodes, never on one.
-    function drawFormLines(scene, piece, ox, oy, p, fx, fy, columns, rows, looks) {
+    function drawFormLines(scene, piece, ox, oy, p, fx, fy, columns, rows, looks, whole) {
       const form = piece.form;
       if (form === "donut") return;
       const { width, height } = scene.world;
@@ -5244,10 +5279,18 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       ctx.fillStyle = ink;
       if (forms.isKlein(form)) {
         const dash = Math.max(2, Math.min(10, Math.round(p / 3)));
+        const seam = (at) => {
+          for (let top = y(0) - p / 2; top < y(rows - 1) + p / 2; top += 2 * dash) ctx.fillRect(at, Math.round(top), line, dash);
+        };
+        if (whole) {
+          // the whole map: the seam is its left and its right border, glued to each other upside down
+          seam(Math.round(x(0) - p / 2 - line));
+          seam(Math.round(x(columns - 1) + p / 2));
+          return;
+        }
         for (let i = 0; i + 1 < columns; i++) {
           if (((fx + i) % width + width) % width !== width - 1) continue;
-          const at = Math.round(x(i) + p / 2 - line / 2);
-          for (let top = y(0) - p / 2; top < y(rows - 1) + p / 2; top += 2 * dash) ctx.fillRect(at, Math.round(top), line, dash);
+          seam(Math.round(x(i) + p / 2 - line / 2));
         }
         return;
       }
@@ -5376,19 +5419,67 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       };
     }
 
-    // the cell of the world under a point of the picture (pixels of the screen from the
-    // corner of the canvas), or -1 where the window shows none
-    function cellUnder(scene, px, py) {
+    // the place of the window under a point of the picture (pixels of the screen from the
+    // corner of the canvas): {x, y} on the grid of the picture (not wrapped), or null where
+    // the window shows none
+    function placeAt(scene, px, py) {
       const camera = state.camera;
       const view = state.view;
-      if (!camera || !view || !scene.organism) return -1;
-      const { width, height } = scene.world;
+      if (!camera || !view || !scene.organism) return null;
       const room = roomOf(scene);
       const x = Math.round(camera.x + (px / state.pixel - (room.left + room.right) / 2) / camera.pitch);
       const y = Math.round(camera.y + (py / state.pixel - (room.top + room.bottom) / 2) / camera.pitch);
-      if (x < view.fx || y < view.fy || x >= view.fx + view.columns || y >= view.fy + view.rows) return -1;
+      if (x < view.fx || y < view.fy || x >= view.fx + view.columns || y >= view.fy + view.rows) return null;
+      return { x, y };
+    }
+
+    // the cell of the world at a place of the picture, or -1 (the whole map has no place
+    // beyond its borders)
+    function cellAtPlace(world, x, y) {
+      const { width, height } = world;
+      if (state.whole) return x < 0 || y < 0 || x >= width || y >= height ? -1 : y * width + x;
       if (state.piece && state.piece.form !== "donut") return forms.planeCell(state.piece.form, width, height, state.piece.ring, x, y).cell;
       return (((y % height) + height) % height) * width + (((x % width) + width) % width);
+    }
+
+    // the cell of the world under a point of the picture, or -1 where the window shows none
+    function cellUnder(scene, px, py) {
+      const at = placeAt(scene, px, py);
+      return at ? cellAtPlace(scene.world, at.x, at.y) : -1;
+    }
+
+    // The cells a formation covers when its middle is put on a place of the picture: the
+    // shape as the picture shows it (in a part seen upside down it lies upside down too), each
+    // alive cell of it at its place, the cell the picture has there. Cells beyond the edge of
+    // the whole map are left out.
+    function stampCells(scene, shape, x, y) {
+      const left = x - Math.floor(shape.width / 2), top = y - Math.floor(shape.height / 2);
+      const found = [];
+      for (let r = 0; r < shape.height; r++) {
+        for (let c = 0; c < shape.width; c++) {
+          if (!shape.cells[r * shape.width + c]) continue;
+          const cell = cellAtPlace(scene.world, left + c, top + r);
+          if (cell >= 0) found.push({ cell, x: left + c, y: top + r });
+        }
+      }
+      return found;
+    }
+
+    // The formation on the finger (scene.ghost: {shape, x, y}): a frame on every place it
+    // would fill, in the ink of the screen, over the picture (the rings of the view GRAPH lie
+    // over the canvas and are smaller than a cell, so the frames show round them).
+    function drawGhost(scene, ox, oy, p, fx, fy, columns, rows, looks) {
+      const ghost = scene.ghost;
+      if (!ghost) return;
+      const line = Math.max(1, Math.min(4, Math.round(p / 8)));
+      const side = Math.max(2, Math.round(p * 0.9));
+      ctx.strokeStyle = css(looks.star, 1);
+      ctx.lineWidth = line;
+      for (const { x, y } of stampCells(scene, ghost.shape, ghost.x, ghost.y)) {
+        const i = x - fx, j = y - fy;
+        if (i < 0 || j < 0 || i >= columns || j >= rows) continue;
+        ctx.strokeRect(Math.round(ox + x * p - side / 2) + line / 2, Math.round(oy + y * p - side / 2) + line / 2, side - line, side - line);
+      }
     }
 
     // where a cell of the world is drawn (pixels of the screen from the corner of the
@@ -5400,7 +5491,10 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const column = cell % width, row = Math.floor(cell / width);
       let x = column + width * Math.round((camera.x - column) / width);
       let y = row + height * Math.round((camera.y - row) / height);
-      if (state.piece && state.piece.form !== "donut") {
+      if (state.whole) {
+        x = column;
+        y = row;
+      } else if (state.piece && state.piece.form !== "donut") {
         const found = forms.planeNear(state.piece.form, width, height, state.piece.ring, cell, camera.x, camera.y);
         if (!found) return null;
         x = found.x;
@@ -5413,7 +5507,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       };
     }
 
-    return { draw, resize, pointOf, cellUnder, mapPoint, looksFor };
+    return { draw, resize, pointOf, cellUnder, placeAt, stampCells, mapPoint, looksFor };
   }
 
   root.RetroLife = root.RetroLife || {};
@@ -8015,7 +8109,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // shorter side of its room, from one cell to the whole world.
   const ACROSS = [1, 3, 5, 7, 9, 13, 19, 27, 39, 55, 79, 111, 159, 223, 319];
   const SLOW_VIEWS = new Set(["organism"]);
-  const LEGEND_ROOM = 58;     // pixels kept free above the buttons of the third screen for the legend of NUMBERS
+  const LEGEND_ROOM = 58;     // pixels kept free above the buttons of the third screen for the legend of NUMBERS ...
+  const KEY_ROOM = 44;        // ... and this much more where the world has walls or a seam (the key of its lines)
   const FULL_FROM = 44;       // pixels from cell to cell, from which the view GRAPH draws every arrow with its head ...
   const FULL_CELLS = 400;     // ... and the cells of the window up to which it does
   const FORCES_NODES = 60000; // nodes up to which the view GRAPH places by forces (about a second of work, once)
@@ -8068,6 +8163,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     owed: 0,             // generations the play owes (fractions carried over)
     last: 0,             // time of the last frame
     stamp: null,         // {entry, turns, flip, shape}: the formation on the finger
+    spot: null,          // {x, y}: the place of the picture of the third screen it is held over
     ghost: null,         // {shape, top, left}: where it would land
     effects: [],
     theme: "yoru",
@@ -8399,9 +8495,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   }
 
   // How much the window shows. The steps the world has room for: the last one is the
-  // whole of its shorter side.
+  // whole world, every cell in its place, all of it in the room (the user, 2026-11-24: "show
+  // the whole map on the organism page ... zoom it out totally"). Its number is the longer
+  // side of the world; organism.js takes that, or more, for the whole world.
   function zoomSteps() {
-    const most = Math.min(state.world.width, state.world.height);
+    const most = Math.max(state.world.width, state.world.height);
     return ACROSS.filter((across) => across < most).concat([most]);
   }
 
@@ -8424,7 +8522,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     } else {
       const shown = organismView && organismView.columns ? Math.min(organismView.columns, organismView.rows) : steps[steps.length - 1];
       at = by > 0 ? steps.filter((step) => step < shown).length - 1 : steps.findIndex((step) => step > shown);
-      if (by < 0 && at < 0) return;  // the window shows all there is
+      if (by < 0 && at < 0) at = steps.length - 1;
     }
     if (at < 0 || at >= steps.length) return;
     flash(by > 0 ? "organism-in" : "organism-out");
@@ -8449,7 +8547,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       // screen has no other); between the buttons, under the card; between the buttons,
       // beside the card, from the top of the screen. The one that holds the largest
       // square is taken (of two alike, the larger one).
-      const above = { left: 0, top: room.top, right: box.width, bottom: Math.min(pick.top, ways.top) - box.top - LEGEND_ROOM };
+      const above = { left: 0, top: room.top, right: box.width, bottom: Math.min(pick.top, ways.top) - box.top - LEGEND_ROOM - (state.world.form === "donut" ? 0 : KEY_ROOM) };
       const under = { left: ways.right - box.left, top: room.top, right: pick.left - box.left, bottom: box.height };
       const beside = { left: Math.max(ways.right, card.right) - box.left, top: 0, right: pick.left - box.left, bottom: box.height };
       const wide = (place) => place.right - place.left;
@@ -8457,11 +8555,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const worth = (place) => Math.min(wide(place), high(place)) * 1e6 + Math.max(0, wide(place)) * Math.max(0, high(place));
       room = [above, under, beside].reduce((best, place) => (worth(place) > worth(best) ? place : best));
     }
-    const most = Math.min(state.world.width, state.world.height);
+    const most = Math.max(state.world.width, state.world.height);
     return {
       world: state.world, labels: now.labels, number: now.which, organism: now.organism, forecast: now.forecast,
       mode: state.mode, theme: renderer.theme(), room, pick: state.pick,
       across: Math.min(state.across, most), focus: lookAtCell(), jump: state.mode === "graph",
+      ghost: state.stamp && state.spot && !state.learn ? { shape: state.stamp.shape, x: state.spot.x, y: state.spot.y } : null,
     };
   }
 
@@ -8486,8 +8585,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     setPixels("organism-size", size);
     setPixels("zoom-size", size || "-");
     const shown = seen && seen.columns ? Math.min(seen.columns, seen.rows) : 0;
+    const everything = Boolean(seen) && (seen.whole || (seen.columns >= state.world.width && seen.rows >= state.world.height));
     $("organism-in").disabled = $("zoom-in").disabled = !drawn || shown <= 1;
-    $("organism-out").disabled = $("zoom-out").disabled = !drawn || (state.across ? state.across >= steps[steps.length - 1] : shown >= steps[steps.length - 1]);
+    $("organism-out").disabled = $("zoom-out").disabled = !drawn || everything;
     $("zoom-fit").disabled = !state.across;
     if (drawn) {
       setPixels("fate-stay", number(now.fate.stay) + " STAY");
@@ -9835,7 +9935,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     $("next").disabled = at === VIEWS.length - 1;
     if (key === "organism") {
       picture.resize();
-      if (state.stamp) leaveStamping();
+      if (state.stamp && !lookAtOrganism().organism) leaveStamping();  // nothing to lay it on
       if (!state.learn && !hinted.has("organism")) {
         hinted.add("organism");
         hint("One organism on its piece of the ring's grid. The row at the bottom changes what you see, minus and plus how much. Time runs slowly here.", 6400);
@@ -9904,6 +10004,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       element.setAttribute("aria-pressed", String(element.dataset.form === state.world.form));
       element.disabled = !forms.fits(element.dataset.form, state.world.width, state.world.height);
     }
+    document.body.dataset.gluing = forms.gluing(state.world.form);  // what the key of the third screen says
     showViewName();
   }
 
@@ -9944,6 +10045,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   function leaveStamping() {
     state.stamp = null;
     state.ghost = null;
+    state.spot = null;
     showStamping();
     requestDraw();
   }
@@ -9959,7 +10061,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     const entry = formations.find((candidate) => candidate.key === key);
     if (!entry) throw new Error("no formation " + key);
     state.stamp = { entry, turns: 0, flip: false, shape: entry.shape };
-    if (state.view !== "map") setView("map");
+    state.spot = null;
+    if (state.view === "organism" && !lookAtOrganism().organism) {
+      // an empty world has no picture to lay it on: it goes into the middle of the world
+      const { width, height } = state.world;
+      life.stamp(state.world, entry.shape, Math.floor((height - entry.shape.height) / 2), Math.floor((width - entry.shape.width) / 2));
+      leaveStamping();
+      hint(entry.title + " added in the middle of the world", 3200);
+      return;
+    }
+    if (state.view !== "map" && state.view !== "organism") setView("map");
     showStamping();
   }
 
@@ -9978,6 +10089,46 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   function ghostAt(cell) {
     const shape = state.stamp.shape;
     state.ghost = { shape, top: cell.row - Math.floor(shape.height / 2), left: cell.column - Math.floor(shape.width / 2) };
+    requestDraw();
+  }
+
+  // On the picture of an organism: the place of the picture a point of the screen is over
+  // (where the rings of the view GRAPH are placed by forces they do not lie on the grid: the
+  // place of the ring nearest to the point).
+  function spotAt(clientX, clientY) {
+    const box = organismCanvas.getBoundingClientRect();
+    if (ringsView && ringsView.placing === "forces" && organismView) {
+      const x = clientX - box.left, y = clientY - box.top;
+      let best = -1;
+      let nearest = Infinity;
+      ringsView.middles.forEach((middle, k) => {
+        const apart = (middle[0] - x) * (middle[0] - x) + (middle[1] - y) * (middle[1] - y);
+        if (apart < nearest) {
+          nearest = apart;
+          best = k;
+        }
+      });
+      return best < 0 ? null : { x: organismView.left + (best % organismView.columns), y: organismView.top + Math.floor(best / organismView.columns) };
+    }
+    return picture.placeAt(organismScene(), clientX - box.left, clientY - box.top);
+  }
+
+  function holdOverOrganism(clientX, clientY) {
+    const spot = spotAt(clientX, clientY);
+    if (spot) state.spot = spot;
+    requestDraw();
+  }
+
+  // A tap with a formation on the finger, on the picture of an organism: it lies where the
+  // picture shows it (upside down where the picture does), and stays on the finger, as on the map.
+  function placeOnOrganism(clientX, clientY, touch) {
+    const spot = spotAt(clientX, clientY);
+    if (!spot) return;
+    const found = picture.stampCells(organismScene(), state.stamp.shape, spot.x, spot.y);
+    let changed = false;
+    for (const { cell } of found) if (life.setCell(state.world, cell, 1)) changed = true;
+    state.spot = touch ? null : spot;
+    if (!changed) hint("Those cells are alive already");
     requestDraw();
   }
 
@@ -10233,11 +10384,14 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // on an arrow of theirs, so both listen)
   for (const element of [organismCanvas, graphSvg]) {
     element.addEventListener("pointerdown", (event) => {
+      if (state.stamp && !state.learn && fingers.size === 0) holdOverOrganism(event.clientX, event.clientY);
       fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       tapped = fingers.size === 1 ? { id: event.pointerId, x: event.clientX, y: event.clientY } : null;
       if (fingers.size === 2) spread = spreadNow();
     });
     element.addEventListener("pointermove", (event) => {
+      // a formation on the finger follows it (a mouse without a button too)
+      if (state.stamp && !state.learn && fingers.size < 2 && (event.pointerType === "mouse" || fingers.has(event.pointerId))) holdOverOrganism(event.clientX, event.clientY);
       if (!fingers.has(event.pointerId)) return;
       fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (fingers.size !== 2 || !spread) return;
@@ -10254,7 +10408,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       fingers.delete(event.pointerId);
       spread = 0;
       // (a tap on an arrow is its own: the click below says which arrow it is)
-      if (tap && !(event.target.closest && event.target.closest(".arrow[data-arrow]"))) tapOrganism(event.clientX, event.clientY);
+      if (tap && state.stamp && !state.learn) placeOnOrganism(event.clientX, event.clientY, event.pointerType !== "mouse");
+      else if (tap && !(event.target.closest && event.target.closest(".arrow[data-arrow]"))) tapOrganism(event.clientX, event.clientY);
     });
     for (const type of ["pointercancel", "pointerleave"]) {
       element.addEventListener(type, (event) => {
@@ -10521,7 +10676,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (!element) return;
     chooseFormation(element.dataset.key);
     closeSheets();
-    hint("Tap the map to place it");
+    if (state.stamp) hint(state.view === "organism" ? "Tap the picture to place it" : "Tap the map to place it");
   });
   $("map-list").addEventListener("click", (event) => {
     const element = event.target.closest("button");
