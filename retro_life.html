@@ -164,8 +164,12 @@ body[data-theme="kuroi"] #leave-ask h2 .plain { font-size: 18px; letter-spacing:
 /* the menu in its lesson: all of it to look at, only the maps to use */
 .sheet section[inert] { opacity: 0.4; }
 /* a narrow screen (a phone held upright): without the reminders of the buttons (the words of
-   a lesson name them), and a smaller cheer, so that the world keeps its room under the card */
+   a lesson name them), and a smaller cheer, so that the world keeps its room under the card;
+   the words of a lesson larger all the same (the user, 2026-11-23: "make the lesson
+   description text bigger on mobile. on my phone I would have more space to read the
+   text, it could be bigger") */
 @media (max-width: 480px) {
+  #lesson p, #lesson-result { font-size: 16px; line-height: 1.45; }
   .lesson-ways .way { display: none; }
   #cheer-face { width: 32px; height: 30px; }
   #cheer-word .px { height: 21px; }
@@ -713,14 +717,6 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
       <div class="chips">
         <button type="button" id="fullscreen" class="lamp" aria-pressed="false" title="Hide the browser round the game" data-px="FULL SCREEN"></button>
       </div>
-      <p class="note">So that the game is not left by mistake. Full screen hides the browser round it, and a swipe from the edge then only ends full screen. The way back of the browser (the back button, a swipe from the left edge) first only says so: once more leaves the game. On a tablet or phone, Add to Home Screen in the browser's menu opens the game like an app, without the browser.</p>
-    </section>
-    <section id="book-part">
-      <h3 data-px="ORGANISMS"></h3>
-      <p class="note">A book of the shapes of Life, page by page: what a glider, a block or a blinker is and what it does. On the screen Organism, where there is room, the name of a known organism stands at the bottom; a tap on it opens its page.</p>
-      <div class="chips">
-        <button type="button" id="open-book" data-px="OPEN THE BOOK"></button>
-      </div>
     </section>
     <section data-for="map">
       <h3 data-px="TIME"></h3>
@@ -734,6 +730,13 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
         </span>
       </div>
       <p class="note">On the third screen, Organism, the world plays at one generation a second at most, so that it can be followed.</p>
+    </section>
+    <section id="book-part">
+      <h3 data-px="ORGANISMS"></h3>
+      <p class="note">A book of the shapes of Life, page by page: what a glider, a block or a blinker is and what it does.</p>
+      <div class="chips">
+        <button type="button" id="open-book" data-px="OPEN THE BOOK"></button>
+      </div>
     </section>
     <section id="maps-part">
       <h3 data-px="MAPS"></h3>
@@ -6729,13 +6732,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   }
 
   // Whether the cells of the map can be touched now in a lesson: by a tap in a lesson
-  // about tapping, until the check; with a formation on the finger in the lesson of the
-  // plus. Elsewhere the map is locked, and drawn so (render.js: grey stripes, a lock).
+  // about tapping, until the check. The lesson of the plus is never locked: its map is
+  // where the shape goes (the user, 2026-11-23: "In Lesson 11, when I can add the
+  // organism, the map still seems like it is locked ... Since the user can click on it,
+  // it shouldn't look locked"). Elsewhere the map is locked, and drawn so (render.js:
+  // grey stripes, a lock).
   function mapLocked() {
     const one = state.learn;
     if (!one || state.view !== "map") return false;
     const lesson = lessonNow();
-    if (lesson && lesson.kind === "add") return !state.stamp;
+    if (lesson && lesson.kind === "add") return false;
     return !lesson || !TAPPED.includes(lesson.kind) || one.stepped || one.solved;
   }
 
@@ -6936,10 +6942,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     if (!lesson || !cell.inside) return;
     const other = lesson.kind === "watch" || lesson.kind === "add" || lesson.kind === "map" || lesson.kind === "look";
     if (other || one.stepped) {
-      // the map is locked now (and drawn so): say it, and show what to press instead
+      // the map is locked now (and drawn so): say it, and show what to press instead; in
+      // the lesson of the plus the map is open, but a shape has to be picked first
       const which = blinking() || (lesson.kind === "watch" ? "play" : "");
       if (which) flash(which);
-      hint(which ? "The map is locked now. Press the blinking button." : "The map is locked now: just watch.");
+      if (lesson.kind === "add") hint("Pick a shape with the plus first, then tap the map.");
+      else hint(which ? "The map is locked now. Press the blinking button." : "The map is locked now: just watch.");
       return;
     }
     if (lesson.kind === "predict") {
@@ -7836,9 +7844,10 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
   // that I don't accidentally quit the game")
 
   // Full screen, a switch in the part Screen of the settings: no address bar and no tabs,
-  // and a swipe from the edge ends full screen before it could leave the page. Hidden
-  // where the browser cannot show a page in full screen (an iPhone); the note there says
-  // how to get the same from the home screen.
+  // and a swipe from the edge ends full screen before it could leave the page. The part is
+  // hidden where the browser cannot show a page in full screen (an iPhone). (Its note was
+  // taken out on 2026-11-23, asked for: "Remove the description of FULL SCREEN from the
+  // menu".)
   const page = document.documentElement;
   const inFullscreen = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
   const canFullscreen = Boolean((page.requestFullscreen || page.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled));
@@ -7855,6 +7864,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     }
   }
   $("fullscreen").hidden = !canFullscreen;
+  $("screen-part").hidden = !canFullscreen;
   $("fullscreen").addEventListener("click", toggleFullscreen);
   document.addEventListener("fullscreenchange", showFullscreen);
   document.addEventListener("webkitfullscreenchange", showFullscreen);
