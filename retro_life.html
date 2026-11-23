@@ -2347,6 +2347,35 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
     return places;
   }
 
+  // Two donuts: the fixed links (fixedPairs) of which one end lies in each ring, the
+  // upper and the lower half of the map: the links through the door, which are all that
+  // joins the two rings (mapping.door_pairs), as [a, b, a, b, ...], the smaller first.
+  // The screen DONUT draws them at every size, also where a world is too large for the
+  // other links. Per line of the map (the middle, and the top and bottom border) a door
+  // of w columns gives 3 w - 2 pairs of neighbours (w straight across, 2 (w - 1)
+  // diagonals) and, at its two ends, 3 links of the rounds of cells there, which join
+  // two cells that are not neighbours.
+  function doorPairs(width, height) {
+    const count = width * height;
+    const half = (height / 2) * width;
+    const seen = new Set();
+    const found = [];
+    const add = (a, b) => {
+      if ((a >= half) === (b >= half)) return;
+      const key = Math.min(a, b) * count + Math.max(a, b);
+      if (seen.has(key)) return;
+      seen.add(key);
+      found.push(Math.min(a, b), Math.max(a, b));
+    };
+    const round = new Array(8);
+    for (let index = 0; index < count; index++) {
+      forms().neighboursInto(round, "two", width, height, index);
+      for (let d = 0; d < 8; d++) add(index, round[d]);
+      for (let d = 0; d < 7; d++) add(round[d], round[d + 1]);
+    }
+    return Uint32Array.from(found);
+  }
+
   // The places of a form (mapping.places): a help for the eye, the model has none.
   function places(form, width, height) {
     if (form === "klein") return kleinPlaces(width, height);
@@ -2372,7 +2401,7 @@ body[data-theme="kuroi"] .book-page .pictures canvas { border-radius: 8px; image
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.graph = {
-    RING_RADIUS, TWO_GAP, fixedPairs, aliveLines, torusPlaces, kleinPlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
+    RING_RADIUS, TWO_GAP, fixedPairs, doorPairs, aliveLines, torusPlaces, kleinPlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
     organisms, organismOf, relationsOfOrganism, relationCountOfOrganism, forecast, canonical, shapeKey, layOut,
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
     neighbours, neighboursInto, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
@@ -3756,7 +3785,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       state.seeds = new Float32Array(count);
       for (let i = 0; i < count; i++) state.seeds[i] = random();
       state.linked = count <= LINKS_UP_TO;
-      state.pairs = null;
+      // Up to LINKS_UP_TO nodes every fixed link is drawn. Two donuts draw the links
+      // through the door at every size: they are all that joins the two rings, and
+      // without them a large world would look like two rings apart.
+      const pairs = state.linked ? graph.fixedPairs(world.width, world.height, form) : form === "two" ? graph.doorPairs(world.width, world.height) : null;
+      state.pairs = pairs;
+      state.door = form === "two" ? graph.doorPairs(world.width, world.height) : null;
       state.ends = null;
       if (!gl) return;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.places);
@@ -3765,8 +3799,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.bufferData(gl.ARRAY_BUFFER, state.seeds, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.shade);
       gl.bufferData(gl.ARRAY_BUFFER, count, gl.DYNAMIC_DRAW);
-      if (state.linked) {
-        const pairs = (state.pairs = graph.fixedPairs(world.width, world.height, form));
+      if (pairs) {
         const ends = new Float32Array(pairs.length * 3);
         for (let i = 0; i < pairs.length; i++) {
           ends[i * 3] = state.places[pairs[i] * 3];
@@ -3953,7 +3986,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.depthMask(false);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      if (state.linked) {
+      if (state.pairs) {
         const signals = Boolean(scene.signals);
         if (signals && state.signalled !== world.version) signal(world);
         cameraUniforms(lines, camera, theme);
@@ -4011,6 +4044,20 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
           }
           plain.stroke();
         }
+      }
+      // two donuts: the links through the door, which join the two rings, at every size
+      if (state.door) {
+        plain.lineWidth = 1;
+        plain.strokeStyle = "rgb(" + render.rgbOf(theme.link).join(",") + ")";
+        plain.globalAlpha = 0.8;
+        plain.beginPath();
+        for (let k = 0; k < state.door.length; k += 2) {
+          const from = seen(camera, state.door[k]);
+          const to = seen(camera, state.door[k + 1]);
+          plain.moveTo(Math.round(from[0]) + 0.5, Math.round(from[1]) + 0.5);
+          plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
+        }
+        plain.stroke();
       }
       const every = Math.max(1, Math.ceil(count / PLAIN_UP_TO));
       const shown = [];
@@ -4073,7 +4120,17 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       return { x: at[0] * state.pixel, y: at[1] * state.pixel, near: at[2] };
     }
 
-    return { draw, pick, pointOf, resize, webgl: Boolean(gl), linked: () => state.linked };
+    // what links the picture draws: how many, and how many of them join the two donuts
+    function drawn() {
+      const pairs = gl ? state.pairs : state.door;  // (the plain drawing draws no other links)
+      if (!pairs) return { links: 0, door: 0 };
+      const half = (state.height / 2) * state.width;
+      let door = 0;
+      for (let k = 0; k < pairs.length; k += 2) if (state.form === "two" && (pairs[k] >= half) !== (pairs[k + 1] >= half)) door++;
+      return { links: pairs.length / 2, door };
+    }
+
+    return { draw, pick, pointOf, resize, webgl: Boolean(gl), linked: () => state.linked, drawn };
   }
 
   root.RetroLife = root.RetroLife || {};
@@ -8040,6 +8097,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     camera: () => ({ ...state.camera }),
     // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
     orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
+    // the links the ring draws: how many, and how many join the two donuts
+    ringDrawn: () => ring.drawn(),
     setCamera(x, y, scale) {
       state.camera = { x, y, scale };
       clampCamera();
