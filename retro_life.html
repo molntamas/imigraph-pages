@@ -855,19 +855,6 @@ body[data-rpg] { overflow: hidden; }
 
   <aside id="settings" class="sheet" hidden role="dialog" aria-label="Settings">
     <header><h2><span data-px="SETTINGS"></span><span class="kana" lang="ja">せってい</span></h2><button type="button" class="close" aria-label="Close" data-icon="close"></button></header>
-    <section>
-      <h3 data-px="LEARN"></h3>
-      <p class="note">New to the Game of Life? Small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one; then the buttons of the game and its other screens. Your world waits until you come back. The arrows go from lesson to lesson; solved ones stay open. To send the lessons to someone: the address of this page with <b>#learn</b> at its end.</p>
-      <div class="chips">
-        <button type="button" id="learn" data-px="LEARN GAME OF LIFE"></button>
-      </div>
-    </section>
-    <section id="screen-part">
-      <h3 data-px="SCREEN"></h3>
-      <div class="chips">
-        <button type="button" id="fullscreen" class="lamp" aria-pressed="false" title="Hide the browser round the game" data-px="FULL SCREEN"></button>
-      </div>
-    </section>
     <section data-for="map">
       <h3 data-px="TIME"></h3>
       <div class="chips time">
@@ -880,6 +867,19 @@ body[data-rpg] { overflow: hidden; }
         </span>
       </div>
       <p class="note">On the third screen, Organism, the world plays at one generation a second at most, so that it can be followed.</p>
+    </section>
+    <section>
+      <h3 data-px="LEARN"></h3>
+      <p class="note">New to the Game of Life? Small lessons on a map of their own: what keeps a cell alive, what kills it, what makes a new one; then the buttons of the game and its other screens. Your world waits until you come back. The arrows go from lesson to lesson; solved ones stay open. To send the lessons to someone: the address of this page with <b>#learn</b> at its end.</p>
+      <div class="chips">
+        <button type="button" id="learn" data-px="LEARN GAME OF LIFE"></button>
+      </div>
+    </section>
+    <section id="screen-part">
+      <h3 data-px="SCREEN"></h3>
+      <div class="chips">
+        <button type="button" id="fullscreen" class="lamp" aria-pressed="false" title="Hide the browser round the game" data-px="FULL SCREEN"></button>
+      </div>
     </section>
     <section id="book-part">
       <h3 data-px="ORGANISMS"></h3>
@@ -5968,7 +5968,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
 // a card leaves room, which button blinks, how far a camera may go. They were part of the
 // functions of app.js (now the files app-<name>.js) that touch the page; here they take what
 // they need as plain values and give a plain value back, so that tests run them in Node in
-// milliseconds (tests/test_js_logic.py, through tests/harness.cjs).
+// milliseconds (Vitest: rpg/src/logic-*.test.ts, `npm run test` in rpg/).
 //
 // No `document`, no `window`, no canvas, no storage in this file, and no Life: what the
 // world does is life.js, what the model is, hypergraph.js. A function here may be as large
