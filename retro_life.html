@@ -11381,7 +11381,7 @@ window.RetroLife.app.camera = function (ctx) {
 
   // Whether the ring turns by itself while the world plays: by the switch, and always in
   // the lesson that shows it.
-  const spins = () => state.spin || Boolean(state.learn && ctx.lessonNow() && /** @type {Lesson} */ (ctx.lessonNow()).view === "donut");
+  const spins = () => state.spin || ctx.lessonNow()?.view === "donut";
 
   /** @type {CameraPart["zoomRing"]} */
   function zoomRing(factor) {
@@ -11635,7 +11635,7 @@ window.RetroLife.app.organism = function (ctx) {
     setPixels("organism-size", size);
     setPixels("zoom-size", size || "-");
     const shown = seen && seen.columns ? Math.min(seen.columns, seen.rows) : 0;
-    const everything = Boolean(seen) && (seen.whole || (seen.columns >= state.world.width && seen.rows >= state.world.height));
+    const everything = seen !== null && (seen.whole || (seen.columns >= state.world.width && seen.rows >= state.world.height));
     $("organism-in").disabled = $("zoom-in").disabled = !drawn || shown <= 1;
     $("organism-out").disabled = $("zoom-out").disabled = !drawn || everything;
     $("zoom-fit").disabled = !state.across;
@@ -12140,7 +12140,8 @@ window.RetroLife.app.rings = function (ctx) {
   // Returns the milliseconds it took.
   /** @type {RingsPart["showRings"]} */
   function showRings(drawn) {
-    const on = Boolean(drawn.rings);
+    const at = drawn.rings ? drawn.at : null;  // (rings are drawn only where an organism is shown)
+    const on = at !== null;
     document.body.dataset.rings = on ? "1" : "0";
     if (!on) {
       if (ringsShown) cellGraph.clear(graphSvg);
@@ -12175,7 +12176,7 @@ window.RetroLife.app.rings = function (ctx) {
     if (tooMany && !forcesRefused) hint("Too many rings to place by forces: they lie tidy. Plus looks closer.", 5200);
     forcesRefused = tooMany;
     const box = organismCanvas.getBoundingClientRect();
-    const key = [width, height, seen.cells[0], drawn.columns, drawn.rows, drawn.step, drawn.at.x, drawn.at.y, box.width, box.height,
+    const key = [width, height, seen.cells[0], drawn.columns, drawn.rows, drawn.step, at.x, at.y, box.width, box.height,
       state.theme, placing, detail, seen.alive.join(""), world.form, seen.flipped ? seen.cells.join(",") + seen.flipped.join("") : ""].join("|");
     if (key === ringsShown) return performance.now() - begin;
     ringsShown = key;
@@ -12216,8 +12217,8 @@ window.RetroLife.app.rings = function (ctx) {
       width: box.width, height: box.height, detail,
       // tidy: every ring on its node of the grid, so that nothing moves when the view is
       // changed; by forces: fitted into the rectangle of the window
-      frame: placing === "tidy" ? { scale: unit, x: drawn.at.x, y: drawn.at.y } : null,
-      box: { left: drawn.at.x - drawn.step / 2, top: drawn.at.y - drawn.step / 2, width: drawn.columns * drawn.step, height: drawn.rows * drawn.step },
+      frame: placing === "tidy" ? { scale: unit, x: at.x, y: at.y } : null,
+      box: { left: at.x - drawn.step / 2, top: at.y - drawn.step / 2, width: drawn.columns * drawn.step, height: drawn.rows * drawn.step },
     });
     state.ringsView = { window: seen, middles: made.middles, detail, placing };
     graphSvg.dataset.cell = String(seen.cells[0]);
@@ -12344,7 +12345,7 @@ window.RetroLife.app.draw = function (ctx) {
     return {
       world: state.world, camera: state.camera, ghost: state.ghost, effects: state.effects, now: now || performance.now(),
       marks: state.learn ? ctx.learnMarks() : null,
-      oneColour: Boolean(state.learn) && Boolean(ctx.lessonNow()) && !/** @type {Lesson} */ (ctx.lessonNow()).ages,
+      oneColour: Boolean(state.learn) && Boolean(ctx.lessonNow()) && !ctx.lessonNow()?.ages,
       locked: ctx.mapLocked(),
       room: state.learn ? state.learn.room : null,
       // the lesson NEIGHBOURS: on every place the number of its alive neighbours
@@ -12724,7 +12725,7 @@ window.RetroLife.app.tutorial = function (ctx) {
   /** @type {TutorialPart["lessonNow"]} */
   const lessonNow = () => (state.learn ? data.learn.lessons[state.learn.index] || null : null);
   // what a lesson is about: its kind, or "end" after the last one
-  const kindNow = () => (lessonNow() ? /** @type {Lesson} */ (lessonNow()).kind : "end");
+  const kindNow = () => lessonNow()?.kind ?? "end";
 
   // generations a second in a lesson
   /** @type {TutorialPart["learnRate"]} */
@@ -12859,14 +12860,15 @@ window.RetroLife.app.tutorial = function (ctx) {
 
   // A lesson is open to go on from when it is solved now or was solved before.
   /** @param {Lesson} lesson */
-  const isOpen = (lesson) => /** @type {LearnState} */ (state.learn).solved || /** @type {Set<string>} */ (state.learned).has(lesson.key);
+  const isOpen = (lesson) => Boolean(state.learn?.solved) || state.learned.has(lesson.key);
 
   /** @type {TutorialPart["nextLesson"]} */
   function nextLesson() {
     const one = state.learn;
     if (!one) return;
-    if (!lessonNow()) return leaveLearning();  // the end: back to the game
-    if (!isOpen(/** @type {Lesson} */ (lessonNow()))) {
+    const lesson = lessonNow();
+    if (!lesson) return leaveLearning();  // the end: back to the game
+    if (!isOpen(lesson)) {
       const which = blinking();  // not yet: what there is to do first
       if (which) flash(which);
       return;
@@ -12970,7 +12972,7 @@ window.RetroLife.app.tutorial = function (ctx) {
 
   /** @param {Lesson} lesson */
   function learned(lesson) {
-    const done = /** @type {Set<string>} */ (state.learned);
+    const done = state.learned;
     if (done.has(lesson.key)) return;
     done.add(lesson.key);
     savePrefs();
@@ -13026,7 +13028,7 @@ window.RetroLife.app.tutorial = function (ctx) {
     $("lesson-cheer").hidden = !one.cheer;
     if (one.cheer) setPixels("cheer-word", CHEERS[one.index % CHEERS.length]);
     for (const pip of /** @type {HTMLCollectionOf<HTMLElement>} */ ($("lesson-pips").children)) {
-      pip.classList.toggle("done", /** @type {Set<string>} */ (state.learned).has(/** @type {string} */ (pip.dataset.key)));
+      pip.classList.toggle("done", state.learned.has(/** @type {string} */ (pip.dataset.key)));
       pip.classList.toggle("now", pip.dataset.key === (lesson ? lesson.key : ""));
     }
     // the arrow to the left: the lesson before, or from the first one the game
@@ -13281,7 +13283,7 @@ window.RetroLife.app.screens = function (ctx) {
   function setView(key) {
     const at = VIEWS.findIndex((entry) => entry.key === key);
     if (at < 0) return;
-    if (state.learn && key !== (ctx.lessonNow() ? /** @type {Lesson} */ (ctx.lessonNow()).view : "map")) return;  // a lesson says which screen it shows
+    if (state.learn && key !== (ctx.lessonNow()?.view ?? "map")) return;  // a lesson says which screen it shows
     state.view = key;
     state.owed = 0;  // the screens play at their own pace
     document.body.dataset.view = key;
@@ -14394,10 +14396,10 @@ window.RetroLife.app.probe = function (ctx) {
         // the tutorial: start it (at a lesson), leave it, and what it shows
         startLearning: ctx.startLearning, leaveLearning: ctx.leaveLearning,
         lesson: () => (state.learn ? {
-          index: state.learn.index, key: ctx.lessonNow() ? /** @type {Lesson} */ (ctx.lessonNow()).key : "end", solved: state.learn.solved, stepped: state.learn.stepped,
+          index: state.learn.index, key: ctx.lessonNow()?.key ?? "end", solved: state.learn.solved, stepped: state.learn.stepped,
           steps: state.learn.steps, guesses: Array.from(state.learn.guesses).sort((a, b) => a - b), says: state.learn.says,
-          view: state.view, blink: ctx.blinking(), oneColour: Boolean(ctx.lessonNow()) && !(/** @type {Lesson} */ (ctx.lessonNow())).ages, rate: ctx.learnRate(),
-          cheer: state.learn.cheer, learned: Array.from(/** @type {Set<string>} */ (state.learned)), locked: ctx.mapLocked(), numbers: ctx.numbersShown(),
+          view: state.view, blink: ctx.blinking(), oneColour: Boolean(ctx.lessonNow()) && !ctx.lessonNow()?.ages, rate: ctx.learnRate(),
+          cheer: state.learn.cheer, learned: Array.from(state.learned), locked: ctx.mapLocked(), numbers: ctx.numbersShown(),
           home: state.learn.home.world === state.world ? "same" : "kept",
         } : null),
         camera: () => ({ ...state.camera }),
@@ -14552,6 +14554,11 @@ window.RetroLife.app.probe = function (ctx) {
     sunPinned: null,     // the sun of the day held at a place on its way (for the page check), or null
     sunDrawn: 0,         // when the ring was last drawn (the sun goes on from there)
     seed: (Date.now() ^ 0x5eed) >>> 0,
+    learn: null,         // set while the tutorial runs (app-tutorial.js)
+    big: null,           // set while a big map is open (app-bigmode.js)
+    lessonAt: 0,         // the lesson the tutorial opens at (from the saved preferences below)
+    menuOpened: 0,       // how often the menu was opened (saved)
+    learned: new Set(),  // the keys of the solved lessons (saved)
   };
 
   // The RPG, another game (rpgview.js); its menu has the switch of full screen too.
