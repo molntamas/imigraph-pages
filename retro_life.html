@@ -426,6 +426,29 @@ body[data-view="organism"][data-rings="1"] #organism-graph { display: block; }
 .cell-graph.light .arrow.rim { opacity: 0.5; }
 .cell-graph.light .arrow.cord-along { display: none; }
 .cell-graph.light .arrow.line:not(.coloured) { opacity: 0.45; }
+/* the screen GRAPH under Bounce Gas II (round 33, app-blockgraph.js): the graph of the rule
+   over the ground of the canvas; one view, no organisms (no row of views, no legend of the
+   coming generation, no name plate, no buttons from organism to organism) */
+body[data-view="organism"][data-blocks="1"] #organism-graph { display: block; }
+body[data-blocks="1"] :is(#organism-views, #organism-fate, #organism-name, #organism-pick .steps, #organism-note) { display: none !important; }
+#blocks-legend { position: absolute; left: 12px; right: 118px; bottom: 66px; max-width: 480px; display: none; color: var(--space-ink); pointer-events: none; font-size: 13px; line-height: 1.3; }
+body[data-view="organism"][data-blocks="1"] #blocks-legend { display: block; }
+#blocks-legend p { margin: 4px 0 0; display: flex; align-items: center; gap: 2px 6px; }
+#blocks-legend p:first-child, #blocks-legend p:last-child { display: block; }
+#blocks-legend p:last-child #blocks-turn { display: block; }
+#blocks-legend .ring { flex: none; width: 10px; height: 10px; border: 2px solid currentColor; }
+body[data-theme="kuroi"] #blocks-legend .ring.odd { border-style: dashed; }
+#blocks-legend .dot { flex: none; width: 11px; height: 11px; border-radius: 50%; background: currentColor; }
+#blocks-turn { color: var(--accent); }
+#blocks-turn .px { height: 11px; }
+@media (orientation: landscape) and (max-height: 560px) { #blocks-legend { right: auto; width: 250px; } }
+/* its arrows: the rings of the even and the odd blocks in their two colours (the kind whose turn
+   is next stronger while the world rests), a cross arrow in ink, the arrows of the middle node
+   grey, a particle's in its colour */
+.cell-graph .arrow.square.next .line { stroke-width: calc(var(--line) * 1.8); }
+body[data-theme="kuroi"] .cell-graph .arrow.square.odd .line { stroke-dasharray: 3 3; }
+.cell-graph .arrow.middle:not(.coloured) { color: var(--rock, #7d8090); }
+.cell-graph .arrow.middle.particle .line { stroke-width: calc(var(--line) * 1.5); }
 #organism-note { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 32px)); pointer-events: none;
   text-align: center; padding: 12px 14px; background: var(--surface); border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow); }
 #organism-note-title { display: flex; justify-content: center; }
@@ -810,6 +833,13 @@ body[data-rpg] { overflow: hidden; }
       <div class="fate" title="Dead now, alive in the coming generation: a hollow tile"><i class="mark born" data-border="born"></i><span id="fate-born"></span></div>
       <div class="fate" title="The number on a node: how many of its eight neighbours are alive"><i class="mark count" data-px="3"></i><span data-px="ALIVE AROUND"></span></div>
     </div>
+    <!-- the legend of the screen GRAPH under Bounce Gas II (round 33, app-blockgraph.js) -->
+    <div id="blocks-legend" aria-label="How to read the graph of Bounce Gas II">
+      <p id="blocks-piece"></p>
+      <p><i class="ring" id="blocks-even"></i><i class="ring odd" id="blocks-odd"></i>a ring of four: a block, even or odd</p>
+      <p><i class="dot" id="blocks-particle"></i>filled, its middle pointing at both corners: a particle</p>
+      <p><span id="blocks-turn"></span><span id="blocks-turn-says"></span></p>
+    </div>
     <div id="organism-ways">
       <div class="zoom" role="group" aria-label="How much of the world the window shows">
         <button type="button" id="organism-out" title="Show more of the world (or turn the wheel, or pinch with two fingers)" aria-label="Show more of the world" data-icon="minus"></button>
@@ -1052,7 +1082,7 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Map</b> <span lang="ja">(マップ)</span> is Conway's Game of Life, in Japanese <span lang="ja">ライフゲーム</span>: a cell is born with exactly 3 alive neighbours, stays alive with 2 or 3, and dies otherwise. There are only two kinds of cells, alive and dead; a dead cell is empty ground. A finger or the mouse sets and unsets cells; two fingers or the wheel zoom and move. The buttons of <b>time</b> at the bottom of the screen go back to the start, one generation back, and slower or faster.</p>
       <p id="walls-about"><b>The edge of the world</b> (World, above in this menu). Usually the world <b>wraps round</b>: what leaves on one side comes back on the other. With <b>walls</b> it ends at its edge, drawn as a wall round the map. A cell beside a wall has fewer neighbours (five on a side, three in a corner), as if the cells beyond were dead for ever; the rule stays the same. What flies into a wall does not come back, but it does not simply vanish either: a <b>glider</b> that flies into a wall, a side or a corner, turns into a <b>block</b> (a square of four cells) at the wall, in every way it can arrive (measured); a <b>spaceship</b> (the lightweight one) that hits a wall throws off a glider, which flies on to another wall and becomes a block there. A blinker that lies along a wall dies; one that stands across it blinks on. So the cells that would cross the wall die, and what is left of them stays.</p>
       <p id="bounce-about"><b>Bounce Gas II</b> (World, above in this menu, the rule) is a second rule for the same map, a <b>block automaton</b> (a cellular automaton on the Margolus neighbourhood). Every step cuts the world into blocks of 2 x 2 cells and puts in the place of each block what a table of 16 blocks says; the next step cuts it again, the cut moved one cell down and to the right, and so on by turns. An alive cell is a <b>particle</b> here. A lone particle flies diagonally, one cell a step. Two particles that meet head-on turn by 90 degrees and fly on. A particle that runs into a group stops for a step and bounces back the way it came. Nothing is born and nothing dies: the number of particles never changes, so the line at the top counts <b>steps</b> and <b>particles</b>, and every particle has one colour (there is no age to show). The rule can be played backwards exactly: a step back is the same table on the cut before, so <b>back</b> in the group of time goes back exactly, as far as the start. Walls along a diagonal, three cells thick, stand still, and so does a world full of particles round a room shaped like a diamond; the maps of the rule show them. The rule is by Tim Tyler (as the program js-revca lists it); the blocks of 2 x 2 are the Margolus neighbourhood of Tommaso Toffoli and Norman Margolus. On this site the page <b>Bounce Gas II</b> (bounce_gas.html, beside Retro Life) plays the same rule with a graph of nodes and arrows.</p>
-      <p id="bounce-off">Under Bounce Gas II the second and third screens are not available: the surfaces and the organisms are drawn from the neighbours and the hypergraph of Conway's Life, which say nothing true about blocks. Walls, the other surfaces and big maps are not available either, and the lessons and the explanation stay with Conway's Life. The plus and the Lexicon have pieces of their own under this rule (one particle, a stream, particles that meet, groups that part), none of Life's shapes. A size of world needs an even number of rows and of columns under this rule; every size here has.</p>
+      <p id="bounce-off">Under Bounce Gas II the second screen shows the world on the <b>donut</b> or the <b>sheet</b>, one point per cell, linked by the rings of its blocks of 2 x 2, and the third screen is <b>Graph</b>, the rule's own graph of nodes and arrows for a piece of the world (there are no organisms under this rule). Walls, the Klein bottles, two donuts and big maps are not available, and the lessons and the explanation stay with Conway's Life. The plus and the Lexicon have pieces of their own under this rule (one particle, a stream, particles that meet, groups that part), none of Life's shapes; a piece is laid on the map, also when it is chosen on the second or third screen. A size of world needs an even number of rows and of columns under this rule; every size here has.</p>
       <p id="colours"><b>The colours of alive cells</b> tell how long a cell has been alive, so that you see at a glance what is new and what stays:</p>
       <ul class="legend">
         <li><i class="swatch" data-colour="born"></i><span><b>just born</b>: alive for the first generation (also a cell you have just set)</span></li>
@@ -1087,9 +1117,19 @@ body[data-rpg] { overflow: hidden; }
         <button type="button" id="signals" class="lamp" aria-pressed="true" title="Paint the lines along which alive nodes send their state" data-px="LIFE SIGNALS"></button>
         <button type="button" id="spin" class="lamp" aria-pressed="false" title="While the world plays, the surface turns slowly round its own axis" data-px="TURN BY ITSELF"></button>
       </div>
+      <p class="note" data-rule-only="bounce" hidden><b>Life signals are not available under Bounce Gas II</b>: nothing is sent along the lines, a particle simply moves. The lines here are the rings of the blocks of 2 x 2, the even blocks in one colour and the odd ones in another (What this is, below, says more).</p>
     </section>
     <section id="surfaces-about" class="about" data-for="donut">
       <h3 data-px="WHAT THIS IS"></h3>
+      <!-- under Bounce Gas II (round 33): the picture of the rule; Conway's Life's paragraphs below are hidden then -->
+      <div id="surfaces-bounce" data-rule-only="bounce" hidden>
+        <p><b>Bounce Gas II on the surfaces</b> (the rule, World above in this menu). Under this rule the world always wraps round, so it is shown as the <b>donut</b> or the <b>sheet</b>: the same world, glued into a ring or laid flat. The Klein bottles and two donuts are not offered, because their seams would cut blocks of 2 x 2 in half.</p>
+        <p><b>One point per cell.</b> Every cell is a point, at the same place as for Conway's Life: lit, in the one colour of a particle, where a particle is, and a faint grey rock where the cell is empty. What is further away from you is fainter. Drag to turn the surface; tap a point to set or unset a particle.</p>
+        <p><b>The links are the blocks.</b> Every block of 2 x 2 cells joins its four cells in a ring of four links, so each cell is linked to its four straight neighbours, above, below, left and right (no diagonals, unlike Life): two of them by its <b>even block</b> (the blocks that start at the top left cell of the map) and two by its <b>odd block</b> (the blocks one cell further down and to the right). The links of the even blocks have one colour and those of the odd blocks another; in Kuroi, which is black and white, the odd ones are dashed. In one step all even blocks act, in the next all odd blocks, and so on by turns: the cut that moves. While the world rests, the kind whose blocks act next is drawn stronger; while it plays both kinds stay as they are, so that the picture does not flicker, and the line at the top says which kind is next (EVEN BLOCKS NEXT or ODD BLOCKS NEXT) and counts the points and the links drawn.</p>
+        <p><b>On the sheet</b> the links of the odd blocks at the edges of the map are the long bent lines, as for Conway's Life: the blocks at the right edge take their other cells from the left edge, those at the bottom from the top. How they bend stands for nothing. In a world larger than 128 x 128 the links are left out, and the sheet draws only its long lines straight across, of every few rows and columns.</p>
+        <p><b>A picture made simpler.</b> There are no life signals under this rule: nothing is sent, a particle simply moves. This screen draws each cell as one point and each block as a ring of four links. The rule's whole model, a graph of three nodes and five arrows per cell in which rewriting rules play the rule, is on the third screen, <b>Graph</b>.</p>
+      </div>
+      <div data-rule-only="life">
       <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> is the same world with its edges joined. The map wraps round: a glider that leaves on the right comes back on the left, one that leaves at the bottom comes back at the top. On the flat map you have to remember that; the donut shows it. Glue the left and right edges of the map together and you get a tube; bend the tube until its two ends meet and you get a ring. The columns of the map go round the ring, the rows round its tube. Nothing about the game changes: every cell keeps its eight neighbours, and the rule is the same. Only the sizes are not true, as on a globe: cells on the inner side of the ring sit closer together than those on the outer side, though on the map they are all the same.</p>
       <p><b>The donut as a hypergraph.</b> The same world can be written as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. A hypergraph knows no places, only which nodes are related. Place the nodes by those relations alone, and because the world wraps round they close into a ring: the same donut as the glued map. Drag to turn the surface any way you like, also to see it from the top (Surfaces, above in this menu, has ready views); tap a node to set or unset its cell.</p>
       <p><b>The lines of the donut.</b> The thin plain lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Surfaces, above) turns the colours off.</p>
@@ -1098,35 +1138,55 @@ body[data-rpg] { overflow: hidden; }
       <p><b>The other surfaces as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these surfaces every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein eight is a ring whose tube is a figure of eight, and the Klein bottle a hand-blown bottle whose neck, a third as wide as its body, bends back, passes through the wall and opens into the bottom from inside. Both have to pass through themselves (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; on the bottle the nodes of the neck are drawn smaller, because they lie closer together; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
       <p id="walls-surfaces"><b>Surfaces with walls.</b> With walls (World, the edge of the world) the world ends at its edge, and up and down go through two surfaces only: the <b>sheet with walls</b> <span lang="ja">(かべのあるかみ)</span>, the map laid flat as on the sheet but without the long lines (nothing joins one edge to the other), and <b>two rooms</b> <span lang="ja">(ふたつのへや)</span>, the same with a wall across the middle of the map, open in the door (the door of two donuts): cells on the two sides of the wall are not neighbours, except in the door. The donut, the Klein bottles and two donuts are not offered: they are closed surfaces, glued all round, and have no edge where a wall could stand. A switch of the edge moves no cell and changes nothing else: the donut, the sheet and the Klein bottles become the sheet with walls, two donuts become two rooms, and back to the sheet and to two donuts.</p>
       <p id="walls-hypergraph"><b>Walls in the hypergraph.</b> A wall is not a node: it is relations that are not there. A node beside a wall names only the neighbours it has (its neighbourhood repeats the node itself in the places of the missing ones), its round goes through those, and it has a line to each: 14 relations on a side, 10 in a corner, 18 at an end of the wall of two rooms, instead of 20, so the line at the top counts fewer than 20 a node. No link leaves the sheet. The 17 rules ask for eight neighbours, so a world with walls needs 11 more (in the module model_walls): 6 that send for a node that lacks 1, 3 or 5 neighbours, and 5 that make it wait one step for each one it lacks, so that every node still decides at the tenth step and the whole world is between two generations at the same moment. Tests hold these 28 rules to Life with walls, cell for cell, also when the changes come one at a time in random order, and that between two generations the hypergraph is exactly what this screen draws.</p>
-      <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
+      </div>
+      <p class="keys" data-rule-only="life">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
+      <p class="keys" data-rule-only="bounce" hidden>Keys: Space start/stop · . one step · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
     </section>
 
     <!-- the group of the third screen, the organisms -->
+    <!-- (under Bounce Gas II this part is GRAPH: app-screens.js, showRule, names it, and the
+         notes and rows of Conway's Life are hidden then; round 33) -->
     <section id="organisms-part" data-for="organism">
-      <h3 data-px="ORGANISMS"></h3>
-      <p class="note">On this screen the world plays at one generation a second at most, so that it can be followed.</p>
-      <p class="note">The third screen: one organism in a window on the grid of the surface. Three views of the same window (the row at the bottom of that screen does the same): Normal shows it as it is, Numbers what the coming generation does, Graph every cell opened up into a ring of eight nodes.</p>
-      <div id="modes" class="row">
+      <h3 data-px="ORGANISMS" id="organisms-title"></h3>
+      <p class="note" data-rule-only="life">On this screen the world plays at one generation a second at most, so that it can be followed.</p>
+      <p class="note" data-rule-only="life">The third screen: one organism in a window on the grid of the surface. Three views of the same window (the row at the bottom of that screen does the same): Normal shows it as it is, Numbers what the coming generation does, Graph every cell opened up into a ring of eight nodes.</p>
+      <p class="note" data-rule-only="bounce" hidden>The third screen under Bounce Gas II: a window of whole blocks of the world, drawn as the rule's graph, three nodes a cell. It has one view. On this screen the world plays at one step a second at most, so that it can be followed. Drag the picture, or tap the small map, to move the window; it stays where it is while the world plays.</p>
+      <div id="modes" class="row" data-rule-only="life">
         <button type="button" data-mode="normal" aria-pressed="true" title="The organism as it is: faces, rocks and the lines that carry life" data-px="NORMAL"></button>
         <button type="button" data-mode="numbers" aria-pressed="false" title="What the coming generation does: on every cell the number of its alive neighbours; who stays, who dies, who is born" data-px="NUMBERS"></button>
         <button type="button" data-mode="graph" aria-pressed="false" title="Every cell opened up into a ring of eight nodes, with the arrows between them" data-px="GRAPH"></button>
       </div>
-      <p class="note">How much of the world the window shows, from a single cell to the whole world (minus and plus on that screen, the wheel and two fingers do the same). Fit goes back to the window that suits the organism.</p>
+      <p class="note" data-rule-only="life">How much of the world the window shows, from a single cell to the whole world (minus and plus on that screen, the wheel and two fingers do the same). Fit goes back to the window that suits the organism.</p>
+      <p class="note" data-rule-only="bounce" hidden>How much of the world the window shows, in whole blocks: from 2 to 24 cells across its shorter side, and never the whole world (minus and plus on that screen, the wheel and two fingers do the same). Fit goes back to 8 across.</p>
       <div class="chips">
         <button type="button" id="zoom-out" title="Show more of the world" aria-label="Show more of the world" data-icon="minus"></button>
         <output id="zoom-size" title="The cells of the window: across, and down"></output>
         <button type="button" id="zoom-in" title="Look closer" aria-label="Look closer" data-icon="add"></button>
         <button type="button" id="zoom-fit" title="The window that suits the organism (key 0 on that screen)" data-px="FIT"></button>
       </div>
-      <p class="note">Lines on other surfaces. Two donuts: the long line across the picture is the wall between the two rings; cells on its two sides are not neighbours, except in the gap, the door, whose two ends carry a small post. Klein bottle (both pictures): the dashed line is the seam; whatever crosses it comes out upside down. On the whole map the seam is its left and right border. Walls: the thick line round the map is the wall, and beyond it nothing is drawn, because there is nothing; two rooms also have the wall across the middle, open in the door, with a post at each end. The donut has no such lines.</p>
-      <p class="note">Where the nodes of the view Graph lie: tidy, every ring a regular octagon on the grid, or by forces, the way the Wolfram project places its graphs.</p>
-      <div id="placings" class="row">
+      <p class="note" data-rule-only="life">Lines on other surfaces. Two donuts: the long line across the picture is the wall between the two rings; cells on its two sides are not neighbours, except in the gap, the door, whose two ends carry a small post. Klein bottle (both pictures): the dashed line is the seam; whatever crosses it comes out upside down. On the whole map the seam is its left and right border. Walls: the thick line round the map is the wall, and beyond it nothing is drawn, because there is nothing; two rooms also have the wall across the middle, open in the door, with a post at each end. The donut has no such lines.</p>
+      <p class="note" data-rule-only="life">Where the nodes of the view Graph lie: tidy, every ring a regular octagon on the grid, or by forces, the way the Wolfram project places its graphs.</p>
+      <div id="placings" class="row" data-rule-only="life">
         <button type="button" data-placing="tidy" aria-pressed="true" title="Every ring a regular octagon, the rings as the cells lie on the map" data-px="TIDY"></button>
         <button type="button" data-placing="forces" aria-pressed="false" title="Arrows pull their two nodes together, all nodes push each other away" data-px="BY FORCES"></button>
       </div>
     </section>
     <section id="organisms-about" class="about" data-for="organism">
       <h3 data-px="WHAT THIS IS"></h3>
+      <!-- under Bounce Gas II (round 33) the third screen is GRAPH: its own words; Conway's Life's below are hidden then -->
+      <div id="graph-bounce" data-rule-only="bounce" hidden>
+        <p><b>Graph</b> <span lang="ja">(グラフ)</span> is the third screen under Bounce Gas II. It shows a piece of the world as the rule's own model: a graph of nodes and arrows, changed by rewriting rules that know nothing of rows, columns or particles. It is the same model that plays this rule on the page <b>Bounce Gas II</b> (bounce_gas.html) of this site. There are no organisms under this rule: particles fly, meet and bounce, and nothing holds them together.</p>
+        <p><b>How to read it:</b></p>
+        <ul class="legend">
+          <li><span>Every cell is <b>three nodes</b>: two <b>corners</b> and a <b>middle</b>. One corner belongs to the cell's even block, the other to its odd block, and each lies towards the middle of its block.</span></li>
+          <li><span>Every block of 2 x 2 cells is a <b>ring of four</b>: four arrows that go round the corners of its four cells, clockwise. So where four cells meet there is a small ring; the rings of the even blocks have one colour and those of the odd blocks another (in Kuroi the odd ones are dashed). At the edge of the window the rings of the odd blocks it cuts are drawn whole, with their corners outside the window.</span></li>
+          <li><span>Every cell is a <b>triangle</b> of three arrows. The <b>cross arrow</b> goes from one corner of the cell to the other: it leaves the corner whose block is the next to act on this cell.</span></li>
+          <li><span>An <b>empty</b> cell's middle lies on the way from that corner to the other: one arrow in, one out. A cell with a <b>particle</b> has its middle pointing at both corners; it is drawn filled, in the colour of a particle.</span></li>
+        </ul>
+        <p><b>How a block acts.</b> A rule takes a ring of four only when all four cross arrows of its cells leave it: then it is that block's turn. It puts the particles of the block where the table of Bounce Gas II says and turns the four cross arrows round, so that they point into the ring: for each of the four cells the turn passes to its other block. So all even blocks act in one step and all odd blocks in the next, and nothing outside the graph says which step it is. Six rules do this, one for each kind of block (empty, one particle, two side by side, two across, three, four). Nothing is made and nothing is removed: a step only turns arrows, so no node here ever moves. Tests hold that what this screen draws is exactly that model's graph for the cells and the step shown, also after steps played by the rewriting engine.</p>
+        <p><b>The window.</b> The picture shows a window of whole blocks of the world; the line under it says which rows and columns, and the small map marks it when it is at most half the world each way. It stays where it is while the world plays. Drag the picture to move it a block at a time, or tap the small map to move it there; minus and plus show fewer or more cells. While the world rests the rings of the kind whose turn is next are drawn stronger; while it plays they stay as they are, so that the picture does not flicker, and the legend says whose turn it is. The line at the top counts the nodes and arrows drawn: those of the window's cells and of the rings it cuts. Tap an arrow to hear what it is. The world plays at one step a second at most here. This screen changes no cell: a piece added from here (the plus) is laid on the map.</p>
+      </div>
+      <div data-rule-only="life">
       <p><b>Organisms</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the surface, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross. The world plays slowly on this screen, one generation a second at most.</p>
       <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down); on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. <b>Minus and plus</b> (or the wheel, or two fingers) show more of the world or look closer, from a single cell to the whole world; the number between them says how many cells the window shows. When you have zoomed in so far that the organism no longer fits, the window shows one of its cells in the middle and stays with it while the organism is there; tap another cell to go there. Otherwise a tap on the picture goes to the next organism.</p>
       <p>The row <b>Normal, Numbers, Graph</b> at the bottom of that screen changes what the window shows. Nothing moves when you switch.</p>
@@ -1161,6 +1221,8 @@ body[data-rpg] { overflow: hidden; }
       <p>Where a node lies means nothing in a graph. The picture is <b>tidy</b>: every ring a regular octagon, the rings as the cells lie on the map. Organisms, above in this menu, can also place the nodes <b>by forces</b>, the way the Wolfram project draws its graphs: every arrow pulls its two nodes together, all nodes push each other away, and the nodes settle where the forces balance. The page works that out once for a window of a size, beginning at the tidy places, so it comes out the same every time, for a window of any size. Either way the picture stands still; only faces, cords and the colours of the lines change.</p>
       <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on the hypergraph of the donut, cell for cell, and a second one, also of 17 rules, on the graph of arrows of the view Graph. This game turns that round. It computes with the ordinary rule, which is far faster, and shows what the rules would hold at that moment. Tests hold them equal, relation for relation and arrow for arrow, between every two generations.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ organisms · A add · S menu · 0 fit</p>
+      </div>
+      <p class="keys" data-rule-only="bounce" hidden>Keys: Space start/stop · . one step · , back · + − speed · ← → screens (or 1 2 3) · A add (on the map) · S menu · 0 fit</p>
     </section>
 
     <!-- always at the bottom -->
@@ -1527,6 +1589,128 @@ body[data-rpg] { overflow: hidden; }
     return out;
   }
 
+  // ---- the graph of the rule (since 2026-11-25, round 33): the model of
+  // wolframs_game_of_life.model_blocks, written down for the screens that draw it. A cell is 3
+  // nodes (its corner in the square of its even block, its corner in the square of its odd
+  // block, its middle node), numbered as there: node FIRST_NODE + 3 cell + (0 even, 1 odd, 2
+  // middle). A block is a square of 4 arrows, clockwise round its four corners; a cell is a
+  // triangle of 3 arrows (the cross arrow leaves the corner whose block acts next; the middle node
+  // lies on the way for an empty cell, or points at both corners for a particle). Held to
+  // model_blocks.start_arrows by tests/test_js_block_graph.py.
+
+  const FIRST_NODE = 1;
+  const NODES_PER_CELL = 3;
+  const EVEN = 0, ODD = 1, MIDDLE = 2;  // the places of a cell's nodes among its three
+
+  // The four cells of the block whose top left cell is (top, left), clockwise from the top
+  // left: top left, top right, bottom right, bottom left (the world wraps round).
+  function blockCells(top, left, width, height) {
+    const bottom = (top + 1) % height, right = (left + 1) % width;
+    return [top * width + left, top * width + right, bottom * width + right, bottom * width + left];
+  }
+
+  // The links of the squares, for a picture of one node per cell (the screen SURFACES): every
+  // block of 2 x 2 joins its four cells in a ring, top left - top right - bottom right - bottom
+  // left - top left, both partitions. As [a, b, a, b, ...] (cells), the even blocks' first;
+  // `even` says how many pairs are theirs. Every cell has four: two of its even block, two of
+  // its odd block. (They are the squares of model_blocks with each corner taken for its cell.)
+  function squarePairs(width, height) {
+    if (!fits(width, height)) throw new Error("a world of blocks has an even number of rows and of columns");
+    const pairs = new Uint32Array(width * height * 4);
+    let at = 0;
+    for (let phase = 0; phase < PHASES; phase++) {
+      for (let top = phase; top < height; top += 2) {
+        for (let left = phase; left < width; left += 2) {
+          const ring = blockCells(top, left, width, height);
+          for (let k = 0; k < 4; k++) {
+            pairs[at++] = ring[k];
+            pairs[at++] = ring[(k + 1) % 4];
+          }
+        }
+      }
+    }
+    return { pairs, even: width * height };
+  }
+
+  // The graph of a world whose blocks of `phase` act next, as model_blocks.start_arrows makes it:
+  // [a, b, a, b, ...], the squares of the even blocks, those of the odd blocks, then the
+  // triangles cell by cell. `only` (a mask of cells, or none): just the squares with a corner in
+  // it and the triangles of its cells, in the same order (a part of the world, for a picture).
+  function startArrows(cells, width, height, phase, only) {
+    if (!fits(width, height)) throw new Error("a world of blocks has an even number of rows and of columns");
+    const keep = only || null;
+    const arrows = [];
+    for (let side = 0; side < PHASES; side++) {
+      for (let top = side; top < height; top += 2) {
+        for (let left = side; left < width; left += 2) {
+          const ring = blockCells(top, left, width, height);
+          if (keep && !ring.some((cell) => keep[cell])) continue;
+          for (let k = 0; k < 4; k++) arrows.push(FIRST_NODE + NODES_PER_CELL * ring[k] + side, FIRST_NODE + NODES_PER_CELL * ring[(k + 1) % 4] + side);
+        }
+      }
+    }
+    const first = phase & 1;
+    for (let cell = 0; cell < width * height; cell++) {
+      if (keep && !keep[cell]) continue;
+      const base = FIRST_NODE + NODES_PER_CELL * cell;
+      const acting = base + first, other = base + 1 - first, middle = base + MIDDLE;
+      arrows.push(acting, other);
+      if (cells[cell]) arrows.push(middle, acting);
+      else arrows.push(acting, middle);
+      arrows.push(middle, other);
+    }
+    return Int32Array.from(arrows);
+  }
+
+  // What an arrow is (model_blocks.kind): "square" between corners of two cells, "cross" from
+  // one corner of a cell to the other, "middle" to or from a middle node.
+  function kindOf(a, b) {
+    const p = a - FIRST_NODE, q = b - FIRST_NODE;
+    if (Math.floor(p / NODES_PER_CELL) !== Math.floor(q / NODES_PER_CELL)) return "square";
+    return p % NODES_PER_CELL === MIDDLE || q % NODES_PER_CELL === MIDDLE ? "middle" : "cross";
+  }
+
+  // A window of the graph (the screen GRAPH): the cells of `rows` x `columns` from (top, left),
+  // the world wrapping round, and the arrows of model_blocks that belong to them, as
+  // startArrows with the window as `only`: the squares with a corner in the window (also those
+  // the window cuts, with their corners outside it) and the triangles of its cells. Returns
+  // {cells: the window's cells, row by row; nodes: every node an arrow names, the window's cells'
+  // three each first, then the corners outside it; arrows: [{nodes: [a, b], kind, side}], side 0
+  // or 1 for the square of an even or an odd block, -1 for a cell's own}.
+  function windowGraph(cells, width, height, phase, top, left, rows, columns) {
+    const inside = new Uint8Array(width * height);
+    const shown = [];
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < columns; i++) {
+        const cell = (((top + j) % height) + height) % height * width + ((((left + i) % width) + width) % width);
+        inside[cell] = 1;
+        shown.push(cell);
+      }
+    }
+    const flat = startArrows(cells, width, height, phase, inside);
+    const nodes = [];
+    const named = new Set();
+    for (const cell of shown) {
+      for (let k = 0; k < NODES_PER_CELL; k++) {
+        nodes.push(FIRST_NODE + NODES_PER_CELL * cell + k);
+        named.add(FIRST_NODE + NODES_PER_CELL * cell + k);
+      }
+    }
+    const arrows = [];
+    for (let k = 0; k < flat.length; k += 2) {
+      const a = flat[k], b = flat[k + 1];
+      for (const node of [a, b]) {
+        if (!named.has(node)) {
+          named.add(node);
+          nodes.push(node);
+        }
+      }
+      const kind = kindOf(a, b);
+      arrows.push({ nodes: [a, b], kind, side: kind === "square" ? (a - FIRST_NODE) % NODES_PER_CELL : -1 });
+    }
+    return { cells: shown, nodes, arrows };
+  }
+
   // ---- pieces (the plus and the Lexicon under the rule; retro_game.gas, round 35)
 
   // The particles of a shape (cells row by row) that are alone in their block, and where they
@@ -1566,7 +1750,10 @@ body[data-rpg] { overflow: hidden; }
   }
 
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.blocks = { BOUNCE_GAS_II, PHASES, inverse, fits, step, flights, landing };
+  root.RetroLife.blocks = {
+    BOUNCE_GAS_II, PHASES, inverse, fits, step, flights, landing,
+    FIRST_NODE, NODES_PER_CELL, EVEN, ODD, MIDDLE, blockCells, squarePairs, startArrows, kindOf, windowGraph,
+  };
 })(typeof window !== "undefined" ? window : globalThis);
 
 </script>
@@ -7141,10 +7328,71 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     return form === "walled" ? "sheet" : "donut";
   }
 
-  // Whether a screen can be shown under a rule: under Bounce Gas II the map only (the
-  // surfaces and the organisms are drawn from Life's neighbours and hypergraph).
-  /** @type {Logic["viewOpen"]} */
-  const viewOpen = (rule, key) => rule !== "bounce" || key === "map";
+  // The name of a screen at the top, in the menu and on the buttons, under a rule: under Bounce
+  // Gas II the third screen is GRAPH (the developer, 2026-11-25: "Let's add the Organism page,
+  // but call it "Graph""), all others keep their names. (Until round 33 the second and third
+  // screens were not there under Bounce Gas II.)
+  /** @type {Logic["viewWords"]} */
+  function viewWords(views, rule, key) {
+    if (rule === "bounce" && key === "organism") return { key, name: "GRAPH", kana: "グラフ" };
+    return views.find((entry) => entry.key === key) || null;
+  }
+
+  // Whose turn it is under Bounce Gas II, for the pictures of the second and third screens: the
+  // phase whose blocks act next, and whether its kind of square is drawn stronger. Only while
+  // the world rests (round 33, the agent's choice): played, the turn passes at every step, and a
+  // whole picture that changed its strong lines several times a second would flicker (the
+  // developer gets motion sick); the line at the top says it in words all the time.
+  /** @type {Logic["blockMark"]} */
+  const blockMark = (phase, playing) => ({ next: phase & 1, marked: !playing });
+
+  /** @type {Logic["blockTurnWords"]} */
+  const blockTurnWords = (phase) => ((phase & 1) === 0 ? "EVEN BLOCKS NEXT" : "ODD BLOCKS NEXT");
+
+  // The window of the screen GRAPH under Bounce Gas II (round 33, the agent's choice): whole
+  // blocks, so an even number of cells each way; `across` cells (even) on the shorter side of the
+  // room `wide` x `high` (pixels), as many as fit on the longer side, never more than the world
+  // less a block (so that the corners of the cut squares outside the window are other nodes
+  // than those inside) and never more than BLOCK_MOST. Returns {columns, rows, pitch: pixels a
+  // cell}. The margin of MARGIN cells all round holds those corners.
+  const BLOCK_MOST = 24;
+  const BLOCK_MARGIN = 0.7;
+  /** @type {Logic["blockWindowSize"]} */
+  function blockWindowSize(across, wide, high, width, height) {
+    const even = (/** @type {number} */ value) => Math.max(2, 2 * Math.floor(value / 2));
+    const most = { x: Math.min(BLOCK_MOST, even(width - 2)), y: Math.min(BLOCK_MOST, even(height - 2)) };
+    const short = Math.max(1, Math.min(wide, high));
+    const n = even(across);
+    const pitch = short / (n + 2 * BLOCK_MARGIN);
+    const along = (/** @type {number} */ room) => even(room / pitch - 2 * BLOCK_MARGIN);
+    const columns = Math.min(most.x, wide <= high ? n : along(wide));
+    const rows = Math.min(most.y, wide <= high ? along(high) : n);
+    return { columns, rows, pitch: Math.min(wide / (columns + 2 * BLOCK_MARGIN), high / (rows + 2 * BLOCK_MARGIN)) };
+  }
+
+  // The top left cell of a window of `columns` x `rows` cells whose middle is as near as whole
+  // blocks allow to (x, y) (cells of the map): both even, in the world (which wraps round).
+  /** @type {Logic["blockWindowAt"]} */
+  function blockWindowAt(x, y, columns, rows, width, height) {
+    const wrap = (/** @type {number} */ value, /** @type {number} */ size) => ((value % size) + size) % size;
+    return {
+      top: wrap(2 * Math.round((y - rows / 2) / 2), height),
+      left: wrap(2 * Math.round((x - columns / 2) / 2), width),
+    };
+  }
+
+  // The steps of the zoom of the screen GRAPH: cells across the shorter side, in whole blocks.
+  const BLOCK_ACROSS = [2, 4, 6, 8, 10, 12, 16, 20, 24];
+  /** @type {Logic["blockZoom"]} */
+  function blockZoom(across, by, width, height) {
+    const most = Math.min(BLOCK_MOST, Math.max(2, 2 * Math.floor((Math.min(width, height) - 2) / 2)));
+    const steps = BLOCK_ACROSS.filter((value) => value <= most);
+    const at = steps.findIndex((value) => value >= across);
+    const now = at < 0 ? steps.length - 1 : at;
+    // plus (by 1) looks closer: fewer cells
+    const next = Math.max(0, Math.min(steps.length - 1, now - by));
+    return { across: steps[next], closest: next === 0, furthest: next === steps.length - 1 };
+  }
 
   // What the page calls the count of time and of alive cells, and its buttons of time, under a
   // rule: generations and alive cells in Life; steps and particles under Bounce Gas II (a
@@ -7355,7 +7603,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     cellsOnLine, swipeTurn,
     rateFor, stepsDue, sunPhase, clampSpeed, speedLabel, bigStepAfter, timeControl,
     menuGroup, inMenuGroup, menuBlinker, menuScroll,
-    sideFor, nextForm, formForEdge, formForRule, viewOpen, ruleWords, viewAfter,
+    sideFor, nextForm, formForEdge, formForRule, viewWords, blockMark, blockTurnWords, blockWindowSize, blockWindowAt, blockZoom, ruleWords, viewAfter,
     TAPPED, lessonFromHash, rpgFromHash, learnRate, mapLocked, blinker, lessonRoom, roomInsets, lessonScale, lessonMarks,
     keyAction,
   };
@@ -8390,6 +8638,34 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   // look more real on bigger surface").
   const FINE_FROM = 700;
   const FINE_MOST = 2560 * 1600;
+  // Bounce Gas II (round 33): the links of the even and of the odd blocks in two colours of
+  // the look, a mix of the link's colour with the old (even) and the just born (odd) colour,
+  // SQUARE_MIX of the way (by day the colours themselves); while the world rests the kind whose
+  // blocks act next is STRONG_MIX of the way (stronger; by day DAY_STRONG towards the ink), the
+  // other stays. In Kuroi (black and white) the odd kind is dashed, DASHES dashes along a
+  // straight link. (The agent's choices, docs/decisions-4-rounds-27.md, round 33.)
+  const SQUARE_MIX = 0.55;
+  const STRONG_MIX = 0.9;
+  const DAY_STRONG = 0.45;  // by day (Hiru): the kind's own colour, and the marked one this far towards the ink
+  const DASHES = 2;
+
+  // The colours of the links of the even and of the odd blocks, [r, g, b] each, in a look
+  // (`theme`); `blocks` {next, marked}: the phase whose blocks act next, and whether to mark it
+  // (while the world rests: drawn stronger). Kuroi gives both kinds one grey (its odd kind is
+  // dashed); its marked kind is lighter.
+  function squareColours(theme, blocks) {
+    const marked = (phase) => Boolean(blocks && blocks.marked && blocks.next === phase);
+    if (theme.sky) {
+      // by day the link's colour is pale on a pale sky: the colours themselves, and the marked
+      // kind darker, towards the ink of the day
+      const ink = render.rgbOf(theme.star);
+      const day = (hex, phase) => render.rgbOf(hex).map((value, k) => Math.round(value + (ink[k] - value) * (marked(phase) ? DAY_STRONG : 0)));
+      return { even: day(theme.old, 0), odd: day(theme.born, 1) };
+    }
+    const link = render.rgbOf(theme.link);
+    const toward = (hex, phase) => render.rgbOf(hex).map((value, k) => Math.round(link[k] + (value - link[k]) * (marked(phase) ? STRONG_MIX : SQUARE_MIX)));
+    return { even: toward(theme.old, 0), odd: toward(theme.born, 1) };
+  }
 
   function wantsFine() {
     try {
@@ -8534,6 +8810,8 @@ attribute vec3 aPlace;
 attribute float aOwn;     // the shade of the node at this end of the link (bent: its first node)
 attribute float aOther;   // the shade of the node at its other end (bent: its last node)
 attribute float aAlong;   // how far along the link this end lies (straight: 0)
+attribute float aDash;    // how many dashes from the link's start (only a dashed kind of link uses it)
+varying float vDash;
 uniform vec3 uAcross;
 uniform vec3 uUp;
 uniform vec3 uTowards;
@@ -8568,6 +8846,7 @@ void main() {
   float w = uEye - e.z;
   float near = clamp((e.z + uDepth) / (2.0 * uDepth), 0.0, 1.0);
   vColour = mix(tint(aOwn, aOther, near), tint(aOther, aOwn, near), aAlong);
+  vDash = aDash;
   // a little further away than it is, so that a link ends behind its own two nodes
   gl_Position = vec4(e.xy * uFocus / uHalf, (-e.z / (3.0 * uRadius) + uBehind) * w, w);
 }`;
@@ -8576,6 +8855,18 @@ void main() {
 precision mediump float;
 varying vec4 vColour;
 void main() { gl_FragColor = vColour; }`;
+
+  // The links: solid, or dashed (uDashed; the links of the odd blocks under Bounce Gas II in
+  // Kuroi, a look of black and white, where two colours cannot tell the two kinds apart).
+  const LINK_FRAGMENT = `
+precision mediump float;
+varying vec4 vColour;
+varying float vDash;
+uniform float uDashed;
+void main() {
+  if (uDashed > 0.5 && fract(vDash) > 0.5) discard;
+  gl_FragColor = vColour;
+}`;
 
   const STAR_VERTEX = `
 attribute vec3 aPlace;
@@ -8797,6 +9088,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       lineOther: null,
       linked: false,
       lineEnds: 0,
+      rule: "life",      // the rule the links are for: Life's hypergraph, or the squares of Bounce Gas II
+      evenPairs: 0,      // Bounce Gas II: how many of `pairs` (the first) are links of the even blocks
+      evenEnds: 0,       // ... and how many ends of pieces of line they make
       pixel: 3,          // screen pixels per pixel of the picture
       cssWidth: 1,
       cssHeight: 1,
@@ -8815,7 +9109,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     try {
       gl = document.createElement("canvas").getContext("webgl");
       if (gl) {
-        for (const [vertex, fragment] of [[NODE_VERTEX, NODE_FRAGMENT], [LINE_VERTEX, LINE_FRAGMENT], [STAR_VERTEX, LINE_FRAGMENT], [SKY_VERTEX, SKY_FRAGMENT]]) program(vertex, fragment);
+        for (const [vertex, fragment] of [[NODE_VERTEX, NODE_FRAGMENT], [LINE_VERTEX, LINK_FRAGMENT], [STAR_VERTEX, LINE_FRAGMENT], [SKY_VERTEX, SKY_FRAGMENT]]) program(vertex, fragment);
         gl = canvas.getContext("webgl", { antialias: fine, alpha: false, depth: true, preserveDrawingBuffer: true });
       }
     } catch {
@@ -8854,12 +9148,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     let nodes, lines, stars, sky, skyTexture, sunTexture, buffers;
     if (gl) {
       nodes = program(NODE_VERTEX, NODE_FRAGMENT);
-      lines = program(LINE_VERTEX, LINE_FRAGMENT);
+      lines = program(LINE_VERTEX, LINK_FRAGMENT);
       stars = program(STAR_VERTEX, LINE_FRAGMENT);
       sky = program(SKY_VERTEX, SKY_FRAGMENT);
       buffers = {
         places: gl.createBuffer(), seeds: gl.createBuffer(), sizes: gl.createBuffer(), shade: gl.createBuffer(),
-        lines: gl.createBuffer(), ends: gl.createBuffer(), along: gl.createBuffer(),
+        lines: gl.createBuffer(), ends: gl.createBuffer(), along: gl.createBuffer(), dash: gl.createBuffer(),
         stars: gl.createBuffer(), starSeeds: gl.createBuffer(), corners: gl.createBuffer(),
       };
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.corners);
@@ -8940,12 +9234,14 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
 
     function prepare(world) {
       const form = world.form || "donut";
-      if (state.world === world && state.width === world.width && state.height === world.height && state.form === form) return;
+      const rule = world.rule || "life";
+      if (state.world === world && state.width === world.width && state.height === world.height && state.form === form && state.rule === rule) return;
       const count = world.width * world.height;
       state.world = world;
       state.width = world.width;
       state.height = world.height;
       state.form = form;
+      state.rule = rule;
       state.radius = graph.reachOf(form) + MARGIN;
       state.version = -1;
       state.signalled = -1;
@@ -8960,10 +9256,22 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       // two donuts the links through the door, which are all that joins the two rings
       // (without them: two rings apart); the sheet its links over the borders (without
       // them: a world with an edge, which it is not).
-      state.always = form === "two" ? graph.doorPairs(world.width, world.height)
-        : form === "sheet" ? thinned(graph.wrapPairs(form, world.width, world.height), world.width, world.height, state.linked) : null;
-      const pairs = state.linked ? graph.fixedPairs(world.width, world.height, form) : state.always;
-      state.pairs = pairs;
+      state.evenPairs = 0;
+      if (rule === "bounce") {
+        // Under Bounce Gas II (round 33): the links are the squares of the blocks of 2 x 2
+        // (blocks.squarePairs: each cell with its four straight neighbours of its two blocks), the
+        // even blocks' first; the sheet's over its borders, all of them the odd blocks', are drawn
+        // at every size, thinned above LINKS_UP_TO as for Life.
+        const squares = root.RetroLife.blocks.squarePairs(world.width, world.height);
+        state.always = form === "sheet" ? thinned(overBorders(squares.pairs, world.width, world.height), world.width, world.height, state.linked) : null;
+        state.evenPairs = state.linked ? squares.even : 0;
+        state.pairs = state.linked ? squares.pairs : state.always;
+      } else {
+        state.always = form === "two" ? graph.doorPairs(world.width, world.height)
+          : form === "sheet" ? thinned(graph.wrapPairs(form, world.width, world.height), world.width, world.height, state.linked) : null;
+        state.pairs = state.linked ? graph.fixedPairs(world.width, world.height, form) : state.always;
+      }
+      const pairs = state.pairs;
       state.ends = null;
       if (!gl) return;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.places);
@@ -8980,6 +9288,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         gl.bufferData(gl.ARRAY_BUFFER, line.where, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.along);
         gl.bufferData(gl.ARRAY_BUFFER, line.along, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.dash);
+        gl.bufferData(gl.ARRAY_BUFFER, line.dash, gl.STATIC_DRAW);
+        state.evenEnds = line.evenEnds;
         state.lineEnds = line.own.length;
         state.lineOwn = line.own;
         state.lineOther = line.other;
@@ -8995,6 +9306,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // straight across (a cell with the one in its own row or column at the opposite edge)
     // of every k-th row and column, at most WRAP_LINES_MOST of each kind, and the page says
     // so. They show that every edge is joined to the opposite one.
+    // The links between two cells that do not lie side by side on the map (Bounce Gas II: the
+    // squares of the odd blocks over the borders of the map; graph.wrapPairs for Life's).
+    function overBorders(pairs, width, height) {
+      const kept = [];
+      for (let k = 0; k < pairs.length; k += 2) {
+        if (graph.bendOf("sheet", width, height, pairs[k], pairs[k + 1])) kept.push(pairs[k], pairs[k + 1]);
+      }
+      return Uint32Array.from(kept);
+    }
+
     function thinned(pairs, width, height, all) {
       if (all) return pairs;
       const everyRow = Math.ceil(height / WRAP_LINES_MOST);
@@ -9024,33 +9345,38 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       }
       const where = new Float32Array(pieces * 6);
       const along = new Float32Array(pieces * 2);
+      const dash = new Float32Array(pieces * 2);
       const own = new Uint32Array(pieces * 2);
       const other = new Uint32Array(pieces * 2);
       let at = 0;
-      const end = (from, index, t, a, b) => {
+      let evenEnds = 0;  // the ends of the pieces of the first state.evenPairs links (Bounce Gas II)
+      const end = (from, index, t, a, b, dashes) => {
         where[at * 3] = from[index * 3];
         where[at * 3 + 1] = from[index * 3 + 1];
         where[at * 3 + 2] = from[index * 3 + 2];
         along[at] = t;
+        dash[at] = dashes;
         own[at] = a;
         other[at] = b;
         at++;
       };
       for (let k = 0; k < pairs.length; k += 2) {
+        if (k / 2 === state.evenPairs) evenEnds = at;
         const a = pairs[k], b = pairs[k + 1];
         const points = bends[k / 2];
         if (!points) {
-          end(places, a, 0, a, b);
-          end(places, b, 0, b, a);
+          end(places, a, 0, a, b, 0);
+          end(places, b, 0, b, a, DASHES);
           continue;
         }
         const last = points.length / 3 - 1;
         for (let j = 0; j < last; j++) {
-          end(points, j, j / last, a, b);
-          end(points, j + 1, (j + 1) / last, a, b);
+          end(points, j, j / last, a, b, j / 2);
+          end(points, j + 1, (j + 1) / last, a, b, (j + 1) / 2);
         }
       }
-      return { where, along, own, other };
+      if (pairs.length / 2 <= state.evenPairs) evenEnds = at;
+      return { where, along, dash, own, other, evenEnds };
     }
 
     // What every end of a piece of line has to know to show a signal: the shades of its
@@ -9162,10 +9488,12 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       return [x - state.sun.width / 2, y - state.sun.height / 2];
     }
 
+    // (under Bounce Gas II a particle has no age: its shade is 1 while it is there, and it is
+    // lit in the one colour the map gives it, the young colour of the look)
     function ages(u, theme) {
       gl.uniform1f(u.uAgeCap, AGE_CAP);
       gl.uniform1f(u.uOldAge, render.OLD);
-      gl.uniform3fv(u.uBorn, unit(render.rgbOf(theme.born)));
+      gl.uniform3fv(u.uBorn, unit(render.rgbOf(state.rule === "bounce" ? theme.young : theme.born)));
       gl.uniform3fv(u.uYoung, unit(render.rgbOf(theme.young)));
       gl.uniform3fv(u.uOld, unit(render.rgbOf(theme.old)));
     }
@@ -9252,18 +9580,32 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       if (state.pairs) {
-        const signals = Boolean(scene.signals);
+        // (Bounce Gas II has no life signals: its links are the squares, in two kinds)
+        const blocks = state.rule === "bounce";
+        const signals = Boolean(scene.signals) && !blocks;
         if (signals && state.signalled !== world.version) signal(world);
         cameraUniforms(lines, camera, theme);
         ages(lines.uniforms, theme);
-        gl.uniform3fv(lines.uniforms.uLink, colour(theme.link));
         gl.uniform1f(lines.uniforms.uSignals, signals ? 1 : 0);
         gl.uniform1f(lines.uniforms.uBehind, (0.75 * camera.node) / (3 * state.radius));
         attribute(lines, "aPlace", buffers.lines, 3);
         attribute(lines, "aOwn", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 0);
         attribute(lines, "aOther", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 1);
         attribute(lines, "aAlong", buffers.along, 1);
-        gl.drawArrays(gl.LINES, 0, state.lineEnds);
+        attribute(lines, "aDash", buffers.dash, 1);
+        if (blocks) {
+          const kinds = squareColours(theme, scene.blocks);
+          gl.uniform3fv(lines.uniforms.uLink, unit(kinds.even));
+          gl.uniform1f(lines.uniforms.uDashed, 0);
+          if (state.evenEnds) gl.drawArrays(gl.LINES, 0, state.evenEnds);
+          gl.uniform3fv(lines.uniforms.uLink, unit(kinds.odd));
+          gl.uniform1f(lines.uniforms.uDashed, theme.plain ? 1 : 0);
+          if (state.lineEnds > state.evenEnds) gl.drawArrays(gl.LINES, state.evenEnds, state.lineEnds - state.evenEnds);
+        } else {
+          gl.uniform3fv(lines.uniforms.uLink, colour(theme.link));
+          gl.uniform1f(lines.uniforms.uDashed, 0);
+          gl.drawArrays(gl.LINES, 0, state.lineEnds);
+        }
       }
       gl.useProgram(nodes.made);
       pass(ROCKS);
@@ -9297,9 +9639,26 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         plain.fillStyle = theme.space;
         plain.fillRect(0, 0, canvas.width, canvas.height);
       }
+      if (state.rule === "bounce") colours[1] = render.rgbOf(theme.young);  // a particle: one colour
       // the links drawn at every size: two donuts the links through the door, which join
-      // the two rings; the sheet its links over the borders, bent (under the signals)
-      if (state.always) {
+      // the two rings; the sheet its links over the borders, bent (under the signals).
+      // Bounce Gas II: the squares of both kinds, up to PLAIN_LINES_UP_TO nodes (above, the
+      // sheet's over its borders), in their two colours, the odd ones dashed in Kuroi.
+      const squares = plainSquares();
+      if (squares) {
+        const kinds = squareColours(theme, scene.blocks);
+        plain.lineWidth = 1;
+        plain.globalAlpha = 0.8;
+        for (const [first, last, rgb, dashed] of [[0, squares.even, kinds.even, false], [squares.even, squares.pairs.length / 2, kinds.odd, Boolean(theme.plain)]]) {
+          if (last <= first) continue;
+          plain.strokeStyle = "rgb(" + rgb.join(",") + ")";
+          plain.setLineDash(dashed ? [2, 2] : []);
+          plain.beginPath();
+          for (let k = first; k < last; k++) plainLine(camera, squares.pairs[2 * k], squares.pairs[2 * k + 1]);
+          plain.stroke();
+        }
+        plain.setLineDash([]);
+      } else if (state.always) {
         plain.lineWidth = 1;
         plain.strokeStyle = "rgb(" + render.rgbOf(theme.link).join(",") + ")";
         plain.globalAlpha = 0.8;
@@ -9307,7 +9666,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         for (let k = 0; k < state.always.length; k += 2) plainLine(camera, state.always[k], state.always[k + 1]);
         plain.stroke();
       }
-      if (scene.signals && count <= PLAIN_LINES_UP_TO) {
+      if (scene.signals && state.rule !== "bounce" && count <= PLAIN_LINES_UP_TO) {
         plain.lineWidth = 1;
         for (let i = 0; i < count; i++) {
           if (!isAlive(i)) continue;
@@ -9400,11 +9759,22 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       return { x: at[0] * state.pixel, y: at[1] * state.pixel };
     }
 
+    // Without WebGL, under Bounce Gas II: the squares drawn, {pairs, even} (all of them up to
+    // PLAIN_LINES_UP_TO nodes, else the sheet's over its borders), or null.
+    function plainSquares() {
+      if (state.rule !== "bounce") return null;
+      if (state.width * state.height <= PLAIN_LINES_UP_TO && state.pairs) return { pairs: state.pairs, even: state.evenPairs };
+      return state.always ? { pairs: state.always, even: 0 } : null;
+    }
+
     // what links the picture draws: how many, how many of them join the two donuts, and
-    // how many are drawn bent (the sheet's links over its borders), as [a, b, ...] in `bent`
+    // how many are drawn bent (the sheet's links over its borders), as [a, b, ...] in `bent`;
+    // under Bounce Gas II how many of them are links of the even blocks (`even`; the rest are
+    // the odd blocks')
     function drawn() {
-      const pairs = gl ? state.pairs : state.always;  // (the plain drawing draws no other links)
-      if (!pairs) return { links: 0, door: 0, wrap: 0, bent: [] };
+      const squares = gl ? null : plainSquares();
+      const pairs = gl ? state.pairs : squares ? squares.pairs : state.always;  // (the plain drawing draws no other links)
+      if (!pairs) return { links: 0, door: 0, wrap: 0, bent: [], even: 0 };
       const half = (state.height / 2) * state.width;
       let door = 0;
       const bent = [];
@@ -9412,14 +9782,28 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         if (state.form === "two" && (pairs[k] >= half) !== (pairs[k + 1] >= half)) door++;
         if (graph.bendOf(state.form, state.width, state.height, pairs[k], pairs[k + 1])) bent.push(pairs[k], pairs[k + 1]);
       }
-      return { links: pairs.length / 2, door, wrap: bent.length / 2, bent };
+      return { links: pairs.length / 2, door, wrap: bent.length / 2, bent, even: squares ? squares.even : state.evenPairs };
     }
 
-    return { draw, pick, pointOf, linkPoint, resize, webgl: Boolean(gl), fine: state.fine, linked: () => state.linked, drawn };
+    // how many links the picture draws (cheap: for the line at the top, after every picture)
+    function linkCount() {
+      const squares = gl ? null : plainSquares();
+      const pairs = gl ? state.pairs : squares ? squares.pairs : state.always;
+      return pairs ? pairs.length / 2 : 0;
+    }
+
+    // the links drawn as [a, b, ...] (the page check compares them with the model's)
+    function drawnPairs() {
+      const squares = gl ? null : plainSquares();
+      const pairs = gl ? state.pairs : squares ? squares.pairs : state.always;
+      return pairs ? Array.from(pairs) : [];
+    }
+
+    return { draw, pick, pointOf, linkPoint, resize, webgl: Boolean(gl), fine: state.fine, linked: () => state.linked, drawn, drawnPairs, linkCount };
   }
 
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.donut = { create, turnOf, turned, spun, wantsFine, LINKS_UP_TO, WRAP_LINES_MOST, FINE_FROM };
+  root.RetroLife.donut = { create, turnOf, turned, spun, wantsFine, squareColours, LINKS_UP_TO, WRAP_LINES_MOST, FINE_FROM };
 })(/** @type {any} */ (window));
 
 </script>
@@ -9879,7 +10263,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       state.view = null;
       if (!organism) {
         state.camera = null;
+        // (the screen GRAPH under Bounce Gas II: no organism, the small map with a frame round
+        // the window of the graph that app-blockgraph.js draws on this ground)
+        if (scene.frame) state.view = { ...scene.frame, cells: null };
         drawMap(scene);
+        state.view = null;
         return { took: performance.now() - begin, moving: false, close: false, pitch: 0, columns: 0, rows: 0, x: 0, y: 0, top: 0, left: 0, rings: false, at: null, step: 0, whole: false };
       }
       const piece = place(world, organism);
@@ -12799,6 +13187,7 @@ window.RetroLife.app.organism = function (ctx) {
   // numbered from the top of the map down, so "next" is down.
   /** @type {OrganismPart["stepOrganism"]} */
   function stepOrganism(by) {
+    if (ctx.blocksOn()) return;  // (GRAPH under Bounce Gas II shows no organisms)
     const now = lookAtOrganism();
     if (now.count < 2) return;
     flash(by < 0 ? "organism-up" : "organism-down");
@@ -12808,6 +13197,7 @@ window.RetroLife.app.organism = function (ctx) {
   // The organism nearest to a place of the world (in cells): a tap on the small map.
   /** @type {OrganismPart["pickOrganismAt"]} */
   function pickOrganismAt(x, y) {
+    if (ctx.blocksOn()) return ctx.moveBlocksTo(x, y);  // GRAPH: the window goes there
     const now = lookAtOrganism();
     if (!now.count) return;
     const which = now.labels[nearestAlive(x, y)];
@@ -12839,6 +13229,7 @@ window.RetroLife.app.organism = function (ctx) {
   // 0: as the organism needs it; otherwise the step nearest to `across`
   /** @type {OrganismPart["setAcross"]} */
   function setAcross(across) {
+    if (ctx.blocksOn() && !across) return ctx.fitBlocks();  // (FIT on GRAPH under Bounce Gas II)
     state.across = logic.snapAcross(zoomSteps(), across);
     requestDraw();
   }
@@ -12847,6 +13238,7 @@ window.RetroLife.app.organism = function (ctx) {
   // organism: the next step from what that window shows.
   /** @type {OrganismPart["zoomBy"]} */
   function zoomBy(by) {
+    if (ctx.blocksOn()) return ctx.zoomBlocks(by);  // GRAPH under Bounce Gas II: its own window
     const steps = zoomSteps();
     const seen = state.organismView;
     const at = logic.zoomTarget(steps, state.across, seen && seen.columns ? Math.min(seen.columns, seen.rows) : null, by);
@@ -13581,6 +13973,7 @@ window.RetroLife.app.rings = function (ctx) {
   // into the middle. Otherwise: the next organism, as before.
   /** @type {RingsPart["tapOrganism"]} */
   function tapOrganism(clientX, clientY) {
+    if (ctx.blocksOn()) return;  // (GRAPH under Bounce Gas II: a drag moves its window, app-blockgraph.js)
     const now = ctx.lookAtOrganism();
     if (!now.organism) return;
     const cell = cellAtPoint(clientX, clientY);
@@ -13626,6 +14019,331 @@ window.RetroLife.app.rings = function (ctx) {
       });
     },
   };
+};
+
+</script>
+<script id="script-app-blockgraph">
+// the screen GRAPH of the second rule, Bounce Gas II (round 33): a window of the world drawn as
+// the graph of wolframs_game_of_life.model_blocks, every cell three nodes and its triangle, every
+// block a ring of four; its window (where it lies, how much it shows, moved by a drag or a tap
+// on the small map), its legend and its counts
+//
+// A section of the page (see app.js): window.RetroLife.app.blockgraph(ctx) makes its functions
+// and returns the ones other sections call; `init` binds its events once all sections exist.
+//
+// Under Conway's Life the third screen is ORGANISMS (app-organism.js, app-rings.js), as before;
+// under Bounce Gas II it is GRAPH, drawn here, with one view only (the developer, 2026-11-25:
+// "call it "Graph" and it should only have the Graph Particles view. No switching between
+// Organisms, not showing organsisms"). The arrows are blocks.windowGraph: the model's, held by
+// tests/test_js_block_graph.py; where a node lies is a help for the eye, as on the page
+// bounce_gas.html (a cell's two corners towards the middles of its two blocks, its middle node
+// beside the diagonal between them). The nodes never move: a step changes only arrows.
+"use strict";
+window.RetroLife.app = window.RetroLife.app || /** @type {AppParts} */ ({});
+/** @param {Ctx} ctx */
+window.RetroLife.app.blockgraph = function (ctx) {
+  const { $, TAP, cellGraph, donut, graphSvg, hint, life, logic, number, organismCanvas, picture, renderer, requestDraw, setPixels, state } = ctx;
+  const blocks = window.RetroLife.blocks;
+  const START_ACROSS = 8;      // cells across the shorter side of the room when the screen opens (the agent's choice)
+  const CORNER = 0.25;         // how far a corner lies from the middle of its cell, towards its block (as bounce_gas.html)
+  const MIDDLE = 0.22;         // how far the middle node lies beside the cell's diagonal
+  const UNIT = 0.5;            // cells in one unit of cellgraph.js (its nodes and heads are shares of the unit)
+
+  let across = START_ACROSS;
+  /** @type {{ world: World, x: number, y: number } | null} */
+  let middle = null;           // the middle of the window (cells of the map), kept until another world
+  let shown = "";              // what the picture shows (drawn again only when that changes)
+  /** @type {{ top: number, left: number, rows: number, columns: number, pitch: number, nodes: number, arrows: number, window: BlockWindow } | null} */
+  let last = null;
+
+  /** @type {BlockgraphPart["blocksOn"]} */
+  const blocksOn = () => state.world.rule === "bounce" && !state.learn && !state.big;
+
+  // Where a node is drawn, in cells from the top left of the window: (i, j) is the place of its
+  // cell in the window (outside it for a corner of a cut square), (row, column) the cell on the
+  // map, `which` its place among the cell's three nodes.
+  /**
+   * @param {number} row
+   * @param {number} column
+   * @param {number} i
+   * @param {number} j
+   * @param {number} which
+   * @returns {number[]}
+   */
+  function nodePlace(row, column, i, j, which) {
+    const x = i + 0.5, y = j + 0.5;
+    // towards the middle of the even block: right if the column is even, down if the row is
+    const dx = column % 2 === 0 ? 1 : -1, dy = row % 2 === 0 ? 1 : -1;
+    if (which === blocks.EVEN) return [x + CORNER * dx, y + CORNER * dy];
+    if (which === blocks.ODD) return [x - CORNER * dx, y - CORNER * dy];
+    return [x + MIDDLE * dx, y - MIDDLE * dy];
+  }
+
+  // the room of the picture: clear of the card at the top, the small map and the zoom at the
+  // bottom, and the legend
+  function room() {
+    const box = organismCanvas.getBoundingClientRect();
+    const pick = $("organism-pick").getBoundingClientRect();
+    const ways = $("organism-ways").getBoundingClientRect();
+    const legend = $("blocks-legend").getBoundingClientRect();
+    const above = legend.height ? Math.max(0, Math.min(pick.top, ways.top) - legend.top) + 6 : 6;
+    return { box, room: logic.organismRoom(box, $("hud").getBoundingClientRect(), pick, ways, above) };
+  }
+
+  /** @type {BlockgraphPart["drawBlockGraph"]} */
+  function drawBlockGraph() {
+    const begin = performance.now();
+    const world = state.world;
+    const { width, height } = world;
+    const theme = renderer.theme();
+    const { box, room: space } = room();
+    const wide = space.right - space.left, high = space.bottom - space.top;
+    const size = logic.blockWindowSize(across, wide, high, width, height);
+    if (!middle || middle.world !== world) middle = { world, x: state.camera.x, y: state.camera.y };
+    const { top, left } = logic.blockWindowAt(middle.x, middle.y, size.columns, size.rows, width, height);
+    // the ground and the small map with a frame round the window (organism.js)
+    picture.draw({
+      world, labels: [], number: -1, organism: null, forecast: { reaching: new Uint8Array(0), next: new Uint8Array(0) },
+      mode: "graph", theme, pick: 0, across: 0, focus: -1, frame: { fx: left, fy: top, columns: size.columns, rows: size.rows },
+    });
+    state.organismView = null;
+    state.ringsView = null;
+    document.body.dataset.rings = "0";
+    ctx.forgetRings();  // (the view GRAPH of Life draws into the same picture: it draws anew)
+    const phase = life.phaseOf(world);
+    const mark = logic.blockMark(phase, state.playing);
+    const key = [world.version, width, height, top, left, size.columns, size.rows, size.pitch.toFixed(2), box.width, box.height,
+      space.left, space.top, state.theme, phase, mark.marked, world.cells.length].join("|");
+    if (key !== shown || !last) {
+      shown = key;
+      const seen = blocks.windowGraph(world.cells, width, height, phase, top, left, size.rows, size.columns);
+      last = { top, left, rows: size.rows, columns: size.columns, pitch: size.pitch, nodes: seen.nodes.length, arrows: seen.arrows.length, window: seen };
+      draw(seen, top, left, size, space, box, theme, mark);
+      showLegend(top, left, size, phase, theme, mark);
+    }
+    setPixels("hud-nodes", number(last.nodes) + " NODES");
+    setPixels("hud-relations", number(last.arrows) + " ARROWS");
+    $("hud-nodes").title = "The nodes drawn: three of every cell of the window (two corners and a middle), and the corners outside it of the squares it cuts";
+    $("hud-relations").title = "The arrows drawn: every square with a corner in the window (four arrows), and the triangle of every cell of the window (three)";
+    setPixels("organism-size", size.columns + " x " + size.rows);
+    setPixels("zoom-size", size.columns + " x " + size.rows);
+    const zoom = logic.blockZoom(across, 0, width, height);
+    $("organism-in").disabled = $("zoom-in").disabled = zoom.closest;
+    $("organism-out").disabled = $("zoom-out").disabled = zoom.furthest;
+    $("zoom-fit").disabled = across === START_ACROSS;
+    return performance.now() - begin;
+  }
+
+  /**
+   * @param {BlockWindow} seen
+   * @param {number} top
+   * @param {number} left
+   * @param {{ columns: number, rows: number, pitch: number }} size
+   * @param {Room} space
+   * @param {DOMRect} box
+   * @param {Theme} theme
+   * @param {{ next: number, marked: boolean }} mark
+   */
+  function draw(seen, top, left, size, space, box, theme, mark) {
+    const world = state.world;
+    const { width, height } = world;
+    const inWindow = seen.cells.length;
+    // where every node lies (units of UNIT cells), and its group: the cells of the window one
+    // each, every corner outside the window one of its own
+    /** @type {number[][]} */
+    const places = [];
+    /** @type {{ node: number, group: number }[]} */
+    const nodes = [];
+    seen.nodes.forEach((node, k) => {
+      const cell = Math.floor((node - blocks.FIRST_NODE) / blocks.NODES_PER_CELL);
+      const which = (node - blocks.FIRST_NODE) % blocks.NODES_PER_CELL;
+      const row = Math.floor(cell / width), column = cell % width;
+      // its place in the window: the corners of a cut square lie a cell outside it
+      let i = (((column - left) % width) + width) % width;
+      let j = (((row - top) % height) + height) % height;
+      if (i > size.columns) i -= width;
+      if (j > size.rows) j -= height;
+      const [x, y] = nodePlace(row, column, i, j, which);
+      places.push([x / UNIT, y / UNIT]);
+      nodes.push({ node, group: k < 3 * inWindow ? Math.floor(k / 3) : inWindow + (k - 3 * inWindow) });
+    });
+    const looks = picture.looksFor(theme);
+    /** @param {number[]} rgb */
+    const css = (rgb) => "rgb(" + rgb.join(",") + ")";
+    const particle = css(/** @type {number[]} */ (looks.shades[2]));  // the one colour of a particle (the young colour, as on the map)
+    const kinds = donut.squareColours(theme, mark);
+    const groups = seen.cells.map((cell) => ({ colour: world.cells[cell] ? particle : "", alive: Boolean(world.cells[cell]), sign: "" }));
+    for (let k = 3 * inWindow; k < seen.nodes.length; k++) groups.push({ colour: "", alive: false, sign: "" });
+    const arrows = seen.arrows.map((arrow) => {
+      if (arrow.kind === "square") {
+        const side = arrow.side === blocks.EVEN ? "even" : "odd";
+        const next = mark.marked && arrow.side === mark.next ? " next" : "";
+        return { nodes: arrow.nodes, classes: "square " + side + next, colour: css(arrow.side === blocks.EVEN ? kinds.even : kinds.odd) };
+      }
+      const cell = Math.floor((arrow.nodes[0] - blocks.FIRST_NODE) / blocks.NODES_PER_CELL);
+      const alive = Boolean(world.cells[cell]);
+      if (arrow.kind === "middle") return { nodes: arrow.nodes, classes: "middle" + (alive ? " particle" : ""), colour: alive ? particle : "" };
+      return { nodes: arrow.nodes, classes: "cross", colour: "" };
+    });
+    const unit = size.pitch * UNIT;
+    // the window in the middle of the room, every node on its place for good
+    const x0 = space.left + (space.right - space.left - size.columns * size.pitch) / 2;
+    const y0 = space.top + (space.bottom - space.top - size.rows * size.pitch) / 2;
+    cellGraph.draw(graphSvg, { nodes, places, groups, arrows, signs: {} }, { width: box.width, height: box.height, detail: "full", frame: { scale: unit, x: x0, y: y0 } });
+    graphSvg.dataset.blocks = "1";
+    graphSvg.dataset.window = [top, left, size.rows, size.columns].join(",");
+  }
+
+  // the legend beside the picture: which piece of the world, what a ring of four and a particle
+  // look like, whose turn it is (the developer is not a physicist: plain words)
+  /**
+   * @param {number} top
+   * @param {number} left
+   * @param {{ columns: number, rows: number }} size
+   * @param {number} phase
+   * @param {Theme} theme
+   * @param {{ next: number, marked: boolean }} mark
+   */
+  function showLegend(top, left, size, phase, theme, mark) {
+    const { width, height } = state.world;
+    // (from 1; a window over the border of the world, which wraps round, in two runs)
+    const span = (/** @type {number} */ first, /** @type {number} */ count, /** @type {number} */ all) =>
+      first + count <= all ? (first + 1) + " to " + (first + count) : (first + 1) + " to " + all + " and 1 to " + (first + count - all);
+    $("blocks-piece").textContent = "Rows " + span(top, size.rows, height) + ", columns " + span(left, size.columns, width) +
+      " of " + width + " x " + height;
+    const kinds = donut.squareColours(theme, mark);
+    $("blocks-even").style.color = "rgb(" + kinds.even.join(",") + ")";
+    $("blocks-odd").style.color = "rgb(" + kinds.odd.join(",") + ")";
+    $("blocks-particle").style.color = "rgb(" + /** @type {number[]} */ (picture.looksFor(theme).shades[2]).join(",") + ")";
+    setPixels("blocks-turn", logic.blockTurnWords(phase));
+    $("blocks-turn-says").textContent = "every cross arrow leaves its corner in an " + (phase ? "odd" : "even") + " ring";
+  }
+
+  // ---- moving the window: in whole blocks, by a drag on the picture or a tap on the small map
+
+  /** @type {BlockgraphPart["zoomBlocks"]} */
+  function zoomBlocks(by) {
+    const zoom = logic.blockZoom(across, by, state.world.width, state.world.height);
+    if (zoom.across === across) return;
+    ctx.flash(by > 0 ? "organism-in" : "organism-out");
+    across = zoom.across;
+    requestDraw();
+  }
+
+  /** @type {BlockgraphPart["fitBlocks"]} */
+  function fitBlocks() {
+    across = START_ACROSS;
+    requestDraw();
+  }
+
+  // the middle of the window to a place of the map (cells)
+  /** @type {BlockgraphPart["moveBlocksTo"]} */
+  function moveBlocksTo(x, y) {
+    middle = { world: state.world, x, y };
+    requestDraw();
+  }
+
+  // the window moved by whole blocks (a drag: the world follows the finger)
+  /**
+   * @param {number} dx
+   * @param {number} dy
+   */
+  function moveBlocksBy(dx, dy) {
+    if (!middle) return;
+    const { width, height } = state.world;
+    middle = { world: state.world, x: (((middle.x + 2 * dx) % width) + width) % width, y: (((middle.y + 2 * dy) % height) + height) % height };
+    requestDraw();
+  }
+
+  // the third screen shows Life again (ORGANISMS): the graph of blocks leaves the picture
+  /** @type {BlockgraphPart["forgetBlockGraph"]} */
+  function forgetBlockGraph() {
+    if (!shown) return;
+    shown = "";
+    cellGraph.clear(graphSvg);
+    graphSvg.dataset.blocks = "0";
+  }
+
+  // the window and its counts as drawn last (for the page check)
+  /** @type {BlockgraphPart["blockView"]} */
+  function blockView() {
+    if (!last) return null;
+    const { top, left, rows, columns, pitch, nodes, arrows } = last;
+    return { top, left, rows, columns, pitch, nodes, arrows, across, cells: last.window.cells, graph: last.window };
+  }
+
+  return {
+    blocksOn,
+    blockView,
+    drawBlockGraph,
+    fitBlocks,
+    forgetBlockGraph,
+    moveBlocksTo,
+    zoomBlocks,
+    init() {
+      // a drag on the picture moves the window, a block for each block's width the finger went
+      // (the world follows the finger); a tap on an arrow names it
+      /** @type {{ id: number, x: number, y: number, moved: boolean } | null} */
+      let held = null;
+      let dragged = false;  // the last touch moved the window: it names no arrow
+      for (const element of /** @type {HTMLElement[]} */ ([organismCanvas, graphSvg])) {
+        element.addEventListener("pointerdown", (event) => {
+          if (!blocksOn() || state.view !== "organism") return;
+          held = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+        });
+      }
+      // (followed on the window: the finger passes over the arrows, which lie over the canvas)
+      window.addEventListener("pointermove", (event) => {
+        if (!held || held.id !== event.pointerId || !last) return;
+        const block = 2 * last.pitch;
+        const dx = Math.trunc((event.clientX - held.x) / block), dy = Math.trunc((event.clientY - held.y) / block);
+        if (!dx && !dy) {
+          if (Math.hypot(event.clientX - held.x, event.clientY - held.y) >= TAP) held.moved = true;
+          return;
+        }
+        held.moved = true;
+        held.x += dx * block;
+        held.y += dy * block;
+        moveBlocksBy(-dx, -dy);
+      });
+      for (const type of /** @type {("pointerup" | "pointercancel")[]} */ (["pointerup", "pointercancel"])) {
+        window.addEventListener(type, (event) => {
+          if (!held || held.id !== event.pointerId) return;
+          dragged = held.moved;
+          held = null;
+        });
+      }
+      graphSvg.addEventListener("click", (event) => {
+        if (!blocksOn() || !last || dragged) return;
+        const arrow = /** @type {HTMLElement} */ (event.target).closest(".arrow[data-arrow]");
+        if (!arrow) return;
+        const one = last.window.arrows[Number(arrow.dataset.arrow)];
+        if (!one) return;
+        cellGraph.light(graphSvg, Number(arrow.dataset.arrow));
+        hint(describe(one), 5200);
+      });
+    },
+  };
+
+  // An arrow in words, with the cell it belongs to (row and column from 1).
+  /** @param {{ nodes: [number, number], kind: string, side: number }} arrow */
+  function describe(arrow) {
+    const width = state.world.width;
+    const cellOf = (/** @type {number} */ node) => Math.floor((node - blocks.FIRST_NODE) / blocks.NODES_PER_CELL);
+    const where = (/** @type {number} */ node) => "row " + (Math.floor(cellOf(node) / width) + 1) + ", column " + ((cellOf(node) % width) + 1);
+    if (arrow.kind === "square") {
+      return "{" + arrow.nodes.join(",") + "}: an arrow of the ring of four of an " + (arrow.side === blocks.EVEN ? "even" : "odd") +
+        " block, from the cell at " + where(arrow.nodes[0]) + " to the one at " + where(arrow.nodes[1]) + ".";
+    }
+    if (arrow.kind === "cross") {
+      const from = (arrow.nodes[0] - blocks.FIRST_NODE) % blocks.NODES_PER_CELL === blocks.EVEN ? "even" : "odd";
+      return "{" + arrow.nodes.join(",") + "}: the cross arrow of the cell at " + where(arrow.nodes[0]) + ". It leaves its corner in the " + from +
+        " ring: the " + from + " block is the next to act on this cell.";
+    }
+    const alive = state.world.cells[cellOf(arrow.nodes[0])];
+    return "{" + arrow.nodes.join(",") + "}: an arrow of the middle node of the cell at " + where(arrow.nodes[0]) + ". " +
+      (alive ? "Both arrows leave the middle: the cell holds a particle." : "The middle lies on the way from one corner to the other: the cell is empty.");
+  }
 };
 
 </script>
@@ -13686,7 +14404,11 @@ window.RetroLife.app.draw = function (ctx) {
 
   /** @type {DrawPart["ringScene"]} */
   function ringScene() {
-    return { world: state.world, turn: state.orbit.turn, zoom: state.orbit.zoom, theme: renderer.theme(), signals: state.signals, sun: sunPhase() };
+    return {
+      world: state.world, turn: state.orbit.turn, zoom: state.orbit.zoom, theme: renderer.theme(), signals: state.signals, sun: sunPhase(),
+      // Bounce Gas II: whose turn it is, marked only while the world rests (logic.blockMark)
+      blocks: state.world.rule === "bounce" ? logic.blockMark(life.phaseOf(state.world), state.playing) : null,
+    };
   }
 
   // how far the sun has come on its way round the ring (0 to 1)
@@ -13757,9 +14479,14 @@ window.RetroLife.app.draw = function (ctx) {
     state.dirty = false;
     const world = state.world;
     let took;
+    const blocks = ctx.blocksOn();
+    document.body.dataset.blocks = blocks ? "1" : "0";
     if (state.view === "donut") {
       took = ring.draw(ringScene());
+    } else if (state.view === "organism" && blocks) {
+      took = ctx.drawBlockGraph();  // the screen GRAPH of Bounce Gas II (app-blockgraph.js)
     } else if (state.view === "organism") {
+      ctx.forgetBlockGraph();
       const drawn = picture.draw(ctx.organismScene());
       state.organismView = drawn;
       took = drawn.took + ctx.showRings(drawn);
@@ -13773,9 +14500,19 @@ window.RetroLife.app.draw = function (ctx) {
     const words = logic.ruleWords(world.rule);
     setPixels("hud-generation", words.time + " " + number(world.generation));
     setPixels("hud-alive", words.alive + " " + number(world.population));
-    if (state.view === "donut") {
+    if (state.view === "donut" && blocks) {
+      // Bounce Gas II: a node per cell and the links drawn (the squares), and whose turn it is
+      setPixels("hud-nodes", number(world.width * world.height) + " NODES  " + number(ring.linkCount()) + " LINKS");
+      setPixels("hud-relations", logic.blockTurnWords(life.phaseOf(world)));
+      $("hud-nodes").title = "One node per cell; the links drawn are the squares of the blocks of 2 x 2, four per block";
+      $("hud-relations").title = "Which blocks act in the next step: the even ones (from the top left cell) or the odd ones (one cell down and to the right)";
+    } else if (state.view === "donut") {
       setPixels("hud-nodes", number(world.width * world.height) + " NODES");
       setPixels("hud-relations", number(graph.relationCount(world.width, world.height, world.form)) + " RELATIONS");
+    }
+    if (!blocks) {  // (the titles of index.html, which the screens of Bounce Gas II change)
+      $("hud-nodes").title = "Every cell is a node of the hypergraph";
+      $("hud-relations").title = "20 relations per node: 1 neighbourhood, 9 of its round, 1 alive or dead, 1 ready, 8 lines";
     }
     ctx.showTime();  // back and back to the start, for the generation drawn
     showMood();
@@ -14680,19 +15417,11 @@ window.RetroLife.app.screens = function (ctx) {
 
   const hinted = new Set();
 
-  // Why the second and third screens are not there under Bounce Gas II (said where one asks
-  // for them: the button to the right, a key, a button of the menu).
-  const RULE_SCREENS = "Under Bounce Gas II the map is the one screen: the surfaces and the organisms show Conway's Life, its neighbours and its hypergraph, which say nothing true about blocks.";
-
   /** @type {ScreensPart["setView"]} */
   function setView(key) {
     const at = VIEWS.findIndex((entry) => entry.key === key);
     if (at < 0) return;
     if (state.learn && key !== (ctx.lessonNow()?.view ?? "map")) return;  // a lesson says which screen it shows
-    if (!logic.viewOpen(state.world.rule, key)) {
-      hint(RULE_SCREENS, 5200);
-      return;
-    }
     if (key !== state.view) state.visit++;  // another screen: the menu opens at its top (logic.menuScroll)
     state.view = key;
     state.owed = 0;  // the screens play at their own pace
@@ -14702,8 +15431,14 @@ window.RetroLife.app.screens = function (ctx) {
     showNext();
     if (key === "organism") {
       picture.resize();
-      if (state.stamp && !ctx.lookAtOrganism().organism) ctx.leaveStamping();  // nothing to lay it on
-      if (!state.learn && !hinted.has("organism")) {
+      // (nothing to lay a formation on; under Bounce Gas II the screen GRAPH changes no cell)
+      if (state.stamp && (ctx.blocksOn() || !ctx.lookAtOrganism().organism)) ctx.leaveStamping();
+      if (ctx.blocksOn()) {
+        if (!hinted.has("graph")) {
+          hinted.add("graph");
+          hint("Graph: a piece of the world as the graph of Bounce Gas II, three nodes a cell. Drag it or tap the small map to move it; minus and plus show more or less. Time runs slowly here.", 7200);
+        }
+      } else if (!state.learn && !hinted.has("organism")) {
         hinted.add("organism");
         hint("One organism on its piece of the ring's grid. The row at the bottom changes what you see, minus and plus how much. Time runs slowly here.", 6400);
       }
@@ -14712,33 +15447,37 @@ window.RetroLife.app.screens = function (ctx) {
     if (key === "donut") {
       ring.resize();
       if (state.stamp) ctx.leaveStamping();
-      if (!state.learn && !hinted.has("donut")) {
-        hinted.add("donut");
-        hint(ring.webgl
-          ? "Every cell is a node: a rock while dead, a light while alive. Drag to turn it any way."
-          : "Every cell is a node. This browser draws it the plain way (no WebGL).", 4600);
+      const blocks = state.world.rule === "bounce" && !state.learn;
+      if (!state.learn && !hinted.has(blocks ? "donut-blocks" : "donut")) {
+        hinted.add(blocks ? "donut-blocks" : "donut");
+        hint(blocks
+          ? "Every cell is a node, lit where a particle is. Each block of 2 x 2 is a ring of four links: the even blocks in one colour, the odd ones in the other."
+          : ring.webgl
+            ? "Every cell is a node: a rock while dead, a light while alive. Drag to turn it any way."
+            : "Every cell is a node. This browser draws it the plain way (no WebGL).", blocks ? 5200 : 4600);
       }
     }
     requestDraw();
   }
 
-  // The button to the right: greyed out on the last screen, and under Bounce Gas II on the
-  // map (as on a big map, its title says why; the tutorial and a big map set its title
-  // themselves).
+  // The button to the right: greyed out on the last screen (the tutorial and a big map set its
+  // title themselves). Under Bounce Gas II its title names the screen it leads to (the third
+  // is GRAPH there).
   function showNext() {
     const at = VIEWS.findIndex((entry) => entry.key === state.view);
-    const ruled = !logic.viewOpen(state.world.rule, VIEWS[at + 1]?.key ?? state.view);
-    $("next").disabled = at === VIEWS.length - 1 || ruled;
+    $("next").disabled = at === VIEWS.length - 1;
     if (state.learn || state.big) return;
-    $("next").title = ruled ? "No other screen under Bounce Gas II: the map is the one screen" : "The screen to the right (right arrow key)";
-    $("next").setAttribute("aria-label", ruled ? "No other screen under Bounce Gas II" : "The screen to the right");
+    const next = VIEWS[at + 1] && state.world.rule === "bounce" ? logic.viewWords(VIEWS, state.world.rule, VIEWS[at + 1].key) : null;
+    $("next").title = next ? "The screen to the right: " + next.name + " (right arrow key)" : "The screen to the right (right arrow key)";
+    $("next").setAttribute("aria-label", next ? "The screen to the right: " + next.name : "The screen to the right");
   }
 
-  // The name at the top: the screen's, and on the screen DONUT the name of the form.
+  // The name at the top: the screen's (under Bounce Gas II the third is GRAPH), and on the
+  // screen DONUT the name of the form.
   function showViewName() {
-    const at = VIEWS.findIndex((entry) => entry.key === state.view);
-    if (at < 0) return;
-    const words = state.view === "donut" ? FORM_WORDS[state.world.form] || FORM_WORDS.donut : VIEWS[at];
+    const view = logic.viewWords(VIEWS, state.learn ? "life" : state.world.rule, state.view);
+    if (!view) return;
+    const words = state.view === "donut" ? FORM_WORDS[state.world.form] || FORM_WORDS.donut : view;
     setPixels("view-name", words.name);
     $("view-kana").textContent = words.kana;
   }
@@ -14802,8 +15541,9 @@ window.RetroLife.app.screens = function (ctx) {
   // keeps the cells and starts the count anew (generation 0, the cells as they are the start,
   // under Bounce Gas II the even phase); the camera and the grid stay. To Bounce Gas II the
   // world must wrap round as a donut: walls go (the sheet with walls becomes the sheet) and
-  // another surface becomes the donut, said in the hint; the screen goes to the map, the one
-  // screen of that rule. Not in the tutorial (its world is Conway's Life) or on a big map.
+  // another surface becomes the donut, said in the hint. The screen stays (since round 33 all
+  // three are there under both rules; the third is GRAPH under Bounce Gas II). Not in the
+  // tutorial (its world is Conway's Life) or on a big map.
   /** @type {ScreensPart["setRule"]} */
   function setRule(rule) {
     if (state.learn || state.big || !life.RULES.includes(rule)) return false;
@@ -14820,10 +15560,6 @@ window.RetroLife.app.screens = function (ctx) {
     }
     let said = "";
     if (rule === "bounce") {
-      if (state.view !== "map") {
-        ctx.closeSheets();
-        setView("map");
-      }
       if (form !== world.form) {
         said = forms.edgeOf(world.form) === "walls"
           ? " The walls are gone: under this rule the world always wraps round."
@@ -14834,6 +15570,7 @@ window.RetroLife.app.screens = function (ctx) {
     }
     state.rule = rule;
     life.setRule(world, rule);
+    if (rule === "bounce" && state.view === "organism" && state.stamp) ctx.leaveStamping();  // GRAPH changes no cell
     showForm();
     showRule();
     hint((rule === "bounce"
@@ -14872,7 +15609,14 @@ window.RetroLife.app.screens = function (ctx) {
     $("step").setAttribute("aria-label", words.step);
     $("back").title = words.back + " (key ,)";
     $("back").setAttribute("aria-label", words.back);
-    if (!state.learn && !state.big) showNext();
+    // the second screen: no life signals under Bounce Gas II (its lines are the squares); the
+    // third screen and its group of the menu are called GRAPH there
+    $("signals").disabled = blocks;
+    setPixels("organisms-title", blocks ? "GRAPH" : "ORGANISMS");
+    if (!state.learn && !state.big) {
+      showNext();
+      showViewName();
+    }
   }
 
   // The form before or after this one in the list, round (decision D5); only the forms of
@@ -15026,7 +15770,8 @@ window.RetroLife.app.stamps = function (ctx) {
     if (!entry) throw new Error("no formation " + key);
     state.stamp = { entry, turns: 0, flip: false, shape: entry.shape };
     state.spot = null;
-    // (under Bounce Gas II a piece is laid on the map, where the blocks are)
+    // (under Bounce Gas II a piece is laid on the map, where the blocks are: also from the
+    // second screen and from GRAPH, which changes no cell; round 33 keeps it)
     if (state.world.rule === "bounce" && state.view !== "map") ctx.setView("map");
     if (state.view === "organism" && !ctx.lookAtOrganism().organism) {
       // an empty world has no picture to lay it on: it goes into the middle of the world
@@ -16070,6 +16815,17 @@ window.RetroLife.app.probe = function (ctx) {
         orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
         // the links the ring draws: how many, how many join the two donuts, the bent ones of the sheet
         ringDrawn: () => ring.drawn(),
+        // ... and as [a, b, ...], the even blocks' first under Bounce Gas II (ringDrawn().even of them)
+        ringPairs: () => ring.drawnPairs(),
+        // the screen GRAPH under Bounce Gas II: its window and counts as last drawn, its arrows,
+        // and what the picture holds (the nodes' places in pixels of the screen, by node)
+        blockView: ctx.blockView,
+        blockDrawn: () => ({
+          arrows: Number(graphSvg.dataset.arrows || 0), nodes: Number(graphSvg.dataset.nodes || 0), blocks: graphSvg.dataset.blocks === "1",
+          places: Array.from(graphSvg.querySelectorAll("circle.node")).map((node) => [Number(node.getAttribute("cx")), Number(node.getAttribute("cy"))]),
+          lines: Array.from(graphSvg.querySelectorAll("g.arrow")).map((arrow) => arrow.getAttribute("class")),
+        }),
+        moveBlocksTo: ctx.moveBlocksTo, zoomBlocks: ctx.zoomBlocks,
         // where the line of the link a-b is drawn on the ring, `t` of its way (CSS pixels from the corner of its canvas)
         /**
          * @param {number} a
@@ -16273,7 +17029,7 @@ window.RetroLife.app.probe = function (ctx) {
   // while it is being made; "basics" first, because the others take its functions along).
   /** @type {(keyof AppParts)[]} */
   const SECTIONS = [
-    "basics", "bigmode", "camera", "organism", "book", "rings", "draw", "world", "tutorial",
+    "basics", "bigmode", "camera", "organism", "book", "rings", "blockgraph", "draw", "world", "tutorial",
     "screens", "stamps", "touch", "sheets", "buttons", "browser", "probe",
   ];
   const binders = [];
