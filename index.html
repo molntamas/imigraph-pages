@@ -235,6 +235,31 @@
       <p class="small">It runs Python in the browser (Pyodide), which is downloaded when the page
       opens: allow a few seconds for the start.</p>
     </li>
+    <li class="page">
+      <h2><a href="bounce_gas_3d.html">Bounce Gas 3D on a graph: a block automaton in three dimensions played by rewriting rules</a></h2>
+      <p>The block automaton of the page above, in three dimensions. The world is a box that wraps round
+      in every direction, cut into blocks of 2 × 2 × 2 cells; every block is replaced by what a table of
+      256 entries says, and on the next step the cut moves by one cell in all three directions. No
+      ready-made rule of this kind was found, so the rule, <i>Bounce Gas 3D</i>, is this project's own,
+      made after Bounce Gas II: single particles fly along the diagonals of the cube, two that meet at
+      an angle turn, and a crowded block stands for a step, so particles bounce off walls and crowds.
+      On the left the particles fly as small cubes in a box; on the right the same world is a
+      <b>directed graph</b>: every cell is three nodes and nine arrows, and 22 rewriting rules do what
+      the table does. On small worlds the page checks after every step that both sides agree in every
+      cell.</p>
+      <ul>
+        <li>Worlds from 4 × 4 × 4 to 32 × 32 × 32 cells; starts (one particle, two that meet at an angle,
+        two that meet head-on, a full block that bursts, a wall that works as a mirror, a gas in a room
+        cut out of a full world) or a random gas of a chosen density.</li>
+        <li>Start, stop, one step, and <b>Back</b>: the rule can be run backwards exactly. The number of
+        particles never changes.</li>
+        <li>Drag to turn both pictures together; nothing moves by itself. Drawn on the graphics card
+        (WebGL), with a plainer drawing where the browser has none.</li>
+      </ul>
+      <p><a class="open" href="bounce_gas_3d.html">Open the page</a></p>
+      <p class="small">It runs Python in the browser (Pyodide), which is downloaded when the page
+      opens: allow a few seconds for the start.</p>
+    </li>
   </ul>
 
 </main>
