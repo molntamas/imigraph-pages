@@ -213,6 +213,28 @@
       <p class="small">It runs Python in the browser (Pyodide), which is downloaded when the page
       opens: allow a few seconds for the start.</p>
     </li>
+    <li class="page">
+      <h2><a href="bounce_gas.html">Bounce Gas II on a graph: a block automaton played by rewriting rules</a></h2>
+      <p>A second kind of cellular automaton next to the Game of Life: a <b>block automaton</b>. The
+      world is cut into blocks of 2 × 2 cells and every block is replaced by what a table of 16 entries
+      says; on the next step the cut moves by one cell. The rule is <i>Bounce Gas II</i> (by Tim Tyler):
+      single particles fly diagonally, two that meet head-on turn by 90 degrees, and a particle that
+      runs into two others stops for a step and flies back. On the right the same world is a
+      <b>directed graph</b>: every cell is three nodes and five arrows, and six rewriting rules do what
+      the table does. After every step the page checks that both sides agree in every cell.</p>
+      <ul>
+        <li>Worlds from 8 × 8 to 256 × 256 cells; patterns (one particle, a head-on collision, a pair
+        that parts, a block that flies apart, a wall that works as a mirror, a gas between walls, a gas
+        in a diamond-shaped room) or a random soup of a chosen density.</li>
+        <li>Start, stop, one step, and <b>Back</b>: the rule can be run backwards exactly, so Back
+        computes the past, also before the start. The number of particles never changes.</li>
+        <li>The page shows the table as 16 small pictures and says, sentence by sentence, what the rule
+        does and what it does not.</li>
+      </ul>
+      <p><a class="open" href="bounce_gas.html">Open the page</a></p>
+      <p class="small">It runs Python in the browser (Pyodide), which is downloaded when the page
+      opens: allow a few seconds for the start.</p>
+    </li>
   </ul>
 
 </main>
