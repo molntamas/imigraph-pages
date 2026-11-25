@@ -974,7 +974,8 @@ body[data-rpg] { overflow: hidden; }
          parts of the screen shown, and only those (data-for: map, donut, organism; app-sheets.js
          hides the others); then the parts that are always at the bottom. A new part of a screen
          is a section with data-for="(the screen)" and an id, in that screen's group, before its "What
-         this is" (docs/rules-buttons-and-look.md). -->
+         this is" (docs/rules-buttons-and-look.md). The "What this is" of the screen shown is
+         always the last part of the menu, below RPG (2026-11-25): app-sheets.js moves it there. -->
     <section id="learn-part">
       <h3 data-px="LEARN"></h3>
       <p class="note">New to the Game of Life? Read how it works, then try it in small lessons.</p>
@@ -1036,7 +1037,7 @@ body[data-rpg] { overflow: hidden; }
         <li><i class="swatch" data-colour="young"></i><span><b>young</b>: alive since the generation before</span></li>
         <li><i class="swatch" data-colour="old"></i><span><b>old</b>: alive for 12 generations or more</span></li>
       </ul>
-      <p>In between, the colour passes step by step from young to old (close up, where cells are faces, the face changes at 12). So a block, which never changes, is soon all old; a glider and everything that blinks keep showing new and young cells; and where something is happening, the colours are mixed. The lights of the donut have the same colours. One look leaves the ages out: in <b>Kuroi</b> (Look, further down in this menu) there is black and white and nothing else, and an alive cell is white however old it is.</p>
+      <p>In between, the colour passes step by step from young to old (close up, where cells are faces, the face changes at 12). So a block, which never changes, is soon all old; a glider and everything that blinks keep showing new and young cells; and where something is happening, the colours are mixed. The lights of the donut have the same colours. One look leaves the ages out: in <b>Kuroi</b> (Look, above in this menu) there is black and white and nothing else, and an alive cell is white however old it is.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · Home the start · + − speed · ← → screens (or 1 2 3) · A add · S menu · R F turn/mirror · 0 show all</p>
     </section>
 
@@ -15160,7 +15161,12 @@ window.RetroLife.app.sheets = function (ctx) {
     // Maps (but not the big maps) and the World sections also in the menu"). A part belongs to
     // the groups its data-for names, separated by spaces; one part of the page in two places is
     // one element, so Surfaces is put before World there and after the map's parts elsewhere.
-    sheet.insertBefore($("surfaces-part"), group === "donut" ? $("world-part") : $("surfaces-about"));
+    sheet.insertBefore($("surfaces-part"), group === "donut" ? $("world-part") : $("organisms-part"));
+    // "What this is" of the screen shown is always the last part of the menu, below RPG (the
+    // developer, 2026-11-25: "The what is this section in the menu should always be in the
+    // bottom of the menu"). In index.html each stays beside its screen's parts; here every one
+    // is put at the end, where only that of the screen shown is not hidden.
+    for (const about of sheet.querySelectorAll("section.about")) sheet.appendChild(about);
     // a part a mode opens the menu at (and marks); "" for none
     const target = state.learn ? "maps-part" : state.big ? "big-part" : "";
     for (const section of /** @type {NodeListOf<HTMLElement>} */ (sheet.querySelectorAll("section"))) {
