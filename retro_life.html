@@ -409,6 +409,9 @@ body[data-view="organism"][data-rings="1"] #organism-graph { display: block; }
 .cell-graph .arrow.cord-across .line { stroke-width: calc(var(--line) * 1.5); }
 /* a line that carries life: stronger */
 .cell-graph .arrow.life .line { stroke-width: calc(var(--line) * 1.7); }
+/* the bridge of a cell beside a wall (the mark of its closed doors, model_rings_walls): in
+   the ink of the rim, dashed, so that it is told from the rim by its shape */
+.cell-graph .arrow.bridge .line { stroke-dasharray: 4 3; }
 /* a face takes the tap that is meant for its cell (the cords lie under it) */
 .cell-graph .sign { pointer-events: all; cursor: pointer; }
 .cell-graph .pad { fill: currentColor; stroke: currentColor; stroke-linejoin: round; opacity: 0.055; }
@@ -979,8 +982,13 @@ body[data-rpg] { overflow: hidden; }
     <!-- the group of the map -->
     <section id="world-part" data-for="map donut">
       <h3 data-px="WORLD"></h3>
-      <p class="note">A new size keeps what lives round the middle. The world wraps round: what leaves on one side comes back on the other. That is why it is a donut on the second screen.</p>
+      <p class="note">A new size keeps what lives round the middle, and the edge of the world.</p>
       <div id="size-list" class="row"></div>
+      <p class="note">The edge of the world. <b>Wraps round</b>: what leaves on one side comes back on the other, which is why it is a donut on the second screen. <b>Walls</b>: the world ends at its edge; a cell there has fewer neighbours, and nothing comes back. A switch changes the edge and nothing else.</p>
+      <div id="edge-list" class="row" role="group" aria-label="The edge of the world">
+        <button type="button" data-edge="wraps" aria-pressed="true" title="The world wraps round: what leaves on one side comes back on the other" data-px="WRAPS ROUND"></button>
+        <button type="button" data-edge="walls" aria-pressed="false" title="Walls round the world: it ends at its edge, and a cell there has fewer neighbours" data-px="WALLS"></button>
+      </div>
       <div class="chips">
         <button type="button" id="random" data-px="RANDOM"></button>
         <button type="button" id="clear" data-px="CLEAR"></button>
@@ -1004,6 +1012,7 @@ body[data-rpg] { overflow: hidden; }
     <section id="map-about" class="about" data-for="map">
       <h3 data-px="WHAT THIS IS"></h3>
       <p><b>Map</b> <span lang="ja">(マップ)</span> is Conway's Game of Life, in Japanese <span lang="ja">ライフゲーム</span>: a cell is born with exactly 3 alive neighbours, stays alive with 2 or 3, and dies otherwise. There are only two kinds of cells, alive and dead; a dead cell is empty ground. A finger or the mouse sets and unsets cells; two fingers or the wheel zoom and move. The buttons of <b>time</b> at the bottom of the screen go back to the start, one generation back, and slower or faster.</p>
+      <p id="walls-about"><b>The edge of the world</b> (World, above in this menu). Usually the world <b>wraps round</b>: what leaves on one side comes back on the other. With <b>walls</b> it ends at its edge, drawn as a wall round the map. A cell beside a wall has fewer neighbours (five on a side, three in a corner), as if the cells beyond were dead for ever; the rule stays the same. What flies into a wall does not come back, but it does not simply vanish either: a <b>glider</b> that flies into a wall, a side or a corner, turns into a <b>block</b> (a square of four cells) at the wall, in every way it can arrive (measured); a <b>spaceship</b> (the lightweight one) that hits a wall throws off a glider, which flies on to another wall and becomes a block there. A blinker that lies along a wall dies; one that stands across it blinks on. So the cells that would cross the wall die, and what is left of them stays.</p>
       <p id="colours"><b>The colours of alive cells</b> tell how long a cell has been alive, so that you see at a glance what is new and what stays:</p>
       <ul class="legend">
         <li><i class="swatch" data-colour="born"></i><span><b>just born</b>: alive for the first generation (also a cell you have just set)</span></li>
@@ -1025,7 +1034,10 @@ body[data-rpg] { overflow: hidden; }
         <button type="button" data-form="bottle" aria-pressed="false" title="The same Klein bottle drawn as a hand-blown bottle: the same neighbours, another picture" data-px="BOTTLE"></button>
         <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
         <button type="button" data-form="two" aria-pressed="false" title="Two donuts: the upper and the lower half of the map, joined at a door" data-px="TWO"></button>
+        <button type="button" data-form="walled" aria-pressed="false" title="Sheet with walls: the map laid flat, and nothing beyond its edges" data-px="SHEET" hidden></button>
+        <button type="button" data-form="rooms" aria-pressed="false" title="Two rooms: the sheet with walls, and a wall across the middle with a door" data-px="ROOMS" hidden></button>
       </div>
+      <p class="note" id="walls-note">With walls (World, the edge of the world) only the sheet and two rooms are offered: the donut, the Klein bottles and two donuts are closed surfaces with no edge, so a world that ends at its edge cannot be one of them.</p>
       <div id="ring-views" class="chips">
         <button type="button" data-ring="top" title="Look at the surface from the top" data-px="FROM THE TOP"></button>
         <button type="button" data-ring="side" title="Look at the surface from the side" data-px="FROM THE SIDE"></button>
@@ -1044,6 +1056,8 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Sheet</b> <span lang="ja">(いちまいのかみ)</span> is the donut before it is glued: the map itself, laid flat in space like a piece of paper, its cells row by row as on the map. The cells, their neighbours and the rule are the donut's; only the picture differs. The long lines that leave the paper at one edge and come back at the opposite edge are the links between neighbours across the edges of the map: every cell on the right edge with its three neighbours on the left edge, every cell on the top edge with its three neighbours on the bottom edge. They are relations of the hypergraph like every short line, and life signals run along them too: a glider that crosses an edge sends its signals the long way round. Glue the paper along them, left edge to right edge and top to bottom, and you get the donut. The lines over the left and right edges go out beyond the paper and round below it, those over the top and bottom edges further down; how they bend is only a help for the eye and stands for nothing. They are drawn at every size, because without them the sheet would look like a world with an edge, which it is not. In a world larger than 128 x 128, where the other links are left out, all of them would be a solid tub under the paper: there the sheet draws only the long lines straight across, of every few rows and columns (64 of each kind), and leaves out the rest.</p>
       <p><b>Other surfaces.</b> Up and down on the second screen, or the row in Surfaces above, give the same cells another surface: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge (the <b>sheet</b> is the same donut, drawn flat). On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. The Klein bottle comes twice in the list, with the same cells and the same neighbours, only drawn differently on the second screen: <b>Klein eight</b> <span lang="ja">(クライン 8の字)</span>, a ring whose tube is a figure of eight, and <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span>, a hand-blown bottle. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
       <p><b>The other surfaces as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these surfaces every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein eight is a ring whose tube is a figure of eight, and the Klein bottle a hand-blown bottle whose neck, a third as wide as its body, bends back, passes through the wall and opens into the bottom from inside. Both have to pass through themselves (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; on the bottle the nodes of the neck are drawn smaller, because they lie closer together; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
+      <p id="walls-surfaces"><b>Surfaces with walls.</b> With walls (World, the edge of the world) the world ends at its edge, and up and down go through two surfaces only: the <b>sheet with walls</b> <span lang="ja">(かべのあるかみ)</span>, the map laid flat as on the sheet but without the long lines (nothing joins one edge to the other), and <b>two rooms</b> <span lang="ja">(ふたつのへや)</span>, the same with a wall across the middle of the map, open in the door (the door of two donuts): cells on the two sides of the wall are not neighbours, except in the door. The donut, the Klein bottles and two donuts are not offered: they are closed surfaces, glued all round, and have no edge where a wall could stand. A switch of the edge moves no cell and changes nothing else: the donut, the sheet and the Klein bottles become the sheet with walls, two donuts become two rooms, and back to the sheet and to two donuts.</p>
+      <p id="walls-hypergraph"><b>Walls in the hypergraph.</b> A wall is not a node: it is relations that are not there. A node beside a wall names only the neighbours it has (its neighbourhood repeats the node itself in the places of the missing ones), its round goes through those, and it has a line to each: 14 relations on a side, 10 in a corner, 18 at an end of the wall of two rooms, instead of 20, so the line at the top counts fewer than 20 a node. No link leaves the sheet. The 17 rules ask for eight neighbours, so a world with walls needs 11 more (in the module model_walls): 6 that send for a node that lacks 1, 3 or 5 neighbours, and 5 that make it wait one step for each one it lacks, so that every node still decides at the tenth step and the whole world is between two generations at the same moment. Tests hold these 28 rules to Life with walls, cell for cell, also when the changes come one at a time in random order, and that between two generations the hypergraph is exactly what this screen draws.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
     </section>
 
@@ -1064,7 +1078,7 @@ body[data-rpg] { overflow: hidden; }
         <button type="button" id="zoom-in" title="Look closer" aria-label="Look closer" data-icon="add"></button>
         <button type="button" id="zoom-fit" title="The window that suits the organism (key 0 on that screen)" data-px="FIT"></button>
       </div>
-      <p class="note">Lines on other surfaces. Two donuts: the long line across the picture is the wall between the two rings; cells on its two sides are not neighbours, except in the gap, the door, whose two ends carry a small post. Klein bottle (both pictures): the dashed line is the seam; whatever crosses it comes out upside down. On the whole map the seam is its left and right border. The donut has no such lines.</p>
+      <p class="note">Lines on other surfaces. Two donuts: the long line across the picture is the wall between the two rings; cells on its two sides are not neighbours, except in the gap, the door, whose two ends carry a small post. Klein bottle (both pictures): the dashed line is the seam; whatever crosses it comes out upside down. On the whole map the seam is its left and right border. Walls: the thick line round the map is the wall, and beyond it nothing is drawn, because there is nothing; two rooms also have the wall across the middle, open in the door, with a post at each end. The donut has no such lines.</p>
       <p class="note">Where the nodes of the view Graph lie: tidy, every ring a regular octagon on the grid, or by forces, the way the Wolfram project places its graphs.</p>
       <div id="placings" class="row">
         <button type="button" data-placing="tidy" aria-pressed="true" title="Every ring a regular octagon, the rings as the cells lie on the map" data-px="TIDY"></button>
@@ -1076,7 +1090,7 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Organisms</b> <span lang="ja">(いきもの)</span> shows one organism close up, in a window on the grid of the surface, laid flat. An organism is a group of alive cells whose signals meet (they are at most two cells apart): a glider, a block, a blinker. The window shows as much of the grid round it as the screen has room for, so a larger screen shows more. The picture stands still: it moves only when the organism comes near the edge of the window, and then far enough ahead that it has the whole window to cross. The world plays slowly on this screen, one generation a second at most.</p>
       <p>The two arrow buttons go to the organism before and to the next one (they are numbered from the top of the map down); on the small map, which shows the whole world and a frame round the window, tap an organism to look at it. <b>Minus and plus</b> (or the wheel, or two fingers) show more of the world or look closer, from a single cell to the whole world; the number between them says how many cells the window shows. When you have zoomed in so far that the organism no longer fits, the window shows one of its cells in the middle and stays with it while the organism is there; tap another cell to go there. Otherwise a tap on the picture goes to the next organism.</p>
       <p>The row <b>Normal, Numbers, Graph</b> at the bottom of that screen changes what the window shows. Nothing moves when you switch.</p>
-      <p><b>Normal</b> shows the organism as it is. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map: an alive cell is a face in the colour of its age, a dead one a grey rock. The thin plain lines and the coloured life signals are those of the donut; the organism shown has the strong lines, others nearby have fainter ones. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node. Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
+      <p><b>Normal</b> shows the organism as it is. Every cell is a node, the same distance from node to node everywhere, so an organism has the shape it has on the map: an alive cell is a face in the colour of its age, a dead one a grey rock. The thin plain lines and the coloured life signals are those of the donut; the organism shown has the strong lines, others nearby have fainter ones. A large organism is drawn small: first the faces become blocks, then the lines are left out. What the window shows of the hypergraph: of every node the relation that says alive or dead and the one that names its eight neighbours, and the eight lines of every alive node (beside a wall: the neighbours and lines it has). Left out are each node's round, its ready mark, and the lines of the dead nodes.</p>
       <p><b>Numbers</b> shows what the coming generation does. Every node carries a number: how many of its eight neighbours are alive, its life support. And colours say what comes:</p>
       <ul class="legend">
         <li><i class="mark stays"></i><span>a <b>filled light tile</b> is alive and stays alive: its number is 2 or 3</span></li>
@@ -1103,6 +1117,7 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Near and far.</b> Zoomed in to a single cell, the picture is that cell's ring alone: 8 nodes, its rim and its four cords, without the lines to its neighbours. With a few cells in the window every arrow has its head, and two arrows along the same two nodes lie side by side; tap one to hear which arrow it is. Further out, where cells are small, every arrow is a plain line and the nodes are left out. And where a ring could not be read at all, the window is drawn as in Normal: look closer to see the rings.</p>
       <p><b>A knot.</b> A ring with its four cords across cannot be drawn on paper without two arrows crossing, however the nodes are moved (it holds the graph mathematicians call K3,3). A dead ring can. The Wolfram Physics Project pictures particles as such knots in a graph that is flat everywhere else: rules that never undo a knot would carry it along, like a particle. Life is not such a world. Its cells are born and die, so here the knot is only the mark of life, tied and undone by the rules; what travels in Life is a pattern like the glider, made anew from other cells in every generation. And why is a dead cell not simply an empty ring? A rewriting rule can only ask for something that is there, never for something missing, so "dead" needs a mark of its own: the same four cords, resting.</p>
       <p>A cell is 8 nodes and 20 arrows: 8 of the rim, 4 cords, 8 lines out. 17 rewriting rules play Life on this graph, in the same three steps as on the hypergraph of the donut: a cell sends its state along its eight lines, reads the eight messages that come in and counts the alive ones, and then lays its cords. Tests hold that these rules give Life, cell for cell, and that between two generations the graph is exactly what this view draws. The picture shows every arrow between the nodes of its cells; left out are the lines to cells outside the window. The line at the top counts the nodes and the arrows of the window.</p>
+      <p id="walls-graph"><b>Closed doors.</b> With walls (World, the edge of the world) a cell beside a wall keeps its ring of eight doors, but a door towards the wall is <b>closed</b>: no line leaves it and none comes in, so its ring shows doors that lead nowhere (three on a side, five in a corner). A rule can only ask for what is there, so such a ring carries one arrow more, its <b>bridge</b>, drawn dashed: from the last open door to the first, past the closed ones, the short way round the wall. Its four cords lie counted from its first open door, so they can look turned. 7 more rules (in the module model_rings_walls) play Life on such rings: 6 that send for a cell with 1, 3 or 5 closed doors, and 1 with which its reader "hears" a closed door, so that every cell still hears eight times and decides at the tenth step. Tests hold these 24 rules to Life with walls, and that between two generations the graph is exactly what this view draws.</p>
       <p>Where a node lies means nothing in a graph. The picture is <b>tidy</b>: every ring a regular octagon, the rings as the cells lie on the map. Organisms, above in this menu, can also place the nodes <b>by forces</b>, the way the Wolfram project draws its graphs: every arrow pulls its two nodes together, all nodes push each other away, and the nodes settle where the forces balance. The page works that out once for a window of a size, beginning at the tidy places, so it comes out the same every time, for a window of any size. Either way the picture stands still; only faces, cords and the colours of the lines change.</p>
       <p>How the screens belong together: a Wolfram model of 17 rewriting rules plays Life on the hypergraph of the donut, cell for cell, and a second one, also of 17 rules, on the graph of arrows of the view Graph. This game turns that round. It computes with the ordinary rule, which is far faster, and shows what the rules would hold at that moment. Tests hold them equal, relation for relation and arrow for arrow, between every two generations.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ organisms · A add · S menu · 0 fit</p>
@@ -1165,25 +1180,43 @@ body[data-rpg] { overflow: hidden; }
 //   two    two donuts: the upper and the lower half of the map are a ring each, except
 //          in the columns of the door in the middle, where everything is as on the
 //          donut. A diagonal step exactly through an end of the door stays on its ring.
+// With walls (since 2026-11-25, the edge of the world: EDGES):
+//   walled the sheet with walls: the map and nothing beyond it;
+//   rooms  two rooms: the same, with a wall across the middle of the map, open in the
+//          columns of the door of two donuts; a step exactly through an end of the wall
+//          is stopped by it.
+// A cell beside a wall lacks the neighbours beyond it: NO_NEIGHBOUR (-1) in their place.
 //
 // No page in here: loaded first, in the browser and in Node (tests/harness.cjs).
 (function (root) {
   "use strict";
 
-  const FORMS = ["donut", "sheet", "bottle", "klein", "two"];  // in the order of up and down
+  const FORMS = ["donut", "sheet", "bottle", "klein", "two", "walled", "rooms"];  // in the order of up and down
   // How each form is glued, which is all a form says about neighbours: the Klein bottle
   // is there twice (a figure of eight and a hand-blown bottle), one gluing, two pictures;
   // and so is the donut (the ring, and the sheet: the map laid flat, its links over the
   // borders drawn as bent edges; since 2026-11-25).
-  const GLUING = { donut: "donut", sheet: "donut", klein: "klein", bottle: "klein", two: "two" };
+  const GLUING = { donut: "donut", sheet: "donut", klein: "klein", bottle: "klein", two: "two", walled: "walled", rooms: "rooms" };
+  const EDGES = ["wraps", "walls"];
+  const NO_NEIGHBOUR = -1;
+  // The form a switch of the edge goes to, and back (forms.COUNTERPART; the agent's choice
+  // of 2026-11-25, theirs to change).
+  const COUNTERPART = { donut: "walled", sheet: "walled", klein: "walled", bottle: "walled", two: "rooms", walled: "sheet", rooms: "two" };
   const gluing = (form) => GLUING[form] || "donut";
   const isKlein = (form) => GLUING[form] === "klein";
+  // The edge of the world of a form: "walls" or "wraps" (round).
+  const edgeOf = (form) => (GLUING[form] === "walled" || GLUING[form] === "rooms" ? "walls" : "wraps");
+  const walled = (form) => edgeOf(form) === "walls";
+  // The forms offered with an edge, in the order of up and down.
+  const offered = (edge) => FORMS.filter((form) => edgeOf(form) === edge);
+  const counterpart = (form) => COUNTERPART[form] || "walled";
   // The form whose flat pictures a form has (the marks on the map, the plane of the screen
   // ORGANISMS): the sheet has the donut's; every other form its own.
   const planeForm = (form) => (gluing(form) === "donut" ? "donut" : form);
   const DIRECTIONS = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
   const MIN_SIDE = 3;
-  const MIN_TWO_ROWS = 6;  // two rings of at least three rows each
+  const MIN_TWO_ROWS = 6;  // two rings (or rooms) of at least three rows each
+  const halves = (form) => form === "two" || form === "rooms";
 
   // The columns of the door of two donuts: a quarter of them, made even (rounded down, at
   // least two), in the middle of the map.
@@ -1195,24 +1228,33 @@ body[data-rpg] { overflow: hidden; }
   function fits(form, width, height) {
     if (!FORMS.includes(form)) throw new Error("not a form: " + form);
     if (Math.min(width, height) < MIN_SIDE) return false;
-    return form !== "two" || (height % 2 === 0 && height >= MIN_TWO_ROWS);
+    return !halves(form) || (height % 2 === 0 && height >= MIN_TWO_ROWS);
   }
 
   const wrap = (value, size) => ((value % size) + size) % size;
 
-  // The cell that lies in direction k of cell (r, c).
+  // Whether a step from column c in direction column dc over a line goes through the door.
+  function throughDoor(width, c, dc) {
+    const door = doorOf(width);
+    const at = 2 * c + 1 + dc;  // twice the place along the line where it is crossed
+    return door.width >= width || (2 * door.first < at && at < 2 * (door.first + door.width));
+  }
+
+  // The cell that lies in direction k of cell (r, c); NO_NEIGHBOUR where a wall is in the way.
   function stepFrom(form, width, height, r, c, k) {
     const [dr, dc] = DIRECTIONS[k];
     let row = r + dr;
     const column = c + dc;
+    if (walled(form)) {
+      if (row < 0 || row >= height || column < 0 || column >= width) return NO_NEIGHBOUR;
+      if (form === "rooms" && dr !== 0 && Math.max(r, row) === height / 2 && !throughDoor(width, c, dc)) return NO_NEIGHBOUR;
+      return row * width + column;
+    }
     if (isKlein(form) && (column < 0 || column >= width)) row = height - 1 - row;
     if (form === "two" && dr !== 0) {
       const half = height / 2;
-      if (wrap(Math.max(r, row), half) === 0) {  // crosses a line: above row 0, half or height
-        const door = doorOf(width);
-        const at = 2 * c + 1 + dc;  // twice the place along the line where it is crossed
-        const through = door.width >= width || (2 * door.first < at && at < 2 * (door.first + door.width));
-        if (!through) row = Math.floor(r / half) * half + wrap(row, half);  // stays on its ring
+      if (wrap(Math.max(r, row), half) === 0 && !throughDoor(width, c, dc)) {  // crosses a wall: above row 0, half or height
+        row = Math.floor(r / half) * half + wrap(row, half);  // stays on its ring
       }
     }
     return wrap(row, height) * width + wrap(column, width);
@@ -1230,9 +1272,36 @@ body[data-rpg] { overflow: hidden; }
     return Array.from(neighboursInto(new Array(8), form, width, height, index));
   }
 
-  // The direction in which the neighbour of `index` in `direction` has `index`.
+  // Where the round of a cell starts (wolframs_game_of_life.walls.turns): `turn`, the
+  // direction after the run of its missing neighbours (0 without a wall), and `missing`,
+  // how many it lacks. The models with walls go round a cell from there, clockwise, the
+  // missing ones last.
+  function turnOf(form, width, height, index) {
+    const around = neighbours(form, width, height, index);
+    let missing = 0;
+    let turn = 0;
+    for (let k = 0; k < 8; k++) {
+      if (around[k] === NO_NEIGHBOUR) missing++;
+      else if (around[(k + 7) % 8] === NO_NEIGHBOUR) turn = k;
+    }
+    return { turn, missing };
+  }
+
+  // The neighbours a cell has in the order of its round (turnOf), into `out`; returns how
+  // many (8 - missing).
+  function ringInto(out, form, width, height, index) {
+    const { turn, missing } = turnOf(form, width, height, index);
+    const r = Math.floor(index / width);
+    const c = index - r * width;
+    for (let i = 0; i < 8 - missing; i++) out[i] = stepFrom(form, width, height, r, c, (turn + i) % 8);
+    return 8 - missing;
+  }
+
+  // The direction in which the neighbour of `index` in `direction` has `index`
+  // (NO_NEIGHBOUR where there is none).
   function backDoor(form, width, height, index, direction) {
     const other = stepFrom(form, width, height, Math.floor(index / width), index % width, direction);
+    if (other === NO_NEIGHBOUR) return NO_NEIGHBOUR;
     const r = Math.floor(other / width);
     for (let k = 0; k < 8; k++) {
       if (stepFrom(form, width, height, r, other - r * width, k) === index) return k;
@@ -1249,12 +1318,12 @@ body[data-rpg] { overflow: hidden; }
   // Whether the cells of a row have neighbours that are not found by plain adding.
   function lineRow(form, height, row) {
     if (row === 0 || row === height - 1) return true;
-    return form === "two" && (row === height / 2 - 1 || row === height / 2);
+    return halves(form) && (row === height / 2 - 1 || row === height / 2);
   }
 
   // The cells whose neighbours are not found by plain adding (without wrapping): the
-  // first and the last row and column, and for two donuts the rows beside the middle
-  // line, in the order of the cells.
+  // first and the last row and column, and for two donuts and two rooms the rows beside
+  // the middle line, in the order of the cells.
   function besideLines(form, width, height) {
     const found = [];
     for (let row = 0; row < height; row++) {
@@ -1273,12 +1342,17 @@ body[data-rpg] { overflow: hidden; }
   // upside down or not. The donut repeats every width and height; a Klein bottle every
   // height, and beyond the left or the right border upside down; two donuts show, in
   // the columns of the door, the world as the donut does, and in the other columns the
-  // ring `ring` (0 the upper half of the map, 1 the lower) again and again.
+  // ring `ring` (0 the upper half of the map, 1 the lower) again and again. With walls the
+  // plane is the map and nothing else: beyond it no cell (NO_NEIGHBOUR).
   function ringOf(form, height, row) {
     return form === "two" && row >= height / 2 ? 1 : 0;
   }
 
   function planeCell(form, width, height, ring, x, y) {
+    if (walled(form)) {
+      const inside = x >= 0 && x < width && y >= 0 && y < height;
+      return { cell: inside ? y * width + x : NO_NEIGHBOUR, flipped: false };
+    }
     const column = wrap(x, width);
     if (isKlein(form) && wrap(Math.floor(x / width), 2) === 1) {
       return { cell: wrap(height - 1 - y, height) * width + column, flipped: true };
@@ -1296,9 +1370,11 @@ body[data-rpg] { overflow: hidden; }
 
   // The place of a cell in that plane nearest to (x, y): {x, y, flipped}, or null where
   // the plane does not show it (two donuts: a cell of the other ring outside the door).
+  // With walls a cell has one place only, its own on the map.
   function planeNear(form, width, height, ring, cell, x, y) {
     const r = Math.floor(cell / width);
     const c = cell - r * width;
+    if (walled(form)) return { x: c, y: r, flipped: false };
     const near = (value, start, period) => start + period * Math.round((value - start) / period);
     if (isKlein(form)) {
       const straight = { x: near(x, c, 2 * width), y: near(y, r, height), flipped: false };
@@ -1347,7 +1423,8 @@ body[data-rpg] { overflow: hidden; }
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.forms = {
-    FORMS, GLUING, gluing, isKlein, planeForm, DIRECTIONS, doorOf, fits, neighboursInto, neighbours, backDoor, linked, lineRow, besideLines, chart,
+    FORMS, GLUING, EDGES, NO_NEIGHBOUR, COUNTERPART, gluing, isKlein, edgeOf, offered, counterpart, planeForm, DIRECTIONS, doorOf, fits,
+    neighboursInto, neighbours, turnOf, ringInto, backDoor, linked, lineRow, besideLines, chart,
     ringOf, planeCell, planeNear, extentOf, chartWindow,
   };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -1542,10 +1619,19 @@ body[data-rpg] { overflow: hidden; }
       }
     }
     const { cells: beside, around } = edgesOf(world);
-    for (let k = 0; k < beside.length; k++) {
-      const a = k * 8;
-      settle(beside[k], cells[around[a]] + cells[around[a + 1]] + cells[around[a + 2]] + cells[around[a + 3]] +
-        cells[around[a + 4]] + cells[around[a + 5]] + cells[around[a + 6]] + cells[around[a + 7]]);
+    if (forms().edgeOf(form) === "walls") {
+      // a neighbour beyond a wall is not there (forms.NO_NEIGHBOUR): it counts as dead
+      for (let k = 0; k < beside.length; k++) {
+        let n = 0;
+        for (let d = k * 8; d < k * 8 + 8; d++) if (around[d] >= 0) n += cells[around[d]];
+        settle(beside[k], n);
+      }
+    } else {
+      for (let k = 0; k < beside.length; k++) {
+        const a = k * 8;
+        settle(beside[k], cells[around[a]] + cells[around[a + 1]] + cells[around[a + 2]] + cells[around[a + 3]] +
+          cells[around[a + 4]] + cells[around[a + 5]] + cells[around[a + 6]] + cells[around[a + 7]]);
+      }
     }
     world.cells = next;
     world.next = cells;
@@ -1638,13 +1724,16 @@ body[data-rpg] { overflow: hidden; }
   }
 
   // Sets the alive cells of a shape, its top left corner at (top, left); what leaves the
-  // world on one side comes back on the other. Dead cells of the shape change nothing.
+  // world on one side comes back on the other, and with walls is cut off (there is
+  // nothing beyond them). Dead cells of the shape change nothing.
   function stamp(world, shape, top, left) {
     const { width: w, height: h } = world;
+    const walls = world.form && forms().edgeOf(world.form) === "walls";
     let changed = false;
     for (let y = 0; y < shape.height; y++) {
       for (let x = 0; x < shape.width; x++) {
         if (!shape.cells[y * shape.width + x]) continue;
+        if (walls && (top + y < 0 || top + y >= h || left + x < 0 || left + x >= w)) continue;
         const row = (((top + y) % h) + h) % h;
         const column = (((left + x) % w) + w) % w;
         if (setCell(world, row * w + column, 1)) changed = true;
@@ -1781,6 +1870,7 @@ body[data-rpg] { overflow: hidden; }
   function resized(world, width, height) {
     const result = createWorld(width, height);
     if (world.form && forms().fits(world.form, width, height)) result.form = world.form;
+    else if (world.form && forms().edgeOf(world.form) === "walls") result.form = "walled";  // the edge stays
     const dy = Math.floor((height - world.height) / 2);
     const dx = Math.floor((width - world.width) / 2);
     for (let y = 0; y < world.height; y++) {
@@ -1850,6 +1940,20 @@ body[data-rpg] { overflow: hidden; }
   const forms = () => root.RetroLife.forms;  // forms.js, loaded before this file
   // (the sheet is the donut's gluing: it takes the donut's quick ways)
   const plain = (form) => !form || forms().gluing(form) === "donut";
+  // With walls (forms.edgeOf; since 2026-11-25) a cell beside a wall lacks some neighbours
+  // (-1 in a list of eight), and the models are those of wolframs_game_of_life.model_walls
+  // and model_rings_walls: a cell's relations name only the neighbours it has, in the order
+  // of its round (forms.ringInto: from the first after the wall, clockwise), and its
+  // neighbourhood repeats the cell in the places of the missing ones.
+  const walled = (form) => Boolean(form) && forms().edgeOf(form) === "walls";
+
+  // The neighbours a cell has, in the order of the model's round of it: the eight of
+  // DIRECTIONS, or with walls those of forms.ringInto.
+  function roundNeighbours(width, height, index, form) {
+    if (!walled(form)) return neighbours(width, height, index, form);
+    const out = new Array(8);
+    return out.slice(0, forms().ringInto(out, form, width, height, index));
+  }
 
   // The cells (0-based) round a cell, in the order of DIRECTIONS; the world wraps round
   // (or has another form).
@@ -1890,12 +1994,17 @@ body[data-rpg] { overflow: hidden; }
     return round;
   }
 
-  // The 20 relations of one cell, in the order of the model's start hypergraph.
+  // A cell's neighbourhood: the cell, the neighbours it has, and itself in the places of
+  // the missing ones (model_walls.neighbourhood; always nine places).
+  const neighbourhood = (node, around) => [node, ...around, ...repeated(node, 8 - around.length)];
+
+  // The 20 relations of one cell, in the order of the model's start hypergraph (with
+  // walls 2 k + 4 for a cell of k neighbours).
   function relationsOfCell(cells, width, height, index, form) {
     const node = FIRST_NODE + index;
-    const around = neighbours(width, height, index, form).map((n) => n + FIRST_NODE);
+    const around = roundNeighbours(width, height, index, form).map((n) => n + FIRST_NODE);
     return [
-      [node, ...around],
+      neighbourhood(node, around),
       ...roundOf(node, around),
       mark(cells, node),
       ready(node),
@@ -1912,8 +2021,35 @@ body[data-rpg] { overflow: hidden; }
     return relations;
   }
 
-  function relationCount(width, height) {
-    return RELATIONS_PER_CELL * width * height;
+  // How many neighbours the cells beside the walls lack, all together, and how many cells
+  // lack any (0 without walls). Kept for the last size and form asked (the HUD asks often).
+  let missingKept = { key: "", missing: 0, walls: 0 };
+  function missingOf(width, height, form) {
+    if (!walled(form)) return { missing: 0, walls: 0 };
+    const key = form + " " + width + " " + height;
+    if (missingKept.key === key) return missingKept;
+    let missing = 0;
+    let beside = 0;
+    for (const index of forms().besideLines(form, width, height)) {
+      const m = forms().turnOf(form, width, height, index).missing;
+      missing += m;
+      if (m) beside++;
+    }
+    missingKept = { key, missing, walls: beside };
+    return missingKept;
+  }
+
+  // How many relations the hypergraph has between two generations: 20 a cell, and with
+  // walls 2 k + 4 for a cell of k neighbours (mapping.relation_count).
+  function relationCount(width, height, form) {
+    return RELATIONS_PER_CELL * width * height - 2 * missingOf(width, height, form).missing;
+  }
+
+  // How many arrows the directed graph has: 20 a cell, and with walls one fewer for each
+  // closed door and one more (the bridge) for each cell beside a wall (mapping.arrow_count).
+  function arrowCount(width, height, form) {
+    const { missing, walls } = missingOf(width, height, form);
+    return ARROWS_PER_CELL * width * height - missing + walls;
   }
 
   // A relation in the notation of the Wolfram project.
@@ -1939,7 +2075,11 @@ body[data-rpg] { overflow: hidden; }
       const b = last === first ? "home" : "neighbour " + last;
       return "in the round of cell " + first + ", " + b + " comes after " + a;
     }
-    if (size === 9) return cell(first) + " and its eight neighbours, clockwise from the one above";
+    if (size === 9) {
+      const k = relation.slice(1).filter((node) => node !== first).length;
+      if (k === 8) return cell(first) + " and its eight neighbours, clockwise from the one above";
+      return cell(first) + " and its " + k + " neighbours, clockwise from the first after the wall; it lacks " + (8 - k) + " (a wall)";
+    }
     if (size === 4 && first !== last && relation[1] === last && relation[2] === last) {
       return "the line from cell " + first + " to cell " + last + " is empty";
     }
@@ -2018,12 +2158,21 @@ body[data-rpg] { overflow: hidden; }
   const cordsOf = (isAlive) => (isAlive ? ACROSS : ALONG);
 
   // The 20 arrows of one cell, in the order of the model's start graph: rim, cords, lines.
+  // With walls (model_rings_walls): the cords counted from the cell's first open door
+  // (forms.turnOf), a line out of every open door only, then the bridge, from the last open
+  // door to the first, past the closed ones (the mark of a wall).
   function arrowsOfCell(cells, width, height, index, form) {
     const arrows = [];
     for (let i = 0; i < DOORS; i++) arrows.push([door(index, i), door(index, (i + 1) % DOORS)]);
-    for (const [a, b] of cordsOf(cells[index])) arrows.push([door(index, a), door(index, b)]);
+    const { turn, missing } = walled(form) ? forms().turnOf(form, width, height, index) : { turn: 0, missing: 0 };
+    const at = (i) => door(index, (turn + i) % DOORS);
+    for (const [a, b] of cordsOf(cells[index])) arrows.push([at(a), at(b)]);
     const around = neighbours(width, height, index, form);
-    for (let i = 0; i < DOORS; i++) arrows.push([door(index, i), door(around[i], backDoorOf(width, height, index, i, form))]);
+    for (let i = 0; i < DOORS - missing; i++) {
+      const d = (turn + i) % DOORS;
+      arrows.push([door(index, d), door(around[d], backDoorOf(width, height, index, d, form))]);
+    }
+    if (missing) arrows.push([at(DOORS - 1 - missing), at(0)]);
     return arrows;
   }
 
@@ -2043,8 +2192,10 @@ body[data-rpg] { overflow: hidden; }
 
   // What an arrow of a world at rest says, in words. Along a double side of a dead ring
   // one arrow is the rim and one the cord; `cord` says which one is meant. With a form
-  // other than the donut a line may end at another door than the opposite one.
-  function describeArrow(arrow, columns, cord, form) {
+  // other than the donut a line may end at another door than the opposite one. With walls
+  // (`rows` needed then) the cords lie counted from the cell's first open door, and a cell
+  // beside a wall has its bridge (model_rings_walls.describe).
+  function describeArrow(arrow, columns, cord, form, rows) {
     const cell = (index) => "the cell in row " + (Math.floor(index / columns) + 1) + ", column " + (index % columns + 1);
     const a = arrow[0] - FIRST_NODE;
     const b = arrow[1] - FIRST_NODE;
@@ -2058,9 +2209,15 @@ body[data-rpg] { overflow: hidden; }
       return "the line from " + cell(from) + " to " + cell(to) + ", its neighbour " + DIRECTION_NAMES[tail] + ": empty";
     }
     const doors = "from its door " + DIRECTION_NAMES[tail] + " to its door " + DIRECTION_NAMES[head];
-    if (head - tail === DOORS / 2 && tail < DOORS / 2) return "a cord across the ring of " + cell(from) + ", " + doors + ": alive";
+    const ring = walled(form) ? forms().turnOf(form, columns, Number(rows), from) : { turn: 0, missing: 0 };
+    const t = (tail - ring.turn + DOORS) % DOORS;  // counted from the first open door
+    const h = (head - ring.turn + DOORS) % DOORS;
+    if (ring.missing && t === DOORS - 1 - ring.missing && h === 0) {
+      return "the bridge of " + cell(from) + ", " + doors + ", past its closed doors: the mark of a wall";
+    }
+    if (h - t === DOORS / 2 && t < DOORS / 2) return "a cord across the ring of " + cell(from) + ", " + doors + ": alive";
     if (turn === 1) {
-      if (cord && tail < DOORS / 2) return "a cord along the rim of " + cell(from) + ", " + doors + ": dead";
+      if (cord && t < DOORS / 2 && h - t === 1) return "a cord along the rim of " + cell(from) + ", " + doors + ": dead";
       return "the rim of " + cell(from) + ", " + doors;
     }
     throw new Error("an arrow of no known kind: " + text(arrow));
@@ -2194,20 +2351,28 @@ body[data-rpg] { overflow: hidden; }
   // each to the door of the neighbour that leads back. Seen upside down, a cell's
   // neighbour above on the screen is its neighbour below on the map. For a window of the
   // donut this is ringWindow (mapping.ring_window_of; a test holds both).
+  // With walls a place beyond the map holds no cell (-1) and nothing is drawn there; a cell
+  // beside a wall has its cords counted from its first open door and its bridge (an arrow
+  // of the kind "bridge"), and no line leaves a closed door (mapping.ring_window_of).
   function ringWindowOf(cells, width, height, win, form) {
     const { rows, columns } = win;
     const order = Array.from(win.cells);
     const flipped = Array.from(win.flipped, Boolean);
     const arrows = [];
     for (const cell of order) {
+      if (cell < 0) continue;
       for (let i = 0; i < DOORS; i++) arrows.push({ nodes: [door(cell, i), door(cell, (i + 1) % DOORS)], kind: "rim", cell });
       const lie = cells[cell] ? "cord across" : "cord along";
-      for (const [a, b] of cordsOf(cells[cell])) arrows.push({ nodes: [door(cell, a), door(cell, b)], kind: lie, cell });
+      const { turn, missing } = walled(form) ? forms().turnOf(form, width, height, cell) : { turn: 0, missing: 0 };
+      const at = (i) => door(cell, (turn + i) % DOORS);
+      for (const [a, b] of cordsOf(cells[cell])) arrows.push({ nodes: [at(a), at(b)], kind: lie, cell });
+      if (missing) arrows.push({ nodes: [at(DOORS - 1 - missing), at(0)], kind: "bridge", cell });
     }
     const around = new Array(8);
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < columns; i++) {
         const cell = order[j * columns + i];
+        if (cell < 0) continue;
         neighboursInto(around, width, height, cell, form);
         for (let d = 0; d < DOORS; d++) {
           const j2 = j + DIRECTIONS[d][0];
@@ -2215,16 +2380,16 @@ body[data-rpg] { overflow: hidden; }
           if (j2 < 0 || i2 < 0 || j2 >= rows || i2 >= columns) continue;
           const other = order[j2 * columns + i2];
           const m = flipped[j * columns + i] ? (12 - d) % DOORS : d;  // the direction on the map
-          if (around[m] !== other) continue;
+          if (other < 0 || around[m] !== other) continue;
           arrows.push({ nodes: [door(cell, m), door(other, backDoorOf(width, height, cell, m, form))], kind: "line", cell });
         }
       }
     }
     const nodes = [];
-    for (const cell of order) for (let i = 0; i < DOORS; i++) nodes.push(door(cell, i));
+    for (const cell of order) if (cell >= 0) for (let i = 0; i < DOORS; i++) nodes.push(door(cell, i));
     return {
       top: win.top, left: win.left, rows, columns, cells: order, flipped,
-      alive: order.map((cell) => (cells[cell] ? 1 : 0)), nodes, arrows,
+      alive: order.map((cell) => (cell >= 0 && cells[cell] ? 1 : 0)), nodes, arrows,
     };
   }
 
@@ -2252,9 +2417,11 @@ body[data-rpg] { overflow: hidden; }
       };
       const round = new Array(8);
       for (let index = 0; index < count; index++) {
-        forms().neighboursInto(round, form, width, height, index);
-        for (let d = 0; d < 8; d++) add(index, round[d]);
-        for (let d = 0; d < 7; d++) add(round[d], round[d + 1]);
+        // with walls: the neighbours the cell has, in the order of its round
+        const k = walled(form) ? forms().ringInto(round, form, width, height, index) : 8;
+        if (k === 8) forms().neighboursInto(round, form, width, height, index);
+        for (let d = 0; d < k; d++) add(index, round[d]);
+        for (let d = 0; d < k - 1; d++) add(round[d], round[d + 1]);
       }
       return Uint32Array.from(found);
     }
@@ -2281,6 +2448,7 @@ body[data-rpg] { overflow: hidden; }
   // s puts {s,s,s,r} on the line to each of its neighbours r (a dead one {s,s,r,r}). So
   // these are the eight lines out of every alive cell, as [sender, receiver, ...],
   // 0-based, in the order of the cells and of DIRECTIONS. Each runs along a fixed pair.
+  // (Beside a wall a cell has no line towards it.)
   function aliveLines(cells, width, height, form) {
     let alive = 0;
     for (let index = 0; index < width * height; index++) if (cells[index]) alive++;
@@ -2289,11 +2457,12 @@ body[data-rpg] { overflow: hidden; }
     for (let index = 0; index < width * height; index++) {
       if (!cells[index]) continue;
       for (const receiver of neighbours(width, height, index, form)) {
+        if (receiver < 0) continue;
         lines[at++] = index;
         lines[at++] = receiver;
       }
     }
-    return lines;
+    return at === lines.length ? lines : lines.slice(0, at);
   }
 
   // ---- what the coming generation does: the view NEXT of the screen ORGANISM
@@ -2309,7 +2478,7 @@ body[data-rpg] { overflow: hidden; }
     for (let index = 0; index < width * height; index++) {
       neighboursInto(round, width, height, index, form);
       let count = 0;
-      for (let d = 0; d < 8; d++) if (cells[round[d]]) count++;
+      for (let d = 0; d < 8; d++) if (round[d] >= 0 && cells[round[d]]) count++;
       reaching[index] = count;
       next[index] = count === 3 || (cells[index] && count === 2) ? 1 : 0;
     }
@@ -2340,9 +2509,10 @@ body[data-rpg] { overflow: hidden; }
           const index = waiting.pop();
           forms().neighboursInto(near, form, width, height, index);
           for (let d = 0; d < 8; d++) {
+            if (near[d] < 0) continue;  // a wall
             forms().neighboursInto(far, form, width, height, near[d]);
             for (const other of [near[d], ...far]) {
-              if (cells[other] && labels[other] < 0) {
+              if (other >= 0 && cells[other] && labels[other] < 0) {
                 labels[other] = count;
                 waiting.push(other);
               }
@@ -2452,6 +2622,7 @@ body[data-rpg] { overflow: hidden; }
         const index = waiting.pop();
         const [r, c, flipped] = place.get(index);
         for (const [near, dr, dc, nearFlipped] of screenSteps(form, width, height, index, flipped)) {
+          if (near < 0) continue;  // a wall
           const reached = [[near, dr, dc, nearFlipped]];
           for (const [other, dr2, dc2, turned] of screenSteps(form, width, height, near, nearFlipped)) {
             reached.push([other, dr + dr2, dc + dc2, turned]);
@@ -2522,7 +2693,7 @@ body[data-rpg] { overflow: hidden; }
         neighboursInto(round, width, height, index, form);
         for (let d = 0; d < 8; d++) {
           const other = round[d];
-          if (part[other]) continue;
+          if (other < 0 || part[other]) continue;
           part[other] = mark;
           found.push(other);
         }
@@ -2541,7 +2712,7 @@ body[data-rpg] { overflow: hidden; }
       let count = 0;
       for (let d = 0; d < 8; d++) {
         const other = round[d];
-        if (!cells[other]) continue;
+        if (other < 0 || !cells[other]) continue;
         count++;
         if (!part[other]) entering.push(other, index);
       }
@@ -2556,17 +2727,19 @@ body[data-rpg] { overflow: hidden; }
   // and its neighbourhood; then the lines that enter from outside. They are relations of
   // the hypergraph of the world, a cut of it: the rounds, the ready marks and the lines
   // of the dead cells are left out.
+  // (With walls: a neighbourhood of nine places with the cell again where it lacks one,
+  // and a line only to each neighbour it has.)
   function relationsOfOrganism(width, height, organism, form) {
     const relations = [];
     for (const index of organism.alive) {
       const node = FIRST_NODE + index;
-      const around = neighbours(width, height, index, form).map((n) => n + FIRST_NODE);
-      relations.push(alive(node), [node, ...around]);
+      const around = roundNeighbours(width, height, index, form).map((n) => n + FIRST_NODE);
+      relations.push(alive(node), neighbourhood(node, around));
       for (const n of around) relations.push(emptyLine(node, n));
     }
     for (const index of organism.around.concat(organism.beyond)) {
       const node = FIRST_NODE + index;
-      relations.push(dead(node), [node, ...neighbours(width, height, index, form).map((n) => n + FIRST_NODE)]);
+      relations.push(dead(node), neighbourhood(node, roundNeighbours(width, height, index, form).map((n) => n + FIRST_NODE)));
     }
     for (let at = 0; at < organism.entering.length; at += 2) {
       relations.push(emptyLine(FIRST_NODE + organism.entering[at], FIRST_NODE + organism.entering[at + 1]));
@@ -2574,9 +2747,14 @@ body[data-rpg] { overflow: hidden; }
     return relations;
   }
 
-  // How many relations that are, without writing them down.
-  function relationCountOfOrganism(organism) {
-    return 10 * organism.alive.length + 2 * (organism.around.length + organism.beyond.length) + organism.entering.length / 2;
+  // How many relations that are, without writing them down (with walls the form and the
+  // size of the world are needed: an alive cell has a line per neighbour it has).
+  function relationCountOfOrganism(organism, width, height, form) {
+    let lines = 8 * organism.alive.length;
+    if (walled(form)) {
+      for (const index of organism.alive) lines -= forms().turnOf(form, Number(width), Number(height), index).missing;
+    }
+    return 2 * organism.alive.length + lines + 2 * (organism.around.length + organism.beyond.length) + organism.entering.length / 2;
   }
 
   // A place (x, y, z) for every cell on a ring (a doughnut): the columns go round the
@@ -2857,6 +3035,7 @@ body[data-rpg] { overflow: hidden; }
       const r = Math.floor(index / width), c = index - r * width;
       forms().neighboursInto(round, form, width, height, index);
       for (const other of round) {
+        if (other < 0) continue;  // with walls there are none
         const ro = Math.floor(other / width), co = other - ro * width;
         if (Math.abs(ro - r) <= 1 && Math.abs(co - c) <= 1) continue;
         const key = Math.min(index, other) * count + Math.max(index, other);
@@ -2870,7 +3049,7 @@ body[data-rpg] { overflow: hidden; }
 
   // The places of a form (mapping.places): a help for the eye, the model has none.
   function places(form, width, height) {
-    if (form === "sheet") return sheetPlaces(width, height);
+    if (form === "sheet" || walled(form)) return sheetPlaces(width, height);  // with walls: the sheet too
     if (form === "klein") return kleinPlaces(width, height);
     if (form === "bottle") return bottlePlaces(width, height);
     if (form === "two") return twoPlaces(width, height);
@@ -2904,6 +3083,7 @@ body[data-rpg] { overflow: hidden; }
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.graph = {
     RING_RADIUS, TWO_GAP, fixedPairs, doorPairs, aliveLines, torusPlaces, kleinPlaces, bottlePlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
+    roundNeighbours, arrowCount,
     SHEET_SIDE, SHEET_TURN, BEND_PIECES, sheetPlaces, sheetBend, bendOf, wrapPairs,
     organisms, organismOf, relationsOfOrganism, relationCountOfOrganism, forecast, canonical, shapeKey, layOut,
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
@@ -6638,6 +6818,21 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     return next;
   }
 
+  // The edge of the world (the developer, 2026-11-24: "make it possible to switch it to have
+  // walls"): the form a switch of the edge goes to, `offered` the forms of the edge asked
+  // for (forms.offered). The form itself if it has that edge already; else its counterpart
+  // (forms.counterpart: the walled sheet, two rooms for two donuts, and back the sheet and
+  // two donuts) if it fits the world; else the first form of that edge that fits, or null
+  // if none does. A switch changes the edge and nothing else (the agent's choice of
+  // 2026-11-25, theirs to change).
+  /** @type {Logic["formForEdge"]} */
+  function formForEdge(form, offered, counterpart, fits) {
+    if (offered.includes(form)) return form;
+    const there = counterpart(form);
+    if (offered.includes(there) && fits(there)) return there;
+    return offered.find(fits) ?? null;
+  }
+
   // The screen to the left (by -1) or right (by 1) of the one shown: its key, or null at the end.
   /** @type {Logic["viewAfter"]} */
   function viewAfter(views, key, by) {
@@ -6825,7 +7020,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     cellsOnLine, swipeTurn,
     rateFor, stepsDue, sunPhase, clampSpeed, speedLabel, bigStepAfter, timeControl,
     menuGroup, inMenuGroup, menuBlinker, menuScroll,
-    sideFor, nextForm, viewAfter,
+    sideFor, nextForm, formForEdge, viewAfter,
     TAPPED, lessonFromHash, learnRate, mapLocked, blinker, lessonRoom, roomInsets, lessonScale, lessonMarks,
     keyAction,
   };
@@ -7255,12 +7450,19 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     //   klein  arrows up beside the left border and down beside the right one: the two
     //          borders are glued against each other, upside down;
     //   two    walls along the middle line and the top and bottom border, open over the
-    //          columns of the door, with a post at each end of the opening.
+    //          columns of the door, with a post at each end of the opening;
+    //   walls  (the edge of the world, since 2026-11-25: the sheet with walls, two rooms) a
+    //          wall all round the map, outside it: a thick band of bricks (Kuroi: plain);
+    //          two rooms also the wall along the middle line, open over the door.
     function drawForm(c, scene, frame, width, height) {
       const form = scene.world.form;
       if (!form || root.RetroLife.forms.planeForm(form) === "donut") return;  // (the sheet: the donut's map)
       const theme = state.theme;
       const { s, ox, oy } = frame;
+      if (root.RetroLife.forms.edgeOf(form) === "walls") {
+        drawWalls(c, frame, width, height);
+        if (form === "walled") return;
+      }
       if (root.RetroLife.forms.isKlein(form)) {
         const k = Math.max(2, Math.min(3, Math.round(Math.min(width, height) / 200)));
         const w = 7 * k;
@@ -7301,19 +7503,67 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
       c.fillStyle = theme.border;
       c.fillRect(x0, ym - wall / 2, xa - x0, wall);
       c.fillRect(xb, ym - wall / 2, x1 - xb, wall);
+      const post = s >= FACES_FROM ? (theme.plain ? 5 : 6) : 4;
+      if (form === "rooms") {  // the border is a wall all round: only the posts of the door
+        for (const x of [xa, xb]) c.fillRect(x - post / 2, ym - post / 2, post, post);
+        return;
+      }
       // the frame above and below the door is open: the ground of the page shows through
       const frameWidth = theme.plain ? 1 : 3;
       c.fillStyle = state.pattern || theme.bg;
       c.fillRect(xa, oy - frameWidth, xb - xa, frameWidth);
       c.fillRect(xa, oy + height, xb - xa, frameWidth);
       // the posts at the ends of the opening, on the three lines
-      const post = s >= FACES_FROM ? (theme.plain ? 5 : 6) : 4;
       c.fillStyle = theme.border;
       for (const x of [xa, xb]) {
         c.fillRect(x - post / 2, ym - post / 2, post, post);
         c.fillRect(x - post / 2, oy - frameWidth - post / 2, post, post);
         c.fillRect(x - post / 2, oy + height + frameWidth - post / 2, post, post);
       }
+    }
+
+    // The wall round a world with walls: a band outside the map, beside its border, never
+    // on a face. In the pixel looks it is laid in bricks (rows of blocks in the colour of
+    // the border, the joints in the ground), in Kuroi a plain band; a shape, not a shade.
+    function drawWalls(c, frame, width, height) {
+      const theme = state.theme;
+      const { ox, oy } = frame;
+      const band = theme.plain ? 4 : 8;   // how thick the wall is
+      const gap = theme.plain ? 1 : 3;    // between the map and the wall: the frame's room
+      const x0 = ox - gap - band;
+      const y0 = oy - gap - band;
+      const x1 = ox + width + gap;
+      const y1 = oy + height + gap;
+      c.fillStyle = theme.border;
+      c.fillRect(x0, y0, x1 + band - x0, band);
+      c.fillRect(x0, y1, x1 + band - x0, band);
+      c.fillRect(x0, y0, band, y1 + band - y0);
+      c.fillRect(x1, y0, band, y1 + band - y0);
+      if (theme.plain) return;
+      // the joints of the bricks: a line along the middle of the band, and every brick
+      // length a cut, staggered from one course to the next
+      const brick = 8;
+      c.fillStyle = state.pattern || theme.bg;
+      const half = band / 2;
+      const course = (x, y, w, h, along) => {
+        if (along) {
+          c.fillRect(x, y + half - 1, w, 1);
+          for (let at = x + brick; at < x + w; at += brick) {
+            c.fillRect(at, y, 1, half - 1);
+            if (at + brick / 2 < x + w) c.fillRect(at + brick / 2, y + half, 1, half);
+          }
+        } else {
+          c.fillRect(x + half - 1, y, 1, h);
+          for (let at = y + brick; at < y + h; at += brick) {
+            c.fillRect(x, at, half - 1, 1);
+            if (at + brick / 2 < y + h) c.fillRect(x + half, at + brick / 2, half, 1);
+          }
+        }
+      };
+      course(x0, y0, x1 + band - x0, band, true);
+      course(x0, y1, x1 + band - x0, band, true);
+      course(x0, y0 + band, band, y1 - y0 - band, false);
+      course(x1, y0 + band, band, y1 - y0 - band, false);
     }
 
     // The padlock of a locked map, beside the world's top right corner: above it or to its
@@ -8276,7 +8526,8 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       state.sizes = new Float32Array(count).fill(1);
       state.step = 0;
       const p = state.places;
-      if (form === "sheet") state.step = Math.hypot(p[3] - p[0], p[4] - p[1], p[5] - p[2]);
+      // (the forms with walls are drawn as the sheet too, without its long lines)
+      if (form === "sheet" || root.RetroLife.forms.edgeOf(form) === "walls") state.step = Math.hypot(p[3] - p[0], p[4] - p[1], p[5] - p[2]);
       if (form !== "bottle") return;
       const room = new Float32Array(count);
       const around = new Array(8);
@@ -9055,6 +9306,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         const k = waiting[head++];
         graph.neighboursInto(around, width, height, cells[k], form);
         for (let d = 0; d < 8; d++) {
+          if (around[d] < 0) continue;  // a wall: no neighbour there
           const j = at[around[d]];
           if (j < 0 || placed[j]) continue;
           const x = xs[k] + graph.DIRECTIONS[d][1];
@@ -9262,9 +9514,15 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         chart = forms.chartWindow(form, width, height, piece.ring, fx, fy, columns, rows);
         cellAt = (i, j) => chart.cells[j * columns + i];
       }
-      // two places side by side are neighbours (on two donuts, not at the edges of the doorway)
-      const twoRings = form === "two";
-      const linked = (i, j, i2, j2) => !twoRings || forms.linked(form, width, height, cellAt(i, j), cellAt(i2, j2));
+      // two places side by side are neighbours (on two donuts, not at the edges of the
+      // doorway; with walls, not across the wall, and beyond the map there is no cell: -1)
+      const walled = forms.edgeOf(form) === "walls";
+      const twoRings = form === "two" || walled;
+      const linked = (i, j, i2, j2) => {
+        if (!twoRings) return true;
+        const a = cellAt(i, j), b = cellAt(i2, j2);
+        return a >= 0 && b >= 0 && forms.linked(form, width, height, a, b);
+      };
       const shadeOf = (cell) => Math.max(1, Math.min(AGE_CAP, world.shade[cell]));
       const vx = Math.round(camera.tx - (columns - 1) / 2), vy = Math.round(camera.ty - (rows - 1) / 2);
       state.view = {
@@ -9292,6 +9550,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         for (let j = 0; j < rows; j++) {
           for (let i = 0; i < columns; i++) {
             const cell = cellAt(i, j);
+            if (cell < 0) continue;  // beyond a wall: nothing
             const x = ox + (fx + i) * p, y = oy + (fy + j) * p;
             if (cells[cell]) {
               ctx.fillStyle = forecast ? (next[cell] ? looks.stays : looks.dies) : colours[shadeOf(cell)];
@@ -9349,6 +9608,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         for (let j = 0; j < rows; j++) {
           for (let i = 0; i < columns; i++) {
             const cell = cellAt(i, j);
+            if (cell < 0) continue;  // beyond a wall: nothing
             const x = X(i), y = Y(j);
             if (cells[cell]) {
               ctx.fillStyle = next[cell] ? looks.stays : looks.dies;
@@ -9419,6 +9679,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       for (let j = 0; j < rows; j++) {
         for (let i = 0; i < columns; i++) {
           const cell = cellAt(i, j);
+          if (cell < 0) continue;  // beyond a wall: nothing
           if (!cells[cell]) {
             dot(i, j);
             continue;
@@ -9465,6 +9726,44 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const x = (i) => ox + (fx + i) * p;
       const y = (j) => oy + (fy + j) * p;
       ctx.fillStyle = ink;
+      if (forms.edgeOf(form) === "walls") {
+        // With walls the plane is the map and nothing else: the wall round it is a thick
+        // line half a step outside its border cells, and beyond it no node is drawn (the
+        // ground of the screen, empty). Two rooms: the wall across the middle as well,
+        // open over the door, with a post at each end of the opening. Never on a node.
+        const thick = 2 * line;
+        const left = x(-fx) - p / 2, right = x(width - 1 - fx) + p / 2;
+        const top = y(-fy) - p / 2, bottom = y(height - 1 - fy) + p / 2;
+        const clipX = (a) => Math.max(x(0) - p / 2, Math.min(x(columns - 1) + p / 2, a));
+        const clipY = (a) => Math.max(y(0) - p / 2, Math.min(y(rows - 1) + p / 2, a));
+        const across = (at, from, to) => {
+          if (at < y(0) - p / 2 - 1 || at > y(rows - 1) + p / 2 + 1) return;
+          const a = clipX(from), b = clipX(to);
+          if (b > a) ctx.fillRect(Math.round(a), Math.round(at - thick / 2), Math.round(b - a), thick);
+        };
+        const down = (at, from, to) => {
+          if (at < x(0) - p / 2 - 1 || at > x(columns - 1) + p / 2 + 1) return;
+          const a = clipY(from), b = clipY(to);
+          if (b > a) ctx.fillRect(Math.round(at - thick / 2), Math.round(a), thick, Math.round(b - a));
+        };
+        across(top, left - thick / 2, right + thick / 2);
+        across(bottom, left - thick / 2, right + thick / 2);
+        down(left, top, bottom);
+        down(right, top, bottom);
+        if (form === "rooms") {
+          const door = forms.doorOf(width);
+          const middle = y(height / 2 - 1 - fy) + p / 2;
+          const gateA = x(door.first - fx) - p / 2, gateB = x(door.first + door.width - fx) - p / 2;
+          across(middle, left, gateA);
+          across(middle, gateB, right);
+          const post = Math.max(3, 3 * line);
+          for (const gate of [gateA, gateB]) {
+            if (middle < y(0) - p / 2 || middle > y(rows - 1) + p / 2 || gate < x(0) - p / 2 || gate > x(columns - 1) + p / 2) continue;
+            ctx.fillRect(Math.round(gate - post / 2), Math.round(middle - post / 2), post, post);
+          }
+        }
+        return;
+      }
       if (forms.isKlein(form)) {
         const dash = Math.max(2, Math.min(10, Math.round(p / 3)));
         const seam = (at) => {
@@ -9548,6 +9847,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         // rectangle of the map)
         const shown = new Uint8Array(w * h);
         for (const index of view.cells) {
+          if (index < 0) continue;  // beyond a wall
           shown[Math.min(h - 1, Math.floor(Math.floor(index / world.width) * scale)) * w + Math.min(w - 1, Math.floor((index % world.width) * scale))] = 1;
         }
         for (let i = 0; i < w * h; i++) {
@@ -9590,6 +9890,19 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       const door = forms.doorOf(world.width);
       const a = Math.round((door.first * w) / world.width);
       const b = Math.round(((door.first + door.width) * w) / world.width);
+      if (forms.edgeOf(form) === "walls") {
+        // the wall all round (the small map's own frame is round it too), and two rooms
+        // the wall across the middle, open over the door
+        c.fillRect(0, 0, w, 1);
+        c.fillRect(0, h - 1, w, 1);
+        c.fillRect(0, 0, 1, h);
+        c.fillRect(w - 1, 0, 1, h);
+        if (form === "rooms") {
+          c.fillRect(0, Math.round(h / 2) - 1, a, 1);
+          c.fillRect(b, Math.round(h / 2) - 1, w - b, 1);
+        }
+        return;
+      }
       for (const y of [0, Math.round(h / 2) - 1, h - 1]) {
         c.fillRect(0, y, a, 1);
         c.fillRect(b, y, w - b, 1);
@@ -11567,7 +11880,7 @@ window.RetroLife.app.basics = function (ctx) {
   function savePrefs() {
     store(PREFS, {
       theme: state.theme, speed: state.speed, signals: state.signals, turning: state.spin,
-      mode: state.mode, placing: state.placing, lesson: state.lessonAt || 0,
+      mode: state.mode, placing: state.placing, lesson: state.lessonAt || 0, edge: state.edge,
       explained: state.explained, tutored: state.tutored, learned: Array.from(state.learned || []),
     });
   }
@@ -12062,7 +12375,7 @@ window.RetroLife.app.organism = function (ctx) {
       setPixels("hud-relations", number(state.ringsView.window.arrows.length) + " ARROWS");
     } else {
       setPixels("hud-nodes", drawn ? (now.which + 1) + "/" + number(now.count) + "  " + number(now.nodes) + " NODES" : "0/0");
-      setPixels("hud-relations", drawn ? number(graph.relationCountOfOrganism(drawn)) + " RELATIONS" : "");
+      setPixels("hud-relations", drawn ? number(graph.relationCountOfOrganism(drawn, state.world.width, state.world.height, state.world.form)) + " RELATIONS" : "");
     }
     $("organism-up").disabled = $("organism-down").disabled = now.count < 2;
     $("organism-fate").hidden = !drawn;
@@ -12434,7 +12747,11 @@ window.RetroLife.app.book = function (ctx) {
         else if (target.dataset.try) {
           ctx.closeSheets();
           ctx.chooseFormation(target.dataset.try);
-          hint("Tap the map to place it; the cross puts it away.");
+          // (what the Lexicon says of a shape is said of an open plane: with walls it holds
+          // away from them, and a shape that runs into a wall turns into something else)
+          hint("Tap the map to place it; the cross puts it away." + (state.edge === "walls"
+            ? " The world has walls: place it away from them, or it may not do what the Lexicon says."
+            : ""), state.edge === "walls" ? 5200 : undefined);
         }
       });
       // a swipe to the side turns a page
@@ -12633,12 +12950,19 @@ window.RetroLife.app.rings = function (ctx) {
     const cordColour = css(young.map((value, k) => Math.round(value + (looks.star[k] - value) * 0.55)));
     const lifeColour = css(/** @type {number[]} */ (looks.shades[1]));
     const unit = drawn.step / data.ringGap;
+    // With walls a place of the window beyond the map holds no cell (-1): it has no ring,
+    // and the places, groups and turns are those of the places that hold one.
+    /** @type {number[]} */
+    const held = [];
+    seen.cells.forEach((cell, k) => { if (cell >= 0) held.push(k); });
+    const all = upsideDown(placing === "forces" ? forcePlaces(drawn.columns, drawn.rows) : tidyPlaces(drawn.columns, drawn.rows), seen.flipped);
+    const places = held.length === seen.cells.length ? all : held.flatMap((k) => all.slice(k * graph.DOORS, (k + 1) * graph.DOORS));
     const made = cellGraph.draw(graphSvg, {
       nodes: seen.nodes.map((node, k) => ({ node, group: Math.floor(k / graph.DOORS) })),
-      places: upsideDown(placing === "forces" ? forcePlaces(drawn.columns, drawn.rows) : tidyPlaces(drawn.columns, drawn.rows), seen.flipped),
+      places,
       // an alive cell wears a face in its ring, as on the map (a plain square in a look without faces)
       signs: { face: { rows: theme.plain ? pixel.PLAIN_CELL : pixel.CELLS.young, colours: { X: aliveColour, h: theme.light, o: theme.face } } },
-      groups: seen.alive.map((alive) => ({ colour: alive ? aliveColour : "", alive, sign: alive ? "face" : "" })),
+      groups: held.map((k) => seen.alive[k]).map((alive) => ({ colour: alive ? aliveColour : "", alive, sign: alive ? "face" : "" })),
       // a line out of an alive cell will carry "alive" when the next generation begins:
       // it has the colour of life
       arrows: seen.arrows.map((arrow) => {
@@ -12723,7 +13047,7 @@ window.RetroLife.app.rings = function (ctx) {
         lightArrow(index);
         if (index < 0) return;
         const one = state.ringsView.window.arrows[index];
-        hint(graph.text(one.nodes) + ": " + graph.describeArrow(one.nodes, state.world.width, one.kind.startsWith("cord")), 5200);
+        hint(graph.text(one.nodes) + ": " + graph.describeArrow(one.nodes, state.world.width, one.kind.startsWith("cord"), state.world.form, state.world.height), 5200);
       });
 
       $("placings").addEventListener("click", (event) => {
@@ -12880,7 +13204,7 @@ window.RetroLife.app.draw = function (ctx) {
     setPixels("hud-alive", "ALIVE " + number(world.population));
     if (state.view === "donut") {
       setPixels("hud-nodes", number(world.width * world.height) + " NODES");
-      setPixels("hud-relations", number(graph.relationCount(world.width, world.height)) + " RELATIONS");
+      setPixels("hud-relations", number(graph.relationCount(world.width, world.height, world.form)) + " RELATIONS");
     }
     ctx.showTime();  // back and back to the start, for the generation drawn
     showMood();
@@ -13005,6 +13329,12 @@ window.RetroLife.app.world = function (ctx) {
 
   /** @type {WorldPart["newWorld"]} */
   function newWorld(world) {
+    // a new world (a map, a size, a pattern text) has the edge that is set: with walls the
+    // form of the other edge most alike (logic.formForEdge); the tutorial's always wraps round
+    if (!state.learn && forms.edgeOf(world.form) !== state.edge) {
+      const form = logic.formForEdge(world.form, forms.offered(state.edge), forms.counterpart, (key) => forms.fits(key, world.width, world.height));
+      if (form) life.setForm(world, form);
+    }
     state.world = world;
     state.followed = null;
     ctx.forgetOrganism();
@@ -13097,6 +13427,8 @@ window.RetroLife.app.world = function (ctx) {
     if (saved.rle !== "!") life.stamp(world, life.parseRle(saved.rle), 0, 0);
     // the form it was saved with (an older save has none, and a form that does not fit is a donut)
     if (forms.FORMS.includes(saved.form) && forms.fits(saved.form, world.width, world.height)) life.setForm(world, saved.form);
+    state.edge = forms.edgeOf(world.form);  // the edge it was saved with (an older save: it wraps round)
+    savePrefs();
     newWorld(world);
     hint("Saved world loaded");
     return true;
@@ -13741,6 +14073,15 @@ window.RetroLife.app.screens = function (ctx) {
     two: { name: "TWO DONUTS", kana: "ふたつのドーナツ", row: "TWO",
       says: "Two donuts: the upper and the lower half of the map are a ring each, joined at the door in the middle.",
       marks: "Two donuts: the lines across the map are walls between the two rings. Where they are open is the door from one ring into the other." },
+    // With walls (the developer, 2026-11-24: "if there are walls at the edge of the surfaces.
+    // then the surface stays 2D ... implement surfaces that can be drawn. I guess two: 1. a
+    // sheet, 2. a sheet with "walls" in it aswell")
+    walled: { name: "SHEET WITH WALLS", kana: "かべのあるかみ", row: "SHEET",
+      says: "Sheet with walls: the map laid flat, and nothing beyond its edges. The cells at the edge have fewer neighbours, and no line leaves the paper.",
+      marks: "Walls: the band round the map is a wall. The world ends there; a cell beside it has fewer neighbours, and nothing comes back on the other side." },
+    rooms: { name: "TWO ROOMS", kana: "ふたつのへや", row: "ROOMS",
+      says: "Two rooms: the sheet with walls, and a wall across the middle with a door. Cells on its two sides are not neighbours, except in the door.",
+      marks: "Two rooms: the band round the map and the line across it are walls. Where the line is open is the door from one room into the other." },
   };
 
   // ---- screens
@@ -13801,33 +14142,69 @@ window.RetroLife.app.screens = function (ctx) {
   function setForm(key, quietly) {
     if (state.learn || !forms.FORMS.includes(key)) return false;
     if (!forms.fits(key, state.world.width, state.world.height)) {
-      hint("Two donuts need an even number of rows, at least six.");
+      hint((key === "rooms" ? "Two rooms" : "Two donuts") + " need an even number of rows, at least six.");
       return false;
     }
     life.setForm(state.world, key);
+    state.edge = forms.edgeOf(key);
     showForm();
     if (!quietly) hint(FORM_WORDS[key].says, 5200);
     requestDraw();
     return true;
   }
 
-  // The form before or after this one in the list, round (decision D5).
+  // The edge of the world (the menu part World): wraps round or walls. A switch changes
+  // the edge and nothing else (no cell, shade, generation, camera): the form goes to the
+  // one of the other edge that is most alike (logic.formForEdge). Not in the tutorial,
+  // whose world always wraps round.
+  /** @type {ScreensPart["setEdge"]} */
+  function setEdge(edge) {
+    if (state.learn || !forms.EDGES.includes(edge)) return false;
+    const { width, height } = state.world;
+    const form = logic.formForEdge(state.world.form, forms.offered(edge), forms.counterpart, (key) => forms.fits(key, width, height));
+    if (form === null) return false;
+    const changed = state.edge !== edge;
+    state.edge = edge;
+    if (form === state.world.form) {
+      showForm();
+      return changed;
+    }
+    life.setForm(state.world, form);
+    showForm();
+    hint(edge === "walls"
+      ? "Walls: the world ends at its edge. A cell there has fewer neighbours; what flies into a wall does not come back on the other side."
+      : "Wraps round: what leaves on one side comes back on the other.", 5200);
+    requestDraw();
+    return true;
+  }
+
+  // The form before or after this one in the list, round (decision D5); only the forms of
+  // the edge the world has (with walls the closed surfaces are not offered).
   /** @type {ScreensPart["stepForm"]} */
   function stepForm(by) {
     if (state.learn) return;
+    const edge = forms.edgeOf(state.world.form);
     const next = logic.nextForm(forms.FORMS, forms.FORMS.indexOf(state.world.form), by,
-      (form) => forms.fits(form, state.world.width, state.world.height));
+      (form) => forms.edgeOf(form) === edge && forms.fits(form, state.world.width, state.world.height));
     flash(by < 0 ? "form-up" : "form-down");
     setForm(forms.FORMS[next]);
   }
 
-  // The form shown where it is chosen: the row in the settings, the name at the top.
+  // The form shown where it is chosen: the row in the settings (only the surfaces of the
+  // edge the world has), the edge in its row, the name at the top.
   /** @type {ScreensPart["showForm"]} */
   function showForm() {
-    for (const element of document.querySelectorAll("[data-form]")) {
-      element.setAttribute("aria-pressed", String(element.dataset.form === state.world.form));
-      element.disabled = !forms.fits(/** @type {string} */ (element.dataset.form), state.world.width, state.world.height);
+    const edge = forms.edgeOf(state.world.form);
+    for (const element of /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("[data-form]"))) {
+      const form = /** @type {string} */ (element.dataset.form);
+      element.setAttribute("aria-pressed", String(form === state.world.form));
+      element.disabled = !forms.fits(form, state.world.width, state.world.height);
+      element.hidden = forms.edgeOf(form) !== edge;
     }
+    for (const element of /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("[data-edge]"))) {
+      element.setAttribute("aria-pressed", String(element.dataset.edge === edge));
+    }
+    document.body.dataset.edge = edge;
     showViewName();
   }
 
@@ -13854,6 +14231,7 @@ window.RetroLife.app.screens = function (ctx) {
 
   return {
     moveView,
+    setEdge,
     setForm,
     setView,
     showForm,
@@ -13864,6 +14242,10 @@ window.RetroLife.app.screens = function (ctx) {
       $("form-list").addEventListener("click", (event) => {
         const element = /** @type {HTMLElement} */ (event.target).closest("[data-form]");
         if (element) setForm(/** @type {string} */ (element.dataset.form));
+      });
+      $("edge-list").addEventListener("click", (event) => {
+        const element = /** @type {HTMLElement} */ (event.target).closest("[data-edge]");
+        if (element && setEdge(/** @type {string} */ (element.dataset.edge))) ctx.savePrefs();
       });
     },
   };
@@ -14871,7 +15253,7 @@ window.RetroLife.app.probe = function (ctx) {
           return {
             which: now.which, count: now.count, alive: one ? one.alive.length : 0, nodes: now.nodes, fate: now.fate, name: now.name,
             cells: one ? { alive: one.alive, around: one.around, beyond: one.beyond, next: one.next, entering: one.entering } : null,
-            relationCount: one ? graph.relationCountOfOrganism(one) : 0,
+            relationCount: one ? graph.relationCountOfOrganism(one, state.world.width, state.world.height, state.world.form) : 0,
             relations: one && now.nodes <= 2000 ? graph.relationsOfOrganism(state.world.width, state.world.height, one, state.world.form) : null,
           };
         },
@@ -14951,6 +15333,7 @@ window.RetroLife.app.probe = function (ctx) {
           requestDraw();
         },
         sunPhase: ctx.sunPhase,
+        setEdge: ctx.setEdge, edge: () => state.edge, saveWorld: ctx.saveWorld, loadSaved: ctx.loadSaved,
         loadMap: ctx.loadMap, loadText: ctx.loadText, worldText: ctx.worldText, resizeWorld: ctx.resizeWorld, play: ctx.play, pause: ctx.pause, goBack: ctx.goBack, reset: ctx.reset, setView: ctx.setView, chooseFormation: ctx.chooseFormation, setTheme: ctx.setTheme, setSpeed: ctx.setSpeed, fit: ctx.fit,
       };
     },
@@ -15040,6 +15423,9 @@ window.RetroLife.app.probe = function (ctx) {
   /** @type {State} */
   const state = {
     world: life.createWorld(data.sizes[1], data.sizes[1]),
+    // the edge of the world, a setting (saved with the others): "wraps" round or "walls";
+    // the world's form always has it (forms.edgeOf), but the tutorial's, which wraps round
+    edge: "wraps",
     camera: { x: 0, y: 0, scale: 8 },   // the map
     fitted: true,                       // the map shows the whole world (until it is moved)
     orbit: { turn: donut.turnOf(...RING_VIEWS.tilted), zoom: 1 },  // the ring
@@ -15137,6 +15523,7 @@ window.RetroLife.app.probe = function (ctx) {
   ctx.showStamping();
   ctx.showPlaying();
   ctx.setView("map");
+  state.edge = prefs.edge === "walls" ? "walls" : "wraps";  // (saved before 2026-11-25: none, it wraps round)
   ctx.loadMap(data.start, true);
   ctx.play();
   // a link straight into the tutorial: retro_life.html#learn (where one stopped; the first
