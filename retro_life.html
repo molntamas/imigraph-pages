@@ -803,7 +803,7 @@ body[data-rpg] { overflow: hidden; }
     </button>
     <div id="ring-forms" class="steps" role="group" aria-label="The surface of the world">
       <button type="button" id="form-up" title="The surface before (up arrow key)" aria-label="The surface before" data-icon="up"></button>
-      <button type="button" id="form-down" title="The next surface: donut, Klein bottle, two donuts (down arrow key)" aria-label="The next surface" data-icon="down"></button>
+      <button type="button" id="form-down" title="The next surface: donut, sheet, Klein bottle, two donuts (down arrow key)" aria-label="The next surface" data-icon="down"></button>
     </div>
     <!-- Time, on the screen since 2026-11-24 (the developer: "Move time to the main Map screen
          ... Remove time from the menu"): on the map and on the surfaces, and on a big map, where
@@ -1021,6 +1021,7 @@ body[data-rpg] { overflow: hidden; }
       <p class="note">The surface of the world: what lies beyond the edges of the map. Up and down on that screen go through them too. The cells stay as they are.</p>
       <div id="form-list" class="row" role="group" aria-label="The surface of the world">
         <button type="button" data-form="donut" aria-pressed="true" title="Donut: every edge of the map leads to the opposite edge" data-px="DONUT"></button>
+        <button type="button" data-form="sheet" aria-pressed="false" title="The same donut drawn as a flat sheet, like a piece of paper: the long bent lines join each edge to the opposite one" data-px="SHEET"></button>
         <button type="button" data-form="bottle" aria-pressed="false" title="The same Klein bottle drawn as a hand-blown bottle: the same neighbours, another picture" data-px="BOTTLE"></button>
         <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
         <button type="button" data-form="two" aria-pressed="false" title="Two donuts: the upper and the lower half of the map, joined at a door" data-px="TWO"></button>
@@ -1040,7 +1041,8 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Donut</b> <span lang="ja">(ドーナツ)</span> is the same world with its edges joined. The map wraps round: a glider that leaves on the right comes back on the left, one that leaves at the bottom comes back at the top. On the flat map you have to remember that; the donut shows it. Glue the left and right edges of the map together and you get a tube; bend the tube until its two ends meet and you get a ring. The columns of the map go round the ring, the rows round its tube. Nothing about the game changes: every cell keeps its eight neighbours, and the rule is the same. Only the sizes are not true, as on a globe: cells on the inner side of the ring sit closer together than those on the outer side, though on the map they are all the same.</p>
       <p><b>The donut as a hypergraph.</b> The same world can be written as a hypergraph, the kind of structure the Wolfram Physics Project builds worlds from: nothing but nodes and relations between them. Every cell is a node: a faint grey rock while it is dead, a light while it is alive. What is further away from you is fainter. Each node carries 20 relations in all: one that names it with its eight neighbours, nine that put those neighbours in an order, one that says alive or dead, one that says it is ready, and eight lines to its neighbours. A hypergraph knows no places, only which nodes are related. Place the nodes by those relations alone, and because the world wraps round they close into a ring: the same donut as the glued map. Drag to turn the surface any way you like, also to see it from the top (Surfaces, above in this menu, has ready views); tap a node to set or unset its cell.</p>
       <p><b>The lines of the donut.</b> The thin plain lines are the relations that never change, those that say which cells are neighbours. The coloured lines are <b>life signals</b>: in the Wolfram model every generation begins with each node sending its state along its eight lines, and an alive node sends "alive". A coloured line is one that carries "alive": it has the colour of the node that sends, strong at that node and fading towards a dead neighbour; between two alive nodes it is strong all the way. A dead node that exactly three coloured lines reach is born in the next generation. Links and signals are drawn for worlds of up to 128 x 128 cells; the switch Life signals (Surfaces, above) turns the colours off.</p>
-      <p><b>Other surfaces.</b> Up and down on the second screen, or the row in Surfaces above, give the same cells another surface: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge. On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. The Klein bottle comes twice in the list, with the same cells and the same neighbours, only drawn differently on the second screen: <b>Klein eight</b> <span lang="ja">(クライン 8の字)</span>, a ring whose tube is a figure of eight, and <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span>, a hand-blown bottle. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
+      <p><b>Sheet</b> <span lang="ja">(いちまいのかみ)</span> is the donut before it is glued: the map itself, laid flat in space like a piece of paper, its cells row by row as on the map. The cells, their neighbours and the rule are the donut's; only the picture differs. The long lines that leave the paper at one edge and come back at the opposite edge are the links between neighbours across the edges of the map: every cell on the right edge with its three neighbours on the left edge, every cell on the top edge with its three neighbours on the bottom edge. They are relations of the hypergraph like every short line, and life signals run along them too: a glider that crosses an edge sends its signals the long way round. Glue the paper along them, left edge to right edge and top to bottom, and you get the donut. The lines over the left and right edges go out beyond the paper and round below it, those over the top and bottom edges further down; how they bend is only a help for the eye and stands for nothing. They are drawn at every size, because without them the sheet would look like a world with an edge, which it is not. In a world larger than 128 x 128, where the other links are left out, all of them would be a solid tub under the paper: there the sheet draws only the long lines straight across, of every few rows and columns (64 of each kind), and leaves out the rest.</p>
+      <p><b>Other surfaces.</b> Up and down on the second screen, or the row in Surfaces above, give the same cells another surface: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge (the <b>sheet</b> is the same donut, drawn flat). On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. The Klein bottle comes twice in the list, with the same cells and the same neighbours, only drawn differently on the second screen: <b>Klein eight</b> <span lang="ja">(クライン 8の字)</span>, a ring whose tube is a figure of eight, and <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span>, a hand-blown bottle. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
       <p><b>The other surfaces as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these surfaces every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein eight is a ring whose tube is a figure of eight, and the Klein bottle a hand-blown bottle whose neck, a third as wide as its body, bends back, passes through the wall and opens into the bottom from inside. Both have to pass through themselves (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; on the bottle the nodes of the neck are drawn smaller, because they lie closer together; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
       <p class="keys">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
     </section>
@@ -1156,7 +1158,8 @@ body[data-rpg] { overflow: hidden; }
 // The forms of a world: what lies beyond the borders of the map. A world keeps its cells
 // in every form; a form only says which cells are neighbours (retro_game.forms is the
 // reference, and tests/test_js_forms.py holds the two equal):
-//   donut  every border leads to the opposite border, the same row or column;
+//   donut  every border leads to the opposite border, the same row or column (`sheet`
+//          is the same gluing in another picture: the flat map in space);
 //   klein  a Klein bottle: top and bottom as on the donut; who leaves on the right in
 //          row r comes back on the left in row height - 1 - r, upside down, and back;
 //   two    two donuts: the upper and the lower half of the map are a ring each, except
@@ -1167,12 +1170,17 @@ body[data-rpg] { overflow: hidden; }
 (function (root) {
   "use strict";
 
-  const FORMS = ["donut", "bottle", "klein", "two"];  // in the order of up and down
+  const FORMS = ["donut", "sheet", "bottle", "klein", "two"];  // in the order of up and down
   // How each form is glued, which is all a form says about neighbours: the Klein bottle
-  // is there twice (a figure of eight and a hand-blown bottle), one gluing, two pictures.
-  const GLUING = { donut: "donut", klein: "klein", bottle: "klein", two: "two" };
+  // is there twice (a figure of eight and a hand-blown bottle), one gluing, two pictures;
+  // and so is the donut (the ring, and the sheet: the map laid flat, its links over the
+  // borders drawn as bent edges; since 2026-11-25).
+  const GLUING = { donut: "donut", sheet: "donut", klein: "klein", bottle: "klein", two: "two" };
   const gluing = (form) => GLUING[form] || "donut";
   const isKlein = (form) => GLUING[form] === "klein";
+  // The form whose flat pictures a form has (the marks on the map, the plane of the screen
+  // ORGANISMS): the sheet has the donut's; every other form its own.
+  const planeForm = (form) => (gluing(form) === "donut" ? "donut" : form);
   const DIRECTIONS = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
   const MIN_SIDE = 3;
   const MIN_TWO_ROWS = 6;  // two rings of at least three rows each
@@ -1339,7 +1347,7 @@ body[data-rpg] { overflow: hidden; }
 
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.forms = {
-    FORMS, GLUING, gluing, isKlein, DIRECTIONS, doorOf, fits, neighboursInto, neighbours, backDoor, linked, lineRow, besideLines, chart,
+    FORMS, GLUING, gluing, isKlein, planeForm, DIRECTIONS, doorOf, fits, neighboursInto, neighbours, backDoor, linked, lineRow, besideLines, chart,
     ringOf, planeCell, planeNear, extentOf, chartWindow,
   };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -1822,8 +1830,8 @@ body[data-rpg] { overflow: hidden; }
 // a cell is a ring of eight nodes (ringWindow). cellScope and ringScope are the cuts the
 // former screen CELL drew (one cell and the cells round it); they stay with their tests.
 //
-// Other surfaces (forms.js): a world can be a donut, a Klein bottle or two donuts, which
-// says only which cells are neighbours. Every function that looks at neighbours takes the
+// Other surfaces (forms.js): a world can be a donut (drawn as a ring or as a flat sheet),
+// a Klein bottle or two donuts, which says only which cells are neighbours. Every function that looks at neighbours takes the
 // form as a last argument that may be left out (then: the donut) and asks forms.js; the
 // model is the same 17 rules on that table of neighbours (retro_game.mapping holds it).
 // cellScope, ringScope, blockOf and ringWindow are cuts of the donut only.
@@ -1840,7 +1848,8 @@ body[data-rpg] { overflow: hidden; }
   const NEIGHBOUR_STATE = "neighbour's state";
 
   const forms = () => root.RetroLife.forms;  // forms.js, loaded before this file
-  const plain = (form) => !form || form === "donut";
+  // (the sheet is the donut's gluing: it takes the donut's quick ways)
+  const plain = (form) => !form || forms().gluing(form) === "donut";
 
   // The cells (0-based) round a cell, in the order of DIRECTIONS; the world wraps round
   // (or has another form).
@@ -2739,8 +2748,129 @@ body[data-rpg] { overflow: hidden; }
     return places;
   }
 
+  // The sheet (since 2026-11-25; the developer: "just a flat map, like a piece of paper.
+  // where the ends of flat are connected with the other side of the paper sheet via graph
+  // edges"): the map itself laid flat in space (mapping.sheet_places). Its cells lie row by
+  // row as on the map, SHEET_SIDE / (the longer side of the map) apart, the middle of the
+  // map at the middle of space. The sheet is turned in its plane by SHEET_TURN, the angle
+  // round the axis of the view the screen opens with (TILTED, app.js RING_VIEWS), so that
+  // there its columns go to the right and its rows towards the eye, as on the map seen
+  // lying on a table. The places come from the grid alone, never from the links.
+  const SHEET_SIDE = 4.8;
+  const SHEET_TURN = 3.9;
+
+  // [x, y, z] of the point that lies `u` to the right of the middle of the sheet, `v` below
+  // it on the map and `z` above its plane (towards the eye of TILTED)
+  function sheetPoint(u, v, z) {
+    const c = Math.cos(SHEET_TURN), s = Math.sin(SHEET_TURN);
+    return [u * c - v * s, -u * s - v * c, z];
+  }
+
+  // the middle of cell (row, column) on the sheet: [u, v]
+  function sheetSpot(width, height, row, column) {
+    const step = SHEET_SIDE / Math.max(width, height);
+    return [(column + 0.5 - width / 2) * step, (row + 0.5 - height / 2) * step];
+  }
+
+  function sheetPlaces(width, height) {
+    const places = new Float32Array(width * height * 3);
+    for (let row = 0; row < height; row++) {
+      for (let column = 0; column < width; column++) {
+        const [u, v] = sheetSpot(width, height, row, column);
+        places.set(sheetPoint(u, v, 0), (row * width + column) * 3);
+      }
+    }
+    return places;
+  }
+
+  // The links of the sheet over its borders, drawn bent (mapping.sheet_bend). A link
+  // between two cells that do not lie side by side on the map (they are neighbours over a
+  // border of the map) would, drawn straight, lie in the sheet among the other links and
+  // say nothing. So it goes from the one cell straight out to the edge of the paper (half a
+  // step), on out beyond the edge and round below the sheet on an ellipse to beyond the
+  // opposite edge, and in to the other cell, as if the paper were rolled under until its
+  // two edges meet. The ellipse reaches SHEET_BULGE of half the side crossed beyond each
+  // edge (so that the loops are seen beside the sheet, not only through it) and goes down
+  // SHEET_BENDS.across of half the width of the sheet over the left and the right border,
+  // SHEET_BENDS.down of half its height over the top and the bottom border, so that the two
+  // families can be told apart. Along the edge (a diagonal link) the curve moves evenly from
+  // the row (column) of the one cell to that of the other; the two links over a corner go
+  // with the left and right ones. The bend is a help for the eye and stands for nothing.
+  // Given as BEND_PIECES + 1 points [x, y, z, ...] from the one cell to the other; null for
+  // a link inside the sheet.
+  const BEND_PIECES = 16;
+  const SHEET_BULGE = 0.25;
+  const SHEET_BENDS = { across: 0.7, down: 1.2 };
+
+  function sheetBend(width, height, a, b) {
+    const ra = Math.floor(a / width), ca = a - ra * width;
+    const rb = Math.floor(b / width), cb = b - rb * width;
+    const across = Math.abs(cb - ca) > 1;
+    if (!across && Math.abs(rb - ra) <= 1) return null;
+    const step = SHEET_SIDE / Math.max(width, height);
+    const half = ((across ? width : height) * step) / 2;   // from the middle to the edge crossed
+    const deep = (across ? SHEET_BENDS.across : SHEET_BENDS.down) * half;
+    // the ellipse: its middle `lift` below the sheet, its half axes `wide` (across the edge
+    // crossed) and `tall`, through the two edges of the paper and `deep` at its lowest
+    const wide = (1 + SHEET_BULGE) * half;
+    const slope = Math.sqrt(1 - (half / wide) ** 2);       // lift / tall
+    const tall = deep / (1 + slope);
+    const lift = slope * tall;
+    const start = Math.atan2(slope, half / wide);          // where the edge of the paper is on it
+    const side = across ? Math.sign(ca - cb) : Math.sign(ra - rb);  // +1: the first cell at the right (bottom) edge
+    const [u0, v0] = sheetSpot(width, height, ra, ca);
+    const [u1, v1] = sheetSpot(width, height, rb, cb);
+    const points = new Float32Array((BEND_PIECES + 1) * 3);
+    points.set(sheetPoint(u0, v0, 0), 0);
+    const round = BEND_PIECES - 2;
+    for (let j = 0; j <= round; j++) {
+      const s = j / round;
+      const angle = start - s * (Math.PI + 2 * start);       // the long way round, through the bottom
+      const over = side * wide * Math.cos(angle);            // across the edge crossed
+      const f = (1 - Math.cos(Math.PI * s)) / 2;             // along it, from the one cell to the other
+      const z = j === 0 || j === round ? 0 : tall * Math.sin(angle) - lift;
+      points.set(across ? sheetPoint(over, v0 + (v1 - v0) * f, z) : sheetPoint(u0 + (u1 - u0) * f, over, z), (j + 1) * 3);
+    }
+    points.set(sheetPoint(u1, v1, 0), BEND_PIECES * 3);
+    return points;
+  }
+
+  // The bent line of a link in the picture of a form, or null where it is drawn straight:
+  // only the sheet bends its links over the borders.
+  function bendOf(form, width, height, a, b) {
+    return form === "sheet" ? sheetBend(width, height, a, b) : null;
+  }
+
+  // The fixed links (fixedPairs) between two cells that do not lie side by side on the map,
+  // as [a, b, a, b, ...], the smaller first (mapping.wrap_pairs): on the sheet (the donut's
+  // gluing) the links over the left and right and over the top and bottom border, which
+  // the sheet draws bent at every size, also where a world is too large for the other
+  // links (without them it would look like a world with an edge, which it is not). Found
+  // from the cells beside the lines of the form and their neighbours, so that it is quick
+  // for the largest worlds. A gluing with walls at the borders would have none.
+  function wrapPairs(form, width, height) {
+    const count = width * height;
+    const seen = new Set();
+    const found = [];
+    const round = new Array(8);
+    for (const index of forms().besideLines(form, width, height)) {
+      const r = Math.floor(index / width), c = index - r * width;
+      forms().neighboursInto(round, form, width, height, index);
+      for (const other of round) {
+        const ro = Math.floor(other / width), co = other - ro * width;
+        if (Math.abs(ro - r) <= 1 && Math.abs(co - c) <= 1) continue;
+        const key = Math.min(index, other) * count + Math.max(index, other);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        found.push(Math.min(index, other), Math.max(index, other));
+      }
+    }
+    return Uint32Array.from(found);
+  }
+
   // The places of a form (mapping.places): a help for the eye, the model has none.
   function places(form, width, height) {
+    if (form === "sheet") return sheetPlaces(width, height);
     if (form === "klein") return kleinPlaces(width, height);
     if (form === "bottle") return bottlePlaces(width, height);
     if (form === "two") return twoPlaces(width, height);
@@ -2748,15 +2878,23 @@ body[data-rpg] { overflow: hidden; }
   }
 
   // How far the furthest node of a form can lie from the middle, for any size of world:
-  // the largest distance on a fine sample of the shape (a ball of that radius holds it).
+  // the largest distance on a fine sample of the shape (a ball of that radius holds it;
+  // the sheet's: with its bent links).
   const reaches = {};
   function reachOf(form) {
-    const key = plain(form) ? "donut" : form;
+    const key = form || "donut";
     if (!(key in reaches)) {
       const found = places(key, 96, 96);
       let most = 0;
       for (let at = 0; at < found.length; at += 3) {
         most = Math.max(most, Math.hypot(found[at], found[at + 1], found[at + 2]));
+      }
+      const pairs = key === "sheet" ? wrapPairs(key, 24, 24) : [];
+      for (let k = 0; k < pairs.length; k += 2) {
+        const points = /** @type {Float32Array} */ (bendOf(key, 24, 24, pairs[k], pairs[k + 1]));
+        for (let at = 0; at < points.length; at += 3) {
+          most = Math.max(most, Math.hypot(points[at], points[at + 1], points[at + 2]));
+        }
       }
       reaches[key] = most;
     }
@@ -2766,6 +2904,7 @@ body[data-rpg] { overflow: hidden; }
   root.RetroLife = root.RetroLife || {};
   root.RetroLife.graph = {
     RING_RADIUS, TWO_GAP, fixedPairs, doorPairs, aliveLines, torusPlaces, kleinPlaces, bottlePlaces, twoPlaces, places, reachOf, screenSteps, backDoorOf,
+    SHEET_SIDE, SHEET_TURN, BEND_PIECES, sheetPlaces, sheetBend, bendOf, wrapPairs,
     organisms, organismOf, relationsOfOrganism, relationCountOfOrganism, forecast, canonical, shapeKey, layOut,
     FIRST_NODE, RELATIONS_PER_CELL, DIRECTIONS, NEIGHBOUR_STATE,
     neighbours, neighboursInto, relationsOfCell, relationsOfWorld, relationCount, text, describe, kindOf, cellScope,
@@ -7119,7 +7258,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     //          columns of the door, with a post at each end of the opening.
     function drawForm(c, scene, frame, width, height) {
       const form = scene.world.form;
-      if (!form || form === "donut") return;
+      if (!form || root.RetroLife.forms.planeForm(form) === "donut") return;  // (the sheet: the donut's map)
       const theme = state.theme;
       const { s, ox, oy } = frame;
       if (root.RetroLife.forms.isKlein(form)) {
@@ -7542,7 +7681,10 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
 // an alive node sends "alive" to its eight neighbours when the next generation begins.
 // Such a line has the colour of the node that sends, strong at that node and fading
 // towards a dead neighbour; between two alive nodes it is strong all the way. Links and
-// signals are drawn for worlds of up to LINKS_UP_TO nodes. Behind it all: stars, which
+// signals are drawn for worlds of up to LINKS_UP_TO nodes (some links at every size: those
+// through the door of two donuts, and the sheet's links over its borders). On the sheet
+// (the map laid flat, since 2026-11-25) the links over its borders are drawn bent, round
+// below the sheet (graph.bendOf); every other line is straight. Behind it all: stars, which
 // turn with the ring; in the look Hiru (the day) a blue sky in bands with a glowing sun
 // that goes slowly round the ring by itself, whatever the ring does (it starts low on the
 // right), and the lights have no glow.
@@ -7577,6 +7719,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   const BOTTLE_SMALLEST = 0.35;  // the size of a node of the bottle's neck against the middle one, at least
   const BOTTLE_LARGEST = 1.4;    // ... and of its body at most
   const LINKS_UP_TO = 128 * 128; // nodes; larger worlds are drawn without links and signals
+  const WRAP_LINES_MOST = 64;    // above: the sheet's long lines straight across, per pair of edges, at most
   const STARS = 420;
   const PLAIN_UP_TO = 7000;      // without WebGL: nodes drawn at most
   const PLAIN_LINES_UP_TO = 64 * 64;  // without WebGL: nodes up to which signals are drawn
@@ -7733,10 +7876,17 @@ void main() {
   }
 }`;
 
+  // A piece of a line. A straight link is one piece: each end carries the shade of its own
+  // node (aOwn) and of the node at the other end (aOther), and aAlong is 0. A bent link
+  // (the sheet's links over its borders) is many pieces along its curve: every end carries
+  // the shades of the link's first node (aOwn) and of its last (aOther), and aAlong says how
+  // far along the link it lies (0 at the first node, 1 at the last), so that the colour of
+  // a signal changes along the curve as it does along a straight line.
   const LINE_VERTEX = `
 attribute vec3 aPlace;
-attribute float aOwn;     // the shade of the node at this end of the link
-attribute float aOther;   // the shade of the node at its other end
+attribute float aOwn;     // the shade of the node at this end of the link (bent: its first node)
+attribute float aOther;   // the shade of the node at its other end (bent: its last node)
+attribute float aAlong;   // how far along the link this end lies (straight: 0)
 uniform vec3 uAcross;
 uniform vec3 uUp;
 uniform vec3 uTowards;
@@ -7757,16 +7907,20 @@ varying vec4 vColour;
 vec3 ofAge(float shade) {
   return shade < 1.5 ? uBorn : mix(uYoung, uOld, clamp((shade - 2.0) / (uOldAge - 2.0), 0.0, 1.0));
 }
+// the colour at the node whose shade is mine, the other end's being theirs
+vec4 tint(float mine, float theirs, float near) {
+  bool own = uSignals > 0.5 && mine > 0.5 && mine < uAgeCap + 0.5;
+  bool other = uSignals > 0.5 && theirs > 0.5 && theirs < uAgeCap + 0.5;
+  float far = 0.12 + 0.88 * near * sqrt(near);
+  if (own) return vec4(ofAge(mine), 0.9 * far);            // this node sends "alive"
+  if (other) return vec4(ofAge(theirs), 0.2 * far);        // it only receives
+  return vec4(uLink, 0.1 + 0.9 * near * near);             // a link, no signal on it
+}
 void main() {
   vec3 e = vec3(dot(uAcross, aPlace), dot(uUp, aPlace), dot(uTowards, aPlace));
   float w = uEye - e.z;
   float near = clamp((e.z + uDepth) / (2.0 * uDepth), 0.0, 1.0);
-  bool own = uSignals > 0.5 && aOwn > 0.5 && aOwn < uAgeCap + 0.5;
-  bool other = uSignals > 0.5 && aOther > 0.5 && aOther < uAgeCap + 0.5;
-  float far = 0.12 + 0.88 * near * sqrt(near);
-  if (own) vColour = vec4(ofAge(aOwn), 0.9 * far);            // this node sends "alive"
-  else if (other) vColour = vec4(ofAge(aOther), 0.2 * far);   // it only receives
-  else vColour = vec4(uLink, 0.1 + 0.9 * near * near);        // a link, no signal on it
+  vColour = mix(tint(aOwn, aOther, near), tint(aOther, aOwn, near), aAlong);
   // a little further away than it is, so that a link ends behind its own two nodes
   gl_Position = vec4(e.xy * uFocus / uHalf, (-e.z / (3.0 * uRadius) + uBehind) * w, w);
 }`;
@@ -7989,8 +8143,11 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       signalled: -1,     // the version of the world whose signals the card has
       places: null,
       seeds: null,
-      pairs: null,
-      ends: null,        // per end of a link: the shade of its node, of the other node
+      pairs: null,       // the links drawn, [a, b, ...]
+      always: null,      // the links drawn at every size (the door of two donuts, the borders of the sheet)
+      ends: null,        // per end of a piece of line: the shades of its two nodes (lineVertices)
+      lineOwn: null,
+      lineOther: null,
       linked: false,
       lineEnds: 0,
       pixel: 3,          // screen pixels per pixel of the picture
@@ -8055,7 +8212,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       sky = program(SKY_VERTEX, SKY_FRAGMENT);
       buffers = {
         places: gl.createBuffer(), seeds: gl.createBuffer(), sizes: gl.createBuffer(), shade: gl.createBuffer(),
-        lines: gl.createBuffer(), ends: gl.createBuffer(),
+        lines: gl.createBuffer(), ends: gl.createBuffer(), along: gl.createBuffer(),
         stars: gl.createBuffer(), starSeeds: gl.createBuffer(), corners: gl.createBuffer(),
       };
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.corners);
@@ -8112,13 +8269,15 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // the nodes lie evenly enough for one size. On the hand-blown bottle the neck is a
     // third as wide as the body: every node gets a size by its own room (the nearer of
     // its neighbours to the right and below), against the middle room of all, which sets
-    // the size of a node (`state.step`).
+    // the size of a node (`state.step`). On the sheet every node has the room of one step
+    // of its grid.
     function sizeNodes(form) {
       const count = state.width * state.height;
       state.sizes = new Float32Array(count).fill(1);
       state.step = 0;
-      if (form !== "bottle") return;
       const p = state.places;
+      if (form === "sheet") state.step = Math.hypot(p[3] - p[0], p[4] - p[1], p[5] - p[2]);
+      if (form !== "bottle") return;
       const room = new Float32Array(count);
       const around = new Array(8);
       const apart = (a, b) => Math.hypot(p[a * 3] - p[b * 3], p[a * 3 + 1] - p[b * 3 + 1], p[a * 3 + 2] - p[b * 3 + 2]);
@@ -8148,12 +8307,15 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       for (let i = 0; i < count; i++) state.seeds[i] = random();
       sizeNodes(form);
       state.linked = count <= LINKS_UP_TO;
-      // Up to LINKS_UP_TO nodes every fixed link is drawn. Two donuts draw the links
-      // through the door at every size: they are all that joins the two rings, and
-      // without them a large world would look like two rings apart.
-      const pairs = state.linked ? graph.fixedPairs(world.width, world.height, form) : form === "two" ? graph.doorPairs(world.width, world.height) : null;
+      // Up to LINKS_UP_TO nodes every fixed link is drawn. Some are drawn at every size,
+      // because without them a large world would say something false (`state.always`):
+      // two donuts the links through the door, which are all that joins the two rings
+      // (without them: two rings apart); the sheet its links over the borders (without
+      // them: a world with an edge, which it is not).
+      state.always = form === "two" ? graph.doorPairs(world.width, world.height)
+        : form === "sheet" ? thinned(graph.wrapPairs(form, world.width, world.height), world.width, world.height, state.linked) : null;
+      const pairs = state.linked ? graph.fixedPairs(world.width, world.height, form) : state.always;
       state.pairs = pairs;
-      state.door = form === "two" ? graph.doorPairs(world.width, world.height) : null;
       state.ends = null;
       if (!gl) return;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.places);
@@ -8165,34 +8327,93 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.shade);
       gl.bufferData(gl.ARRAY_BUFFER, count, gl.DYNAMIC_DRAW);
       if (pairs) {
-        const ends = new Float32Array(pairs.length * 3);
-        for (let i = 0; i < pairs.length; i++) {
-          ends[i * 3] = state.places[pairs[i] * 3];
-          ends[i * 3 + 1] = state.places[pairs[i] * 3 + 1];
-          ends[i * 3 + 2] = state.places[pairs[i] * 3 + 2];
-        }
+        const line = lineVertices(pairs, form);
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.lines);
-        gl.bufferData(gl.ARRAY_BUFFER, ends, gl.STATIC_DRAW);
-        state.lineEnds = pairs.length;
-        state.ends = new Uint8Array(pairs.length * 2);
+        gl.bufferData(gl.ARRAY_BUFFER, line.where, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.along);
+        gl.bufferData(gl.ARRAY_BUFFER, line.along, gl.STATIC_DRAW);
+        state.lineEnds = line.own.length;
+        state.lineOwn = line.own;
+        state.lineOther = line.other;
+        state.ends = new Uint8Array(line.own.length * 2);
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ends);
         gl.bufferData(gl.ARRAY_BUFFER, state.ends, gl.DYNAMIC_DRAW);
       }
     }
 
-    // What every end of a link has to know to show a signal: the shade of its own node and
-    // of the node at the other end. An alive node sends "alive" along all its eight lines
+    // The sheet's links over its borders, as drawn: all of them up to LINKS_UP_TO nodes.
+    // Above, where the other links are left out, all of them would be a solid tub under the
+    // sheet (at 512 x 512, 3,070 long lines) that hides what they mean: there it draws those
+    // straight across (a cell with the one in its own row or column at the opposite edge)
+    // of every k-th row and column, at most WRAP_LINES_MOST of each kind, and the page says
+    // so. They show that every edge is joined to the opposite one.
+    function thinned(pairs, width, height, all) {
+      if (all) return pairs;
+      const everyRow = Math.ceil(height / WRAP_LINES_MOST);
+      const everyColumn = Math.ceil(width / WRAP_LINES_MOST);
+      const kept = [];
+      for (let k = 0; k < pairs.length; k += 2) {
+        const ra = Math.floor(pairs[k] / width), ca = pairs[k] - ra * width;
+        const rb = Math.floor(pairs[k + 1] / width), cb = pairs[k + 1] - rb * width;
+        if ((ra === rb && ra % everyRow === 0) || (ca === cb && ca % everyColumn === 0)) kept.push(pairs[k], pairs[k + 1]);
+      }
+      return Uint32Array.from(kept);
+    }
+
+    // Every piece of line the card draws, two ends each: a straight link is one piece
+    // between the places of its two nodes, a bent one (graph.bendOf: the sheet's links over
+    // its borders) BEND_PIECES pieces along its curve. Per end: its place (`where`), how far
+    // along its link it lies (`along`, see LINE_VERTEX) and the two nodes whose shades
+    // colour it (`own`, `other`).
+    function lineVertices(pairs, form) {
+      const { width, height, places } = state;
+      const bends = [];
+      let pieces = 0;
+      for (let k = 0; k < pairs.length; k += 2) {
+        const points = graph.bendOf(form, width, height, pairs[k], pairs[k + 1]);
+        bends.push(points);
+        pieces += points ? points.length / 3 - 1 : 1;
+      }
+      const where = new Float32Array(pieces * 6);
+      const along = new Float32Array(pieces * 2);
+      const own = new Uint32Array(pieces * 2);
+      const other = new Uint32Array(pieces * 2);
+      let at = 0;
+      const end = (from, index, t, a, b) => {
+        where[at * 3] = from[index * 3];
+        where[at * 3 + 1] = from[index * 3 + 1];
+        where[at * 3 + 2] = from[index * 3 + 2];
+        along[at] = t;
+        own[at] = a;
+        other[at] = b;
+        at++;
+      };
+      for (let k = 0; k < pairs.length; k += 2) {
+        const a = pairs[k], b = pairs[k + 1];
+        const points = bends[k / 2];
+        if (!points) {
+          end(places, a, 0, a, b);
+          end(places, b, 0, b, a);
+          continue;
+        }
+        const last = points.length / 3 - 1;
+        for (let j = 0; j < last; j++) {
+          end(points, j, j / last, a, b);
+          end(points, j + 1, (j + 1) / last, a, b);
+        }
+      }
+      return { where, along, own, other };
+    }
+
+    // What every end of a piece of line has to know to show a signal: the shades of its
+    // two nodes (lineVertices). An alive node sends "alive" along all its eight lines
     // (hypergraph.js, aliveLines), and those run along the fixed pairs.
     function signal(world) {
-      const { pairs, ends } = state;
+      const { lineOwn, lineOther, ends } = state;
       const { shade } = world;
-      for (let i = 0; i < pairs.length; i += 2) {
-        const a = shade[pairs[i]];
-        const b = shade[pairs[i + 1]];
-        ends[i * 2] = a;
-        ends[i * 2 + 1] = b;
-        ends[i * 2 + 2] = b;
-        ends[i * 2 + 3] = a;
+      for (let v = 0; v < lineOwn.length; v++) {
+        ends[v * 2] = shade[lineOwn[v]];
+        ends[v * 2 + 1] = shade[lineOther[v]];
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ends);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, ends);
@@ -8220,14 +8441,35 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // where node `i` is seen: [x, y] in pixels of the picture, how far towards the eye,
     // its size
     function seen(camera, i) {
-      const p = state.places;
+      return seenAt(camera, state.places, i, state.sizes[i]);
+    }
+
+    // the same for point `i` of a list of points [x, y, z, ...] (a node, or a point of a bent line)
+    function seenAt(camera, p, i, size) {
       const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
       const { across, up, towards } = camera;
       const ex = across[0] * x + across[1] * y + across[2] * z;
       const ey = up[0] * x + up[1] * y + up[2] * z;
       const ez = towards[0] * x + towards[1] * y + towards[2] * z;
       const scale = camera.focus / (EYE - ez);
-      return [camera.halfX + ex * scale, camera.halfY - ey * scale, ez, camera.node * state.sizes[i] * scale];
+      return [camera.halfX + ex * scale, camera.halfY - ey * scale, ez, camera.node * size * scale];
+    }
+
+    // Without WebGL: the line of a link onto the path being drawn, straight or bent
+    // (graph.bendOf).
+    function plainLine(camera, a, b) {
+      const points = graph.bendOf(state.form, state.width, state.height, a, b);
+      const from = seen(camera, a);
+      plain.moveTo(Math.round(from[0]) + 0.5, Math.round(from[1]) + 0.5);
+      if (points) {
+        for (let k = 1; k < points.length / 3; k++) {
+          const to = seenAt(camera, points, k, 1);
+          plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
+        }
+        return;
+      }
+      const to = seen(camera, b);
+      plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
     }
 
     const nearOf = (camera, ez) => Math.max(0, Math.min(1, (ez + camera.depth) / (2 * camera.depth)));
@@ -8372,6 +8614,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         attribute(lines, "aPlace", buffers.lines, 3);
         attribute(lines, "aOwn", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 0);
         attribute(lines, "aOther", buffers.ends, 1, gl.UNSIGNED_BYTE, 2, 1);
+        attribute(lines, "aAlong", buffers.along, 1);
         gl.drawArrays(gl.LINES, 0, state.lineEnds);
       }
       gl.useProgram(nodes.made);
@@ -8386,8 +8629,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       gl.depthMask(true);
     }
 
-    // Without WebGL: the signals first, then the nodes one by one, far ones first. Large
-    // worlds: every alive node and a part of the rocks.
+    // Without WebGL: the links drawn at every size (`state.always`; no other links), the
+    // signals, then the nodes one by one, far ones first. Large worlds: every alive node and
+    // a part of the rocks.
     function drawPlain(scene, camera) {
       const theme = scene.theme;
       const world = scene.world;
@@ -8405,6 +8649,16 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         plain.fillStyle = theme.space;
         plain.fillRect(0, 0, canvas.width, canvas.height);
       }
+      // the links drawn at every size: two donuts the links through the door, which join
+      // the two rings; the sheet its links over the borders, bent (under the signals)
+      if (state.always) {
+        plain.lineWidth = 1;
+        plain.strokeStyle = "rgb(" + render.rgbOf(theme.link).join(",") + ")";
+        plain.globalAlpha = 0.8;
+        plain.beginPath();
+        for (let k = 0; k < state.always.length; k += 2) plainLine(camera, state.always[k], state.always[k + 1]);
+        plain.stroke();
+      }
       if (scene.signals && count <= PLAIN_LINES_UP_TO) {
         plain.lineWidth = 1;
         for (let i = 0; i < count; i++) {
@@ -8413,27 +8667,9 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
           plain.strokeStyle = "rgb(" + colours[world.shade[i]].join(",") + ")";
           plain.globalAlpha = 0.5 * (0.12 + 0.88 * nearOf(camera, from[2]) ** 1.5);
           plain.beginPath();
-          for (const other of graph.neighbours(world.width, world.height, i, world.form)) {
-            const to = seen(camera, other);
-            plain.moveTo(Math.round(from[0]) + 0.5, Math.round(from[1]) + 0.5);
-            plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
-          }
+          for (const other of graph.neighbours(world.width, world.height, i, world.form)) plainLine(camera, i, other);
           plain.stroke();
         }
-      }
-      // two donuts: the links through the door, which join the two rings, at every size
-      if (state.door) {
-        plain.lineWidth = 1;
-        plain.strokeStyle = "rgb(" + render.rgbOf(theme.link).join(",") + ")";
-        plain.globalAlpha = 0.8;
-        plain.beginPath();
-        for (let k = 0; k < state.door.length; k += 2) {
-          const from = seen(camera, state.door[k]);
-          const to = seen(camera, state.door[k + 1]);
-          plain.moveTo(Math.round(from[0]) + 0.5, Math.round(from[1]) + 0.5);
-          plain.lineTo(Math.round(to[0]) + 0.5, Math.round(to[1]) + 0.5);
-        }
-        plain.stroke();
       }
       const every = Math.max(1, Math.ceil(count / PLAIN_UP_TO));
       const shown = [];
@@ -8500,21 +8736,42 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
       return { x: at[0] * state.pixel, y: at[1] * state.pixel, near: at[2] };
     }
 
-    // what links the picture draws: how many, and how many of them join the two donuts
-    function drawn() {
-      const pairs = gl ? state.pairs : state.door;  // (the plain drawing draws no other links)
-      if (!pairs) return { links: 0, door: 0 };
-      const half = (state.height / 2) * state.width;
-      let door = 0;
-      for (let k = 0; k < pairs.length; k += 2) if (state.form === "two" && (pairs[k] >= half) !== (pairs[k + 1] >= half)) door++;
-      return { links: pairs.length / 2, door };
+    // where the line of the link between nodes a and b is drawn `t` of its way from a (0)
+    // to b (1), bent or straight (CSS pixels from the corner of the canvas)
+    function linkPoint(scene, a, b, t) {
+      prepare(scene.world);
+      const camera = cameraOf(scene);
+      const points = graph.bendOf(state.form, state.width, state.height, a, b);
+      let at;
+      if (points) {
+        at = seenAt(camera, points, Math.round(t * (points.length / 3 - 1)), 1);
+      } else {
+        const from = seen(camera, a), to = seen(camera, b);
+        at = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
+      }
+      return { x: at[0] * state.pixel, y: at[1] * state.pixel };
     }
 
-    return { draw, pick, pointOf, resize, webgl: Boolean(gl), fine: state.fine, linked: () => state.linked, drawn };
+    // what links the picture draws: how many, how many of them join the two donuts, and
+    // how many are drawn bent (the sheet's links over its borders), as [a, b, ...] in `bent`
+    function drawn() {
+      const pairs = gl ? state.pairs : state.always;  // (the plain drawing draws no other links)
+      if (!pairs) return { links: 0, door: 0, wrap: 0, bent: [] };
+      const half = (state.height / 2) * state.width;
+      let door = 0;
+      const bent = [];
+      for (let k = 0; k < pairs.length; k += 2) {
+        if (state.form === "two" && (pairs[k] >= half) !== (pairs[k + 1] >= half)) door++;
+        if (graph.bendOf(state.form, state.width, state.height, pairs[k], pairs[k + 1])) bent.push(pairs[k], pairs[k + 1]);
+      }
+      return { links: pairs.length / 2, door, wrap: bent.length / 2, bent };
+    }
+
+    return { draw, pick, pointOf, linkPoint, resize, webgl: Boolean(gl), fine: state.fine, linked: () => state.linked, drawn };
   }
 
   root.RetroLife = root.RetroLife || {};
-  root.RetroLife.donut = { create, turnOf, turned, spun, wantsFine, LINKS_UP_TO, FINE_FROM };
+  root.RetroLife.donut = { create, turnOf, turned, spun, wantsFine, LINKS_UP_TO, WRAP_LINES_MOST, FINE_FROM };
 })(/** @type {any} */ (window));
 
 </script>
@@ -8690,7 +8947,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // (A piece that reaches all the way round a small world is cut open somewhere.)
     function place(world, organism) {
       if (state.piece && state.piece.organism === organism) return state.piece;
-      const form = world.form || "donut";
+      const form = forms.planeForm(world.form || "donut");  // (the sheet: the donut's)
       if (form !== "donut") return placeOnPlane(world, organism, form);
       const { width, height } = world;
       const cells = organism.alive.concat(organism.around, organism.beyond);
@@ -9284,7 +9541,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
         if (world.cells[index] && !(mine && labels[index] === number)) plot(index, others);
       }
       if (mine) for (let index = 0; index < world.cells.length; index++) if (labels[index] === number) plot(index, own);
-      const form = world.form || "donut";
+      const form = forms.planeForm(world.form || "donut");
       const view = state.view;
       if (form !== "donut" && view && view.cells && view.columns <= world.width / 2 && view.rows <= world.height / 2) {
         // another form: the cells of the window, a little lighter (they need not be one
@@ -9322,7 +9579,7 @@ void main() { gl_FragColor = texture2D(uSky, vAt); }`;
     // The lines of a form on the small map: the two borders of a Klein bottle that are glued
     // with a twist, the walls of two donuts, open over the door.
     function drawMapForm(c, world, w, h, theme) {
-      const form = world.form || "donut";
+      const form = forms.planeForm(world.form || "donut");
       if (form === "donut") return;
       c.fillStyle = theme.border;
       if (forms.isKlein(form)) {
@@ -13450,8 +13707,8 @@ window.RetroLife.app.tutorial = function (ctx) {
 
 </script>
 <script id="script-app-screens">
-// the screens (map, surfaces, organisms) and the surfaces of the world (donut, Klein bottle,
-// two donuts; called forms in the code)
+// the screens (map, surfaces, organisms) and the surfaces of the world (donut, sheet, Klein
+// bottle, two donuts; called forms in the code)
 //
 // A section of the page (see app.js): window.RetroLife.app.screens(ctx) makes its functions and
 // returns the ones other sections call; `init` binds its events once all sections exist.
@@ -13468,6 +13725,11 @@ window.RetroLife.app.screens = function (ctx) {
   const FORM_WORDS = {
     donut: { name: "DONUT", kana: "ドーナツ", row: "DONUT",
       says: "Donut: the map with its edges glued. What leaves on one side comes back on the other." },
+    // The donut's gluing in another picture (the developer, 2026-11-24: "just a flat map,
+    // like a piece of paper. where the ends of flat are connected with the other side of
+    // the paper sheet via graph edges")
+    sheet: { name: "SHEET", kana: "いちまいのかみ", row: "SHEET",
+      says: "Sheet: the map laid flat, like a piece of paper. The long bent lines join each edge to the opposite one: the same links that close the donut." },
     // The Klein bottle in two pictures, one gluing (the user, 2026-11-23: "Keep both
     // representations ... as separate surfaces that we can go through with up and down")
     klein: { name: "KLEIN EIGHT", kana: "クライン 8の字", row: "KLEIN 8",
@@ -13573,7 +13835,7 @@ window.RetroLife.app.screens = function (ctx) {
   function hintMarks() {
     const form = state.world.form;
     // (the two pictures of the Klein bottle have the same marks: said once)
-    if (state.learn || form === "donut" || hinted.has("marks-" + forms.gluing(form))) return;
+    if (state.learn || forms.gluing(form) === "donut" || hinted.has("marks-" + forms.gluing(form))) return;
     hinted.add("marks-" + forms.gluing(form));
     hint(/** @type {string} */ (FORM_WORDS[form].marks), 6400);
   }
@@ -14651,8 +14913,15 @@ window.RetroLife.app.probe = function (ctx) {
         camera: () => ({ ...state.camera }),
         // the turn of the ring as its three rows (across, up, towards the eye), and its zoom
         orbit: () => ({ ...state.orbit.turn, zoom: state.orbit.zoom }),
-        // the links the ring draws: how many, and how many join the two donuts
+        // the links the ring draws: how many, how many join the two donuts, the bent ones of the sheet
         ringDrawn: () => ring.drawn(),
+        // where the line of the link a-b is drawn on the ring, `t` of its way (CSS pixels from the corner of its canvas)
+        /**
+         * @param {number} a
+         * @param {number} b
+         * @param {number} t
+         */
+        ringLinkPoint: (a, b, t) => ring.linkPoint(ctx.ringScene(), a, b, t),
         /**
          * @param {number} x
          * @param {number} y
