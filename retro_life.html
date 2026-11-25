@@ -282,6 +282,10 @@ button:active { transform: translateY(var(--px)); box-shadow: none; }
 button[aria-pressed="true"], button.primary { background: var(--accent); color: var(--accent-ink); }
 button:focus-visible, canvas:focus-visible, textarea:focus-visible { outline: 2px dashed var(--accent); outline-offset: 2px; }
 button:disabled { opacity: 0.35; cursor: default; }
+/* greyed out like a disabled button, but a press still reaches it and says why (round 38: a
+   surface of the row of Surfaces that cannot be chosen now); it does not sink when pressed */
+button[aria-disabled="true"] { opacity: 0.35; cursor: default; }
+button[aria-disabled="true"]:active, body[data-theme="kuroi"] button[aria-disabled="true"]:active { transform: none; opacity: 0.35; }
 /* The button to press next blinks (the tutorial; and in the menu EXPLANATION until it was
    opened once, then LEARN GAME OF LIFE until the tutorial was opened once). Where the device
    asks for less motion, it has a frame that stands still. */
@@ -300,9 +304,11 @@ button.blink.primary { animation-name: blink-back; }
      one filled (.row);
    - a switch that is on or off carries a lamp, filled when it is on (.lamp);
    - a button that does something once is a plain block. */
-.row { display: inline-flex; flex-wrap: wrap; margin: 8px 0 10px; box-shadow: 0 var(--px) 0 var(--shadow); max-width: 100%; }
+/* (every button sits a line's width to the left, so that the borders of neighbours are one line;
+   the row's padding gives it back, so that a row wrapped to more lines keeps its left edge
+   straight: round 38, the row of Surfaces of seven) */
+.row { display: inline-flex; flex-wrap: wrap; margin: 8px 0 10px; padding-left: var(--px); box-shadow: 0 var(--px) 0 var(--shadow); max-width: 100%; }
 .row button { box-shadow: none; min-height: 42px; margin: 0 0 0 calc(-1 * var(--px)); }
-.row button:first-child { margin-left: 0; }
 .row button:active { transform: none; }
 button.lamp::before { content: ""; flex: none; width: 12px; height: 12px; border: var(--px) solid var(--ink); background: transparent; }
 button.lamp[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
@@ -1040,8 +1046,9 @@ body[data-rpg] { overflow: hidden; }
       </div>
     </section>
 
-    <!-- the group of the map -->
-    <section id="world-part" data-for="map donut">
+    <!-- the group of the map (World also on the second and the third screen, after that
+         screen's own part: app-sheets.js puts it before World) -->
+    <section id="world-part" data-for="map donut organism">
       <h3 data-px="WORLD"></h3>
       <!-- the rule (2026-11-25, the developer: "add a new rule engine for retro game of life";
            the row and its words are the agents' choice, docs/decisions-4-rounds-27.md, round 31) -->
@@ -1049,7 +1056,7 @@ body[data-rpg] { overflow: hidden; }
         <button type="button" data-rule="life" aria-pressed="true" title="Conway's Game of Life: a cell is born with 3 alive neighbours and stays alive with 2 or 3" data-px="CONWAY'S LIFE"></button>
         <button type="button" data-rule="bounce" aria-pressed="false" title="Bounce Gas II: blocks of 2 x 2 cells; particles fly diagonally and bounce, none is born and none dies" data-px="BOUNCE GAS II"></button>
       </div>
-      <p class="note" id="rule-note">The rule. <b>Conway's Life</b>: a cell is born or dies by its eight neighbours. <b>Bounce Gas II</b>: the world is cut into blocks of 2 x 2, and an alive cell is a particle that flies diagonally, turns when it meets another head-on and bounces off a group; nothing is born and nothing dies. A switch keeps the cells and starts the count anew (What this is, below, says more).</p>
+      <p class="note" id="rule-note">The rule. <b>Conway's Life</b>: a cell is born or dies by its eight neighbours. <b>Bounce Gas II</b>: the world is cut into blocks of 2 x 2, and an alive cell is a particle that flies diagonally, turns when it meets another head-on and bounces off a group; nothing is born and nothing dies. A switch keeps the cells and starts the count anew (What this is of the map says more).</p>
       <p class="note">A new size keeps what lives round the middle, and the edge of the world.</p>
       <div id="size-list" class="row"></div>
       <p class="note">The edge of the world. <b>Wraps round</b>: what leaves on one side comes back on the other, which is why it is a donut on the second screen. <b>Walls</b>: the world ends at its edge, and nothing comes back on the other side; under Conway's Life a cell there has fewer neighbours, under Bounce Gas II a wall is a mirror. A switch changes the edge and nothing else.</p>
@@ -1057,7 +1064,7 @@ body[data-rpg] { overflow: hidden; }
         <button type="button" data-edge="wraps" aria-pressed="true" title="The world wraps round: what leaves on one side comes back on the other" data-px="WRAPS ROUND"></button>
         <button type="button" data-edge="walls" aria-pressed="false" title="Walls round the world: it ends at its edge (under Conway's Life a cell there has fewer neighbours; under Bounce Gas II a wall is a mirror)" data-px="WALLS"></button>
       </div>
-      <p class="note" data-rule-only="bounce" hidden>Under Bounce Gas II <b>a wall is a mirror</b>: a particle that reaches it comes back like a ball off a cushion, and in a corner it stays a step and flies back the way it came. (Every other step a wall cuts the blocks of 2 x 2 at the edge; a cut block swaps its two cells.) Under Conway's Life a wall does something else: a cell beside it simply has fewer neighbours. With walls this rule plays on the sheet with walls; two rooms are not offered under it.</p>
+      <p class="note" data-rule-only="bounce" hidden>Under Bounce Gas II <b>a wall is a mirror</b>: a particle that reaches it comes back like a ball off a cushion, and in a corner it stays a step and flies back the way it came. (Every other step a wall cuts the blocks of 2 x 2 at the edge; a cut block swaps its two cells.) Under Conway's Life a wall does something else: a cell beside it simply has fewer neighbours. With walls this rule plays on the sheet with walls; two rooms cannot be chosen under it (greyed out in Surfaces, on the second screen).</p>
       <div class="chips">
         <button type="button" id="random" data-px="RANDOM"></button>
         <button type="button" id="clear" data-px="CLEAR"></button>
@@ -1101,17 +1108,18 @@ body[data-rpg] { overflow: hidden; }
     <section id="surfaces-part" data-for="donut">
       <h3 data-px="SURFACES"></h3>
       <p class="note">The second screen: the world laid on a surface in space. A drag turns it any way you like; these buttons go straight to a view. Turn by itself lets the surface turn slowly round its own axis while the world plays.</p>
-      <p class="note">The surface of the world: what lies beyond the edges of the map. Up and down on that screen go through them too. The cells stay as they are.</p>
+      <p class="note">The surface of the world: what lies beyond the edges of the map. Every surface is listed; those that cannot be chosen now are greyed out, and a press on one says why. Up and down on that screen go through the others. The cells stay as they are.</p>
       <div id="form-list" class="row" role="group" aria-label="The surface of the world">
         <button type="button" data-form="donut" aria-pressed="true" title="Donut: every edge of the map leads to the opposite edge" data-px="DONUT"></button>
         <button type="button" data-form="sheet" aria-pressed="false" title="The same donut drawn as a flat sheet, like a piece of paper: the long bent lines join each edge to the opposite one" data-px="SHEET"></button>
         <button type="button" data-form="bottle" aria-pressed="false" title="The same Klein bottle drawn as a hand-blown bottle: the same neighbours, another picture" data-px="BOTTLE"></button>
         <button type="button" data-form="klein" aria-pressed="false" title="Klein bottle drawn as a ring whose tube is a figure of eight: what leaves on the right comes back on the left upside down" data-px="KLEIN 8"></button>
         <button type="button" data-form="two" aria-pressed="false" title="Two donuts: the upper and the lower half of the map, joined at a door" data-px="TWO"></button>
-        <button type="button" data-form="walled" aria-pressed="false" title="Sheet with walls: the map laid flat, and nothing beyond its edges" data-px="SHEET" hidden></button>
-        <button type="button" data-form="rooms" aria-pressed="false" title="Two rooms: the sheet with walls, and a wall across the middle with a door" data-px="ROOMS" hidden></button>
+        <button type="button" data-form="walled" aria-pressed="false" title="Sheet with walls: the map laid flat, and nothing beyond its edges" data-px="WALLED"></button>
+        <button type="button" data-form="rooms" aria-pressed="false" title="Two rooms: the sheet with walls, and a wall across the middle with a door" data-px="ROOMS"></button>
       </div>
-      <p class="note" id="walls-note">With walls (World, the edge of the world) only the sheet and two rooms are offered (under Bounce Gas II only the sheet): the donut, the Klein bottles and two donuts are closed surfaces with no edge, so a world that ends at its edge cannot be one of them.</p>
+      <!-- which surfaces are greyed out now and why, written by showForm (app-screens.js, round 38) -->
+      <p class="note" id="form-why"></p>
       <div id="ring-views" class="chips">
         <button type="button" data-ring="top" title="Look at the surface from the top" data-px="FROM THE TOP"></button>
         <button type="button" data-ring="side" title="Look at the surface from the side" data-px="FROM THE SIDE"></button>
@@ -1127,7 +1135,7 @@ body[data-rpg] { overflow: hidden; }
       <h3 data-px="WHAT THIS IS"></h3>
       <!-- under Bounce Gas II (round 33): the picture of the rule; Conway's Life's paragraphs below are hidden then -->
       <div id="surfaces-bounce" data-rule-only="bounce" hidden>
-        <p><b>Bounce Gas II on the surfaces</b> (the rule, World above in this menu). When the world wraps round it is shown as the <b>donut</b> or the <b>sheet</b>: the same world, glued into a ring or laid flat. With walls it is the <b>sheet with walls</b>. The Klein bottles and two donuts are not offered, because their seams would cut blocks of 2 x 2 in half, and two rooms neither: at the ends of its door the wall across the middle would cut blocks only half-way.</p>
+        <p><b>Bounce Gas II on the surfaces</b> (the rule, World above in this menu). When the world wraps round it is shown as the <b>donut</b> or the <b>sheet</b>: the same world, glued into a ring or laid flat. With walls it is the <b>sheet with walls</b>. The Klein bottles and two donuts cannot be chosen under this rule (greyed out in Surfaces, above), because their seams would cut blocks of 2 x 2 in half, and two rooms neither: at the ends of its door the wall across the middle would cut blocks only half-way.</p>
         <p><b>One point per cell.</b> Every cell is a point, at the same place as for Conway's Life: lit, in the one colour of a particle, where a particle is, and a faint grey rock where the cell is empty. What is further away from you is fainter. Drag to turn the surface; tap a point to set or unset a particle.</p>
         <p><b>The links are the blocks.</b> Every block of 2 x 2 cells joins its four cells in a ring of four links, so each cell is linked to its four straight neighbours, above, below, left and right (no diagonals, unlike Life): two of them by its <b>even block</b> (the blocks that start at the top left cell of the map) and two by its <b>odd block</b> (the blocks one cell further down and to the right). The links of the even blocks have one colour and those of the odd blocks another; in Kuroi, which is black and white, the odd ones are dashed. In one step all even blocks act, in the next all odd blocks, and so on by turns: the cut that moves. While the world rests, the kind whose blocks act next is drawn stronger; while it plays both kinds stay as they are, so that the picture does not flicker, and the line at the top says which kind is next (EVEN BLOCKS NEXT or ODD BLOCKS NEXT) and counts the points and the links drawn.</p>
         <p><b>On the sheet</b> the links of the odd blocks at the edges of the map are the long bent lines, as for Conway's Life: the blocks at the right edge take their other cells from the left edge, those at the bottom from the top. How they bend stands for nothing. In a world larger than 128 x 128 the links are left out, and the sheet draws only its long lines straight across, of every few rows and columns.</p>
@@ -1141,7 +1149,7 @@ body[data-rpg] { overflow: hidden; }
       <p><b>Sheet</b> <span lang="ja">(いちまいのかみ)</span> is the donut before it is glued: the map itself, laid flat in space like a piece of paper, its cells row by row as on the map. The cells, their neighbours and the rule are the donut's; only the picture differs. The long lines that leave the paper at one edge and come back at the opposite edge are the links between neighbours across the edges of the map: every cell on the right edge with its three neighbours on the left edge, every cell on the top edge with its three neighbours on the bottom edge. They are relations of the hypergraph like every short line, and life signals run along them too: a glider that crosses an edge sends its signals the long way round. Glue the paper along them, left edge to right edge and top to bottom, and you get the donut. The lines over the left and right edges go out beyond the paper and round below it, those over the top and bottom edges further down; how they bend is only a help for the eye and stands for nothing. They are drawn at every size, because without them the sheet would look like a world with an edge, which it is not. In a world larger than 128 x 128, where the other links are left out, all of them would be a solid tub under the paper: there the sheet draws only the long lines straight across, of every few rows and columns (64 of each kind), and leaves out the rest.</p>
       <p><b>Other surfaces.</b> Up and down on the second screen, or the row in Surfaces above, give the same cells another surface: what lies beyond the edges of the map. On a <b>donut</b> every edge leads to the opposite edge (the <b>sheet</b> is the same donut, drawn flat). On a <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span> top and bottom are glued as on the donut, but what leaves on the right comes back on the left upside down: row 1 meets the last row. On the map, arrows beside the left and the right edge say so. The Klein bottle comes twice in the list, with the same cells and the same neighbours, only drawn differently on the second screen: <b>Klein eight</b> <span lang="ja">(クライン 8の字)</span>, a ring whose tube is a figure of eight, and <b>Klein bottle</b> <span lang="ja">(クラインのつぼ)</span>, a hand-blown bottle. <b>Two donuts</b> <span lang="ja">(ふたつのドーナツ)</span> are the upper and the lower half of the map, each a ring of its own, joined at a door in the middle: the lines across the map are walls, and where they are open one walks from one ring into the other. A switch moves no cell and changes nothing else; switch back and you have the same donut. Only the cells next to an edge get other neighbours, and an organism that lies across an edge at that moment is cut there.</p>
       <p><b>The other surfaces as a hypergraph.</b> It is the same model with the same 17 rules: they ask for nothing but eight neighbours per cell, and on these surfaces every cell keeps eight. Only which nodes are neighbours changes. The places in space are again a help for the eye: the Klein eight is a ring whose tube is a figure of eight, and the Klein bottle a hand-blown bottle whose neck, a third as wide as its body, bends back, passes through the wall and opens into the bottom from inside. Both have to pass through themselves (no Klein bottle fits into our space otherwise), so nodes that lie close together there need not be neighbours; on the bottle the nodes of the neck are drawn smaller, because they lie closer together; the two donuts lie one above the other, and the gap between them stands for nothing. At the two ends of the door a few cells are joined by the model's rounds without being neighbours; those links are drawn too.</p>
-      <p id="walls-surfaces"><b>Surfaces with walls.</b> With walls (World, the edge of the world) the world ends at its edge, and up and down go through two surfaces only: the <b>sheet with walls</b> <span lang="ja">(かべのあるかみ)</span>, the map laid flat as on the sheet but without the long lines (nothing joins one edge to the other), and <b>two rooms</b> <span lang="ja">(ふたつのへや)</span>, the same with a wall across the middle of the map, open in the door (the door of two donuts): cells on the two sides of the wall are not neighbours, except in the door. The donut, the Klein bottles and two donuts are not offered: they are closed surfaces, glued all round, and have no edge where a wall could stand. A switch of the edge moves no cell and changes nothing else: the donut, the sheet and the Klein bottles become the sheet with walls, two donuts become two rooms, and back to the sheet and to two donuts.</p>
+      <p id="walls-surfaces"><b>Surfaces with walls.</b> With walls (World, the edge of the world) the world ends at its edge, and up and down go through two surfaces only: the <b>sheet with walls</b> <span lang="ja">(かべのあるかみ)</span>, the map laid flat as on the sheet but without the long lines (nothing joins one edge to the other), and <b>two rooms</b> <span lang="ja">(ふたつのへや)</span>, the same with a wall across the middle of the map, open in the door (the door of two donuts): cells on the two sides of the wall are not neighbours, except in the door. The donut, the Klein bottles and two donuts cannot be chosen then (greyed out in the row of Surfaces, above; and the sheet with walls and two rooms while the world wraps round): they are closed surfaces, glued all round, and have no edge where a wall could stand. A switch of the edge moves no cell and changes nothing else: the donut, the sheet and the Klein bottles become the sheet with walls, two donuts become two rooms, and back to the sheet and to two donuts.</p>
       <p id="walls-hypergraph"><b>Walls in the hypergraph.</b> A wall is not a node: it is relations that are not there. A node beside a wall names only the neighbours it has (its neighbourhood repeats the node itself in the places of the missing ones), its round goes through those, and it has a line to each: 14 relations on a side, 10 in a corner, 18 at an end of the wall of two rooms, instead of 20, so the line at the top counts fewer than 20 a node. No link leaves the sheet. The 17 rules ask for eight neighbours, so a world with walls needs 11 more (in the module model_walls): 6 that send for a node that lacks 1, 3 or 5 neighbours, and 5 that make it wait one step for each one it lacks, so that every node still decides at the tenth step and the whole world is between two generations at the same moment. Tests hold these 28 rules to Life with walls, cell for cell, also when the changes come one at a time in random order, and that between two generations the hypergraph is exactly what this screen draws.</p>
       </div>
       <p class="keys" data-rule-only="life">Keys: Space start/stop · . one generation · , back · + − speed · ← → screens (or 1 2 3) · ↑ ↓ surfaces · S menu</p>
@@ -7407,6 +7415,14 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   /** @type {Logic["inMenuGroup"]} */
   const inMenuGroup = (groups, group) => groups.split(" ").includes(group);
 
+  // The part that leads the group of a screen, put before World, which the groups share: Surfaces
+  // on the second screen (2026-11-25), Organisms (GRAPH under Bounce Gas II) on the third, where
+  // World is shown too since round 38; on the map World leads (null).
+  /** @type {Record<string, string>} */
+  const MENU_LEAD = { donut: "surfaces-part", organism: "organisms-part" };
+  /** @type {Logic["menuLead"]} */
+  const menuLead = (group) => MENU_LEAD[group] ?? null;
+
   // Which button of the part Learn blinks: EXPLANATION until the explanation was opened once,
   // then LEARN GAME OF LIFE until the tutorial was opened once, then none ("" for none).
   /** @type {Logic["menuBlinker"]} */
@@ -7441,6 +7457,21 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
       if (fits(forms[next])) break;
     }
     return next;
+  }
+
+  // Why a surface (form) cannot be chosen now (round 38: the part Surfaces lists every surface
+  // and greys out those that cannot be chosen; up and down go through the others): "edge" when it
+  // is a surface of another edge of the world than `edge` (`edgeOf`), "size" when it does not fit
+  // a world of this size (`fits`), "rule" when the world's rule does not play on it (`plays`);
+  // null when it can be chosen. One cause per form, the edge first, since switching the edge
+  // (World) is the first step towards such a surface. It names no edge, form or rule, so that a
+  // new one needs no case here.
+  /** @type {Logic["formBlocked"]} */
+  function formBlocked(form, edge, edgeOf, fits, plays) {
+    if (edgeOf(form) !== edge) return "edge";
+    if (!fits(form)) return "size";
+    if (!plays(form)) return "rule";
+    return null;
   }
 
   // The edge of the world (the developer, 2026-11-24: "make it possible to switch it to have
@@ -7782,7 +7813,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     fitScale, clampedCamera, zoomedCamera, pannedCamera, pinchedCamera, ringZoom, wheelFactor,
     cellsOnLine, swipeTurn,
     rateFor, stepsDue, sunPhase, clampSpeed, speedLabel, bigStepAfter, timeControl,
-    menuGroup, inMenuGroup, menuBlinker, menuScroll,
+    menuGroup, inMenuGroup, menuLead, menuBlinker, menuScroll, formBlocked,
     sideFor, nextForm, formForEdge, formForRule, pieceBounds, viewWords, blockMark, blockTurnWords, blockMost, blockWindowSize, blockWindowAt, blockZoom, ruleWords, viewAfter,
     TAPPED, lessonFromHash, rpgFromHash, learnRate, mapLocked, blinker, lessonRoom, roomInsets, lessonScale, lessonMarks,
     keyAction,
@@ -15630,7 +15661,9 @@ window.RetroLife.app.screens = function (ctx) {
   // user, 2026-11-22: "when clicking down you get to the next 3D surface the cells are
   // moving on"). The name stands at the top of that screen; `says` pops up at a switch,
   // `marks` the first time the form is seen on the map.
-  /** @type {Record<string, { name: string, kana: string, row: string, says: string, marks?: string, bounceSays?: string, bounceMarks?: string }>} */
+  // `needs`: what a world needs for it (a size), `bounceNot`: why Bounce Gas II does not play on
+  // it; both said where it is greyed out (round 38).
+  /** @type {Record<string, { name: string, kana: string, row: string, says: string, marks?: string, bounceSays?: string, bounceMarks?: string, needs?: string, bounceNot?: string }>} */
   const FORM_WORDS = {
     donut: { name: "DONUT", kana: "ドーナツ", row: "DONUT",
       says: "Donut: the map with its edges glued. What leaves on one side comes back on the other." },
@@ -15643,17 +15676,21 @@ window.RetroLife.app.screens = function (ctx) {
     // representations ... as separate surfaces that we can go through with up and down")
     klein: { name: "KLEIN EIGHT", kana: "クライン 8の字", row: "KLEIN 8",
       says: "Klein eight: a Klein bottle drawn as a ring whose tube is a figure of eight. What leaves on the right comes back on the left upside down. In space its tube has to pass through itself.",
-      marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut." },
+      marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut.",
+      bounceNot: "its seam, glued upside down, would cut blocks of 2 x 2 in half" },
     bottle: { name: "KLEIN BOTTLE", kana: "クラインのつぼ", row: "BOTTLE",
       says: "Klein bottle: the same cells, drawn as a hand-blown bottle. Its neck passes through the wall and opens into the bottom from inside. Same neighbours as the Klein eight, only another picture.",
-      marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut." },
+      marks: "Klein bottle: the arrows beside the map say that its left and right edges are glued upside down. Top and bottom are glued as on the donut.",
+      bounceNot: "its seam, glued upside down, would cut blocks of 2 x 2 in half" },
     two: { name: "TWO DONUTS", kana: "ふたつのドーナツ", row: "TWO",
       says: "Two donuts: the upper and the lower half of the map are a ring each, joined at the door in the middle.",
-      marks: "Two donuts: the lines across the map are walls between the two rings. Where they are open is the door from one ring into the other." },
+      marks: "Two donuts: the lines across the map are walls between the two rings. Where they are open is the door from one ring into the other.",
+      needs: "an even number of rows, at least six",
+      bounceNot: "the walls between its two rings would cut blocks of 2 x 2 in half" },
     // With walls (the developer, 2026-11-24: "if there are walls at the edge of the surfaces.
     // then the surface stays 2D ... implement surfaces that can be drawn. I guess two: 1. a
     // sheet, 2. a sheet with "walls" in it aswell")
-    walled: { name: "SHEET WITH WALLS", kana: "かべのあるかみ", row: "SHEET",
+    walled: { name: "SHEET WITH WALLS", kana: "かべのあるかみ", row: "WALLED",
       says: "Sheet with walls: the map laid flat, and nothing beyond its edges. The cells at the edge have fewer neighbours, and no line leaves the paper.",
       marks: "Walls: the band round the map is a wall. The world ends there; a cell beside it has fewer neighbours, and nothing comes back on the other side.",
       // under Bounce Gas II a wall is a mirror (round 36: the developer, 2026-11-25, "Mirror
@@ -15662,8 +15699,13 @@ window.RetroLife.app.screens = function (ctx) {
       bounceMarks: "Walls: the band round the map is a wall, and under Bounce Gas II a wall is a mirror: a particle that reaches it comes back like a ball off a cushion." },
     rooms: { name: "TWO ROOMS", kana: "ふたつのへや", row: "ROOMS",
       says: "Two rooms: the sheet with walls, and a wall across the middle with a door. Cells on its two sides are not neighbours, except in the door.",
-      marks: "Two rooms: the band round the map and the line across it are walls. Where the line is open is the door from one room into the other." },
+      marks: "Two rooms: the band round the map and the line across it are walls. Where the line is open is the door from one room into the other.",
+      needs: "an even number of rows, at least six",
+      bounceNot: "at the ends of its door the wall across the middle would cut blocks of 2 x 2 only half-way" },
   };
+  // The rules by name, in a sentence (the rule-list of World names them in pixel letters).
+  /** @type {Record<string, string>} */
+  const RULE_NAMES = { life: "Conway's Life", bounce: "Bounce Gas II" };
 
   // The name of a surface in a sentence ("two donuts", "Klein eight").
   const surfaceName = (/** @type {string} */ key) => (FORM_WORDS[key] || FORM_WORDS.donut).name.toLowerCase().replace("klein", "Klein");
@@ -15744,17 +15786,87 @@ window.RetroLife.app.screens = function (ctx) {
   // shape that turns into another: the user gets motion sick from pictures that move
   // without need). Allowed while the world plays; not in the tutorial.
 
+  // ---- which surfaces can be chosen now (round 38: the developer, 2026-11-25, "gray out
+  // surfaces in the menu surface selection that cannot be chosen" and "if there is only 1
+  // surface in the surfaces gui, gray out the up and down buttons")
+  //
+  // Every surface is listed in the part Surfaces; one that cannot be chosen is greyed out for
+  // one cause (logic.formBlocked): it belongs to another edge of the world, it does not fit the
+  // world's size, or the rule does not play on it. The words are per cause, built from the lists
+  // the game has (forms.FORMS, edgeOf, the labels of the row of the edge), never per pair of
+  // edges, so that a new edge or surface is greyed out and said without a change here.
+
+  /**
+   * Why a surface cannot be chosen now, or null. `edge`: the edge it is held to (the world's;
+   * its own, where only the size and the rule count).
+   * @param {string} key
+   * @param {string} [edge]
+   */
+  function blockedBy(key, edge = forms.edgeOf(state.world.form)) {
+    const { width, height, rule } = state.world;
+    return logic.formBlocked(key, edge, forms.edgeOf, (form) => forms.fits(form, width, height), (form) => life.ruleFits(rule, width, height, form));
+  }
+
+  // The surfaces that can be chosen now, in the order of up and down.
+  const choosable = () => forms.FORMS.filter((key) => blockedBy(key) === null);
+
+  const capital = (/** @type {string} */ text) => text.charAt(0).toUpperCase() + text.slice(1);
+  // "a", "a and b", "a, b and c"
+  const listed = (/** @type {string[]} */ items) => (items.length < 2 ? items.join("") : items.slice(0, -1).join(", ") + " and " + items[items.length - 1]);
+  // an edge as its button in World reads (WRAPS ROUND, WALLS, and any edge the row gets)
+  const edgeLabel = (/** @type {string} */ edge) =>
+    /** @type {HTMLElement | null} */ (document.querySelector('#edge-list [data-edge="' + edge + '"]'))?.dataset.px ?? edge.toUpperCase();
+
+  /**
+   * Why a surface cannot be chosen now, in a sentence (its title and the hint at a press).
+   * @param {string} key
+   * @param {"edge" | "size" | "rule"} cause
+   */
+  function whyNot(key, cause) {
+    const { width, height, rule } = state.world;
+    const name = capital(surfaceName(key));
+    const words = FORM_WORDS[key] || FORM_WORDS.donut;
+    switch (cause) {
+      case "edge":
+        return name + " is a surface for the edge " + edgeLabel(forms.edgeOf(key)) + ", and the edge of this world is " +
+          edgeLabel(forms.edgeOf(state.world.form)) + ": switch the edge in World (the edge of the world) to choose it.";
+      case "size":
+        return name + " cannot be chosen on a world of " + width + " x " + height +
+          (words.needs ? ": this surface needs " + words.needs : "") + ". Another size in World makes it possible.";
+      case "rule": {
+        const plays = forms.FORMS.filter((form) => life.ruleFits(rule, width, height, form)).map((form) => "the " + surfaceName(form));
+        const because = rule === "bounce" && words.bounceNot ? " (" + words.bounceNot + ")" : "";
+        const named = RULE_NAMES[rule] || rule;
+        return name + " cannot be chosen under " + named + because + ". " + named + " plays on " + listed(plays) + "; the rule is set in World.";
+      }
+      default: throw new Error("no words for a surface blocked by " + cause);
+    }
+  }
+
+  // The line under the row of Surfaces: the surfaces greyed out now, by cause.
+  /** @param {[string, "edge" | "size" | "rule"][]} greyed */
+  function whyNote(greyed) {
+    if (!greyed.length) return "";
+    /** @type {Map<string, string[]>} */
+    const groups = new Map();
+    for (const [key, cause] of greyed) {
+      const head = cause === "edge" ? "For the edge " + edgeLabel(forms.edgeOf(key)) + " (World)"
+        : cause === "size" ? "Not for a world of " + state.world.width + " x " + state.world.height
+          : "Not under " + (RULE_NAMES[state.world.rule] || state.world.rule);
+      groups.set(head, (groups.get(head) || []).concat(surfaceName(key)));
+    }
+    return "Greyed out now, and a press on one says why. " +
+      Array.from(groups, ([head, names]) => head + ": " + listed(names) + ".").join(" ");
+  }
+
   /** @type {ScreensPart["setForm"]} */
   function setForm(key, quietly) {
     if (state.learn || !forms.FORMS.includes(key)) return false;
-    if (!forms.fits(key, state.world.width, state.world.height)) {
-      hint((key === "rooms" ? "Two rooms" : "Two donuts") + " need an even number of rows, at least six.");
-      return false;
-    }
-    if (!life.ruleFits(state.world.rule, state.world.width, state.world.height, key)) {
-      hint(key === "rooms"
-        ? "Two rooms are not offered under Bounce Gas II: at the ends of its door the wall across the middle would cut blocks of 2 x 2 only half-way. With walls the rule plays on the sheet with walls."
-        : "Under Bounce Gas II the surface is the donut or the sheet, and with walls the sheet with walls: a Klein bottle's seam or the walls of two donuts would cut its blocks of 2 x 2.", 6400);
+    // (the size and the rule; the edge goes with the form here: the menu and up and down offer
+    // only surfaces of the world's edge, chooseForm)
+    const blocked = blockedBy(key, forms.edgeOf(key));
+    if (blocked) {
+      hint(whyNot(key, blocked), 6400);
       return false;
     }
     life.setForm(state.world, key);
@@ -15894,29 +16006,65 @@ window.RetroLife.app.screens = function (ctx) {
     }
   }
 
-  // The form before or after this one in the list, round (decision D5); only the forms of
-  // the edge the world has (with walls the closed surfaces are not offered) that its rule plays.
+  // What up and down say when they are greyed out: only one surface can be chosen now.
+  const onlyOne = () => "Only one surface can be chosen now, the " + surfaceName(state.world.form) +
+    " (the edge, the size and the rule of the world allow no other; Surfaces in the menu says why each other one is greyed out).";
+
+  // The form before or after this one in the list, round (decision D5); only the surfaces that
+  // can be chosen now (of the edge the world has, that fit it and that its rule plays). Where
+  // that is one surface alone, up and down are greyed out and a key says why (round 38).
   /** @type {ScreensPart["stepForm"]} */
   function stepForm(by) {
     if (state.learn) return;
-    const edge = forms.edgeOf(state.world.form);
-    const plays = playable(state.world);
-    const next = logic.nextForm(forms.FORMS, forms.FORMS.indexOf(state.world.form), by,
-      (form) => forms.edgeOf(form) === edge && plays(form));
+    if (choosable().length < 2) {
+      hint(onlyOne(), 6400);
+      return;
+    }
+    const next = logic.nextForm(forms.FORMS, forms.FORMS.indexOf(state.world.form), by, (form) => blockedBy(form) === null);
     flash(by < 0 ? "form-up" : "form-down");
     setForm(forms.FORMS[next]);
   }
 
-  // The form shown where it is chosen: the row in the settings (only the surfaces of the
-  // edge the world has), the edge in its row, the name at the top.
+  // A surface chosen in the row of Surfaces: one that is greyed out is not taken, and the hint
+  // says why (round 38).
+  /** @param {string} key */
+  function chooseForm(key) {
+    if (state.learn) return false;
+    const blocked = blockedBy(key);
+    if (blocked) {
+      hint(whyNot(key, blocked), 7200);
+      return false;
+    }
+    return setForm(key);
+  }
+
+  // The form shown where it is chosen: the row in the settings (every surface, those that
+  // cannot be chosen now greyed out with their reason, round 38), the line under it, up and
+  // down on the second screen, the edge in its row, the name at the top.
   /** @type {ScreensPart["showForm"]} */
   function showForm() {
     const edge = forms.edgeOf(state.world.form);
+    /** @type {[string, "edge" | "size" | "rule"][]} */
+    const greyed = [];
     for (const element of /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("[data-form]"))) {
       const form = /** @type {string} */ (element.dataset.form);
+      const blocked = blockedBy(form);
       element.setAttribute("aria-pressed", String(form === state.world.form));
-      element.disabled = !forms.fits(form, state.world.width, state.world.height);
-      element.hidden = forms.edgeOf(form) !== edge;
+      // greyed out as `disabled` is (app.css), but a press still says why (chooseForm)
+      if (blocked) element.setAttribute("aria-disabled", "true"); else element.removeAttribute("aria-disabled");
+      element.dataset.title = element.dataset.title ?? element.title;
+      element.title = blocked ? whyNot(form, blocked) : element.dataset.title;
+      if (blocked) greyed.push([form, blocked]);
+    }
+    $("form-why").textContent = whyNote(greyed);
+    $("form-why").hidden = !greyed.length;
+    // up and down: greyed out where only one surface can be chosen, the reason in their title
+    const alone = choosable().length < 2;
+    for (const id of ["form-up", "form-down"]) {
+      const element = /** @type {HTMLButtonElement} */ ($(id));
+      element.disabled = alone;
+      element.dataset.title = element.dataset.title ?? element.title;
+      element.title = alone ? onlyOne() : element.dataset.title;
     }
     for (const element of /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("[data-edge]"))) {
       element.setAttribute("aria-pressed", String(element.dataset.edge === edge));
@@ -15968,7 +16116,7 @@ window.RetroLife.app.screens = function (ctx) {
       $("form-down").addEventListener("click", () => stepForm(1));
       $("form-list").addEventListener("click", (event) => {
         const element = /** @type {HTMLElement} */ (event.target).closest("[data-form]");
-        if (element) setForm(/** @type {string} */ (element.dataset.form));
+        if (element) chooseForm(/** @type {string} */ (element.dataset.form));
       });
       $("edge-list").addEventListener("click", (event) => {
         const element = /** @type {HTMLElement} */ (event.target).closest("[data-edge]");
@@ -16470,12 +16618,22 @@ window.RetroLife.app.sheets = function (ctx) {
       return;
     }
     const group = logic.menuGroup(state.view, Boolean(state.big));
-    // The part Surfaces comes first in its group, before World and Maps, which the map's group
-    // shares with it (the developer, 2026-11-25: "when the Surface View is active include the
-    // Maps (but not the big maps) and the World sections also in the menu"). A part belongs to
-    // the groups its data-for names, separated by spaces; one part of the page in two places is
-    // one element, so Surfaces is put before World there and after the map's parts elsewhere.
-    sheet.insertBefore($("surfaces-part"), group === "donut" ? $("world-part") : $("organisms-part"));
+    // The screen's own part comes first in its group, before World (and Maps), which the map's
+    // group shares with it: Surfaces on the second screen (the developer, 2026-11-25: "when the
+    // Surface View is active include the Maps (but not the big maps) and the World sections also
+    // in the menu"), Organisms (GRAPH) on the third (round 38: "in the menu of Organisms/Graph
+    // page, add the WORLD section as well"). A part belongs to the groups its data-for names,
+    // separated by spaces; one part of the page in several places is one element, so the
+    // leading part is put before World each time (where it lies while hidden does not matter).
+    const lead = logic.menuLead(group);
+    if (lead) sheet.insertBefore($(lead), $("world-part"));
+    // SHOW ALL of World fits the camera of the map and the zoom of the surfaces; the third screen
+    // has its own window (minus, plus and FIT of its part), so there it is greyed out
+    const own = group === "organism";
+    $("fit").disabled = own;
+    $("fit").title = own
+      ? "Show all is for the map and the surfaces: on this screen minus, plus and FIT (above) set how much the window shows"
+      : "Show the whole world (key 0)";
     // "What this is" of the screen shown is always the last part of the menu, below RPG (the
     // developer, 2026-11-25: "The what is this section in the menu should always be in the
     // bottom of the menu"). In index.html each stays beside its screen's parts; here every one
