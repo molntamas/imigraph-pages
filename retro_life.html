@@ -544,7 +544,8 @@ body[data-universe="1"][data-view="map"] .hud-line.donut-only { display: flex; }
 @media (max-width: 699px) { #universe-legend { left: 12px; right: 12px; top: 118px; max-width: none; text-align: left; } }
 body[data-universe="1"][data-view="map"] #universe-legend { display: block; }
 #universe-legend p { margin: 4px 0 0; }
-#universe-name { font-weight: 700; font-size: 15px; color: var(--accent); }
+#universe-name, #wolfram-rules-name { font-weight: 700; font-size: 15px; color: var(--accent); }
+#wolfram-rules-name { font-size: 17px; margin: 0 auto 4px; }
 /* what the shapes and colours of a universe mean ("What this is" in the mode): a still picture of
    each mark beside its words, in the colours of the look (setTheme sets them) */
 .marks .universe-mark { display: flex; align-items: flex-start; gap: 10px; }
@@ -1212,6 +1213,7 @@ body[data-rpg] { overflow: hidden; }
          stand still; its words; the walk through the rules on an example -->
     <!-- GRAPH RULES of a universe (round 48, stage 3, app-universe-rules.js): its rules and a walk through the first stored steps -->
     <div id="wolfram-rules" aria-label="The rules of the universe">
+      <p id="wolfram-rules-name"></p>
       <p id="wolfram-rules-head"></p>
       <div id="wolfram-rule-list"></div>
       <div id="wolfram-walk">
@@ -1531,7 +1533,7 @@ body[data-rpg] { overflow: hidden; }
         </div>
         <p><b>Computed ahead</b>: the project's engine played each universe once and stored every change (which rule, which relations it took); the page plays the changes back, so start, one step, back and back to the start go exactly through the same run every time, and the run ends where it was stored. It is <b>read only</b>: nothing can be added, set or saved.</p>
         <p><b>The picture</b>: every relation of the state is drawn as the lines from each of its nodes to the next, every node as a point. A relation that names the same node twice (a loop) draws that node as a <b>square</b>; a relation of one node, a marker put in by hand, as a <b>larger</b> point in another colour. Where a node lies is a help for the eye, not part of the model: it was worked out once, from the last state, so that nodes near each other in hops lie near each other (placing by stress), and a node keeps that place for the whole run. At the start the universe is a small speck where its first nodes will stay. What is nearer is drawn larger and brighter. The picture stands still: nothing turns or moves by itself. <b>FLAT / IN SPACE</b> (bottom right of the map) chooses the places worked out on a plane or in space: in space a <b>drag</b> turns it, two fingers or the wheel zoom; flat a drag moves the sheet, two fingers zoom and twist it, the wheel zooms at the pointer, [ and ] turn it. SHOW ALL (World) shows it as it opened. The lamps in World draw it in other ways (faces, age, the marker's trail, arrowheads), and a tap on a node colours the others by hops from it.</p>
-        <p><b>The plus</b> (bottom bar) opens the next universe of Maps, after the last the first again (key A; Shift+A the one before); its name stands at the top of the legend. <b>Not in this mode</b>, and why: the sizes and the edge of the world (a universe has none), RANDOM and CLEAR (no cells), the second and third screens (a universe lies on no surface and has no cells: right goes from the map to GRAPH RULES), big maps, the Lexicon, the pattern text, SAVE and LOAD, the explanation and the lessons (they are about cells). Your world of cells waits untouched; a rule of cells in World brings it back.</p>
+        <p><b>The plus</b> (bottom bar) opens the next universe of Maps, after the last the first again (key A; Shift+A the one before), here and on GRAPH RULES; its name stands at the top of the legend. <b>Not in this mode</b>, and why: the sizes and the edge of the world (a universe has none), RANDOM and CLEAR (no cells), the second and third screens (a universe lies on no surface and has no cells: right goes from the map to GRAPH RULES), big maps, the Lexicon, the pattern text, SAVE and LOAD, the explanation and the lessons (they are about cells). Your world of cells waits untouched; a rule of cells in World brings it back.</p>
         <p class="keys">Keys: Space start/stop · . one step · , back · Home the start · + − speed · A the next universe (Shift+A the one before) · ← → screens (or 1 2 3 4) · [ ] turn a flat universe · S menu · 0 show all</p>
       </div>
       <div id="cube-about" data-rule-only="bounce3d" hidden>
@@ -1813,13 +1815,13 @@ body[data-rpg] { overflow: hidden; }
     <section id="rules-about" class="about" data-for="rules">
       <h3 data-px="WHAT THIS IS"></h3>
       <div data-rule-only="wolfram" hidden>
-        <p><b>Graph rules of a universe</b> <span lang="ja">(ルール)</span>: every rule of the universe shown, as a picture of the relations it looks for (left) and of what it puts in their place (right), drawn as the map draws them: lines from each node of a relation to the next, a square where a relation names a node twice, the large point where a relation holds one node, filled triangles with FACES on. The letters or numbers are the rule's own names for its nodes; a ring on the right is a node the rule makes. Below each picture the rule as the engine writes it, and what it does in plain words.</p>
+        <p><b>Graph rules of a universe</b> <span lang="ja">(ルール)</span>: every rule of the universe shown, as a picture of the relations it looks for (left) and of what it puts in their place (right), drawn as the map draws them: lines from each node of a relation to the next, a square where a relation names a node twice, the large point where a relation holds one node, filled triangles with FACES on. The letters or numbers are the rule's own names for its nodes; a ring on the right is a node the rule makes. Below each picture the rule as the engine writes it, and what it does in plain words. <b>The plus</b> (bottom bar) shows the rules of the next universe of Maps, its name at the top, its walk from the start; going left, the map shows that universe.</p>
         <div class="marks" id="universe-rule-marks">
           <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><circle cx="15" cy="10" r="3.2" data-fill="young"/><circle cx="15" cy="10" r="7" fill="none" stroke-width="2" data-stroke="born"/></svg><span><b>A ring</b> round a node: a node the rule makes (on the right of a rule), or a node the step made (in the walk).</span></p>
           <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><line x1="3" y1="15" x2="15" y2="5" stroke-width="1.5" data-stroke="rock"/><line x1="15" y1="5" x2="27" y2="15" stroke-width="3.5" data-stroke="born"/></svg><span><b>Thick lines</b> in the walk: the relations the next step takes (before it), or the relations it put in (after it).</span></p>
         </div>
         <p><b>The first steps</b>: the walk shows the stored run from its start, two pictures a step, a picture at a press, nothing by itself: before a step, the relations it takes (thick); after it, the relations it put in (thick) and the nodes it made (rings). It reads the stored run; it computes nothing. Every step of the engine makes every change that fits at once, in its order (the standard order).</p>
-        <p class="keys">Keys: . or ON the next picture · , or BACK the one before · Home the first · ← → screens (or 1 2 3 4) · S menu</p>
+        <p class="keys">Keys: . or ON the next picture · , or BACK the one before · Home the first · A or the plus the next universe's rules (Shift+A the one before) · ← → screens (or 1 2 3 4) · S menu</p>
       </div>
       <p><b>Graph rules</b> <span lang="ja">(ルール)</span> shows the rules that make the world of the screen to the left change. That screen draws the world as a graph: nodes, and arrows from one node to another. Here are the <b>rewriting rules</b> of that graph, and nothing else changes it: no rows, no columns, no clock. A rule is a small pattern of arrows and what replaces it. Wherever the pattern is found in the graph, it is taken away and the replacement is put in its place, everywhere at once, step after step. That is the whole world. The game itself computes with the ordinary rule, which is far faster, and tests hold that these rules do exactly the same.</p>
       <p><b>Which rules.</b> Those of the rule and the edge chosen in World (below, and on every screen): Conway's Life (17 rules; with walls 17 + 7), Bounce Gas II (6; with walls or the open edge 6 + 5), Bounce Gas 3D (22; 22 + 11) or Critters (15, of which the 6 of its odd blocks are Bounce Gas II's own; 15 + 5). The card at the top says which and how many. They are the rules of the graph the third screen draws (for Life its view GRAPH; its views NORMAL and NUMBERS draw another model of the same Life, a hypergraph with rules of its own, which this screen does not show). Under Conway's Life the open edge has no rules, and the screen says so.</p>
@@ -12959,10 +12961,12 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     const at = keys.indexOf(key);
     return keys[(((at < 0 ? 0 : at + by) % keys.length) + keys.length) % keys.length];
   }
-  // What the plus is in the mode: "next" on the map (the next universe), "off" on GRAPH RULES (it
-  // says why), and null outside the mode (the plus adds a formation as ever).
+  // What the plus is in the mode: "next", the next universe, on both its screens: the map, and GRAPH
+  // RULES, which then shows the next universe's rules (the developer: "the plus should be also used
+  // in the graph rules pages, so it is easy to navigate between rules"); "off" on any other screen
+  // (the mode has none now); null outside the mode (the plus adds a formation as ever).
   /** @type {Logic["plusIs"]} */
-  const plusIs = (universe, view) => (!universe ? null : view === "map" ? "next" : "off");
+  const plusIs = (universe, view) => (!universe ? null : view === "map" || view === "rules" ? "next" : "off");
 
   // Where start plays a universe from (the planning session's choice of round 48): where it stands,
   // or at the end of the run from step 0 again (a press starts it, so it never loops by itself).
@@ -13006,8 +13010,8 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   // Why a part of the game does nothing in the mode (each said where one would look: a title, a note,
   // a hint at a press). A new part greyed out in the mode needs its words here.
   const UNIVERSE_NOT = {
-    // (on the map of the mode the plus opens the next universe; these are its words on GRAPH RULES)
-    add: "Here the plus does nothing: this screen shows the rules of the universe, and nothing can be added to a universe. On the map (to the left) the plus opens the next universe.",
+    // (the plus of the mode opens the next universe; these words stand where nothing can be added)
+    add: "Nothing can be added to a universe: in the mode the plus opens the next universe, on the map and on GRAPH RULES.",
     cells: "There are no cells to fill or clear in a universe. Choose a rule of cells in World for that.",
     size: "A universe has no size and no edge: it is as large as its rule made it.",
     big: "Big maps are Conway's Life only: choose CONWAY'S LIFE in World first.",
@@ -13521,7 +13525,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
       return ["nothing"];
     }
     if (key === " " && s.onButton) return null;  // the button does its own
-    // (the plus of the mode: the next universe on its map, Shift+A the one before; off on GRAPH RULES)
+    // (the plus of the mode: the next universe on its map and on GRAPH RULES, Shift+A the one before)
     if (s.universe && key === "a" && !s.formationsOpen) return plusIs(true, s.view) === "next" ? ["next-universe", s.shift ? -1 : 1] : ["rests-add"];
     // (and [ ] turn a flat universe in the plane of the screen, stage 2)
     if (s.universe && s.view === "map" && (key === "[" || key === "]")) return ["roll-universe", key === "[" ? -1 : 1];
@@ -22077,6 +22081,8 @@ window.RetroLife.app.universe = function (ctx) {
     ctx.pause();
     if (state.stamp) ctx.leaveStamping();
     const changed = !state.universe || state.universe.key !== chosen;
+    // (another universe chosen on GRAPH RULES of the mode, by the plus: it stays there)
+    const onRules = Boolean(state.universe) && state.view === "rules";
     state.universe = { key: chosen };
     lastKey = chosen;
     // (a universe chosen opens finished, at its last step: the whole picture, not a speck; the
@@ -22088,8 +22094,9 @@ window.RetroLife.app.universe = function (ctx) {
       hopsFrom = null;
     }
     document.body.dataset.universe = "1";
-    // the second and third screens are not in the mode (D6), GRAPH RULES not yet (stage 3)
-    if (state.view !== "map") ctx.setView("map");
+    // the second and third screens are not in the mode (D6): the mode opens on the map, and a switch
+    // of the universe on GRAPH RULES stays there
+    if (state.view !== "map" && !onRules) ctx.setView("map");
     ctx.showRule();
     ctx.showRulesBar();
     ctx.showPlaying();
@@ -22479,6 +22486,8 @@ window.RetroLife.app.universe = function (ctx) {
     if (!state.universe) return;
     ctx.flash("add");
     enterUniverse(logic.universeAfter(data.universes.map((entry) => entry.key), state.universe.key, by), true);
+    // (on GRAPH RULES the next universe's rules from their top, its walk at its first picture)
+    if (state.view === "rules") ctx.openUniverseRules();
   }
 
   // The ways to draw and the placing chosen per universe, saved with the preferences (savePrefs) and
@@ -22877,7 +22886,9 @@ window.RetroLife.app.universeRules = function (ctx) {
       buildCards();
       built = look;
     }
-    $("wolfram-rules-head").textContent = stored.title + ": " + (stored.cards.length === 1 ? "its rule" : "its " + stored.cards.length + " rules") +
+    // (the universe's name at the top, plain: after a press on the plus it says which one this is)
+    $("wolfram-rules-name").textContent = stored.title;
+    $("wolfram-rules-head").textContent = (stored.cards.length === 1 ? "Its rule" : "Its " + stored.cards.length + " rules") +
       ", each the relations it looks for (left) and what it puts in their place (right). A ring is a node the rule makes.";
     const walk = drawWalk();
     shown = { key, cards: stored.cards.length, ...walk };
@@ -22922,6 +22933,15 @@ window.RetroLife.app.universeRules = function (ctx) {
     ctx.requestDraw();
   }
 
+  // Another universe on this screen (the plus): its rules from the top of the page, set at once (no
+  // scrolling that moves), and its walk at its first picture.
+  /** @type {UniverseRulesPart["openUniverseRules"]} */
+  function openUniverseRules() {
+    walkAt.set(keyNow(), 0);
+    $("wolfram-rules").scrollTop = 0;
+    ctx.requestDraw();
+  }
+
   /** @type {UniverseRulesPart["universeRulesView"]} */
   const universeRulesView = () => shown;
 
@@ -22929,6 +22949,7 @@ window.RetroLife.app.universeRules = function (ctx) {
     drawUniverseRules,
     leaveUniverseRules,
     walkUniverse,
+    openUniverseRules,
     universeRulesView,
     init() {
       $("wolfram-walk-back").addEventListener("click", () => walkUniverse(-1));
