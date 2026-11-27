@@ -544,6 +544,13 @@ body[data-universe="1"][data-view="map"] .hud-line.donut-only { display: flex; }
 @media (max-width: 699px) { #universe-legend { left: 12px; right: 12px; top: 118px; max-width: none; text-align: left; } }
 body[data-universe="1"][data-view="map"] #universe-legend { display: block; }
 #universe-legend p { margin: 4px 0 0; }
+#universe-name { font-weight: 700; font-size: 15px; color: var(--accent); }
+/* what the shapes and colours of a universe mean ("What this is" in the mode): a still picture of
+   each mark beside its words, in the colours of the look (setTheme sets them) */
+.marks .universe-mark { display: flex; align-items: flex-start; gap: 10px; }
+.marks .universe-mark svg { flex: none; width: 45px; height: 30px; margin-top: 2px; border: 1px solid var(--dim); }
+.marks .universe-mark span { min-width: 0; }
+body[data-theme="kuroi"] .marks .trail { stroke-dasharray: 3 2; }
 #universe-legend i { display: inline-block; vertical-align: middle; margin: 0 6px 0 2px; }
 #universe-legend .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 #universe-legend .dot.big { width: 14px; height: 14px; }
@@ -777,6 +784,9 @@ body[data-stamping="1"] #add { background: var(--seal); color: var(--surface); }
   background: var(--surface); border-left: var(--px) solid var(--ink); padding: 0 14px 24px; overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* a wider menu where the screen has room (the developer, 2026-11-27: "it should be made wider ...
+   on my desktop it easily fits on the screen"); a phone keeps the whole width (below) */
+@media (min-width: 1100px) { .sheet { width: 520px; } }
 .sheet > header {
   position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;
   background: var(--surface); padding: 12px 0 10px; border-bottom: var(--px) solid var(--ink); z-index: 1;
@@ -803,6 +813,10 @@ body[data-mode="big"] #speed { width: 110px; }
 .rows button { justify-content: flex-start; text-align: left; flex-wrap: wrap; gap: 4px 10px; padding: 8px 10px; }
 .rows button small { color: var(--dim); flex-basis: 100%; font-size: 12px; line-height: 1.35; }
 .rows button .side { margin-left: auto; color: var(--dim); }
+/* a title in pixel letters longer than the menu is wide is drawn smaller, never wider than the
+   menu (round 48: "A marker walks while the space grows" made the menu scroll sideways) */
+.rows button .title { min-width: 0; max-width: 100%; }
+.rows button .title .px { max-width: 100%; }
 #formation-list h3 { grid-column: 1 / -1; margin-top: 12px; }
 #formation-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 8px; }
 .formation { flex-direction: column; padding: 8px 4px 6px; gap: 6px; font-size: 12px; line-height: 1.2; text-align: center; }
@@ -1093,6 +1107,7 @@ body[data-rpg] { overflow: hidden; }
     <!-- the mode WOLFRAM (round 48, app-universe.js): a universe on the map, a stored run played back -->
     <canvas id="universe" aria-label="A Wolfram universe in space, read only. Drag to turn it, zoom with two fingers or the wheel."></canvas>
     <div id="universe-legend" aria-label="How to read the picture of a universe">
+      <p id="universe-name"></p>
       <p id="universe-node"><i class="dot" id="universe-node-mark"></i>a point: a node (it keeps its place for the whole run)</p>
       <p id="universe-ages" hidden><i class="dot" id="universe-age-start"></i>in the start <i class="dot" id="universe-age-new"></i>made in the newest tenth of the steps <i class="dot" id="universe-age-run"></i>before (AGE)</p>
       <p id="universe-hops" hidden>hops from the node tapped: <i class="dot" id="universe-hops-0"></i>0 to 5 <i class="dot" id="universe-hops-1"></i>6 to 11 <i class="dot" id="universe-hops-2"></i>12 to 17 <i class="dot" id="universe-hops-3"></i>more, or none</p>
@@ -1476,7 +1491,7 @@ body[data-rpg] { overflow: hidden; }
       <p class="note" data-rule-only="bounce" hidden>The maps of Bounce Gas II, from the research behind it. A map whose words need it brings its own edge: One particle, Two meet head-on and A wall as a mirror wrap round, the two in a box have walls; the others keep the edge you set. The maps of Conway's Life come back with the rule Conway's Life (World, above).</p>
       <p class="note" data-rule-only="critters" hidden>The maps of Critters, from the research behind it (research/critters of this project), each line measured. A map whose words need it brings its own edge: A glider and Three ships wrap round, the glider at a wall, the four gliders and the blob in a box have walls, the two that leave have the open edge; the others keep the edge you set (wrapping round at the open edge). The maps of the other rules come back with their rule (World, above).</p>
       <p class="note" data-rule-only="bounce3d" hidden>The maps of Bounce Gas 3D, from the research behind it, and its line says what each does. A map whose words need it brings its own edge: One particle, the two that meet, A full block and A wall as a mirror wrap round, A ball between mirrors and A gas in a box have walls, A gas that leaves the open edge; Thin gas and A gas in a room keep the edge you set (wrapping round at the open edge). The maps of the other rules come back with their rule (World, above).</p>
-      <p class="note" data-rule-only="wolfram" hidden>The Wolfram universes, from the research behind them (research/physics-like-universes of this project). Each opens at its start, resting; start plays its stored run, back goes back through it. Its line says what it does, every claim measured.</p>
+      <p class="note" data-rule-only="wolfram" hidden>The Wolfram universes, from the research behind them (research/physics-like-universes of this project). Each opens finished, at its last step, resting; start plays its stored run again from the beginning, once; back goes back through it. Its line says what it does, every claim measured.</p>
       <div id="map-list" class="rows"></div>
     </section>
     <section id="big-part" data-for="map">
@@ -1500,10 +1515,24 @@ body[data-rpg] { overflow: hidden; }
       <div id="universe-about" data-rule-only="wolfram" hidden>
         <p><b>A Wolfram universe</b> (World, above in this menu: WOLFRAM) is a run of the rules of a <b>Wolfram model</b>: a world made of <b>relations</b> between <b>nodes</b>, a relation a short list of nodes (one, two, three or four of them). A rule says which relations it looks for and what it puts in their place, often with a new node; the run takes the rules everywhere they fit, step after step (the model's standard order). Nothing else is given: no grid, no surface, no space. Where the rules make relations between nodes that are near, a space grows, as a sheet, a tube, a cap or a crumpled web. These are the kept universes of the research behind this mode (research/physics-like-universes of this project), after the Wolfram Physics Project.</p>
         <p id="universe-rules"></p>
+        <!-- what the shapes and colours of a universe mean, each with its mark as the map draws it
+             (round 48, the developer: "explain this also in the menu, in the what is this section.
+             with graphics"); colours set by setTheme from the look (data-fill, data-stroke) -->
+        <div class="marks" id="universe-marks">
+          <p><b>What the shapes and colours mean</b></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><circle cx="15" cy="10" r="3.2" data-fill="young"/></svg><span><b>A point</b>: a node. Every node keeps one place for the whole run.</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><polyline points="4,15 15,5 26,13" fill="none" stroke-width="1.5" data-stroke="rock"/><circle cx="4" cy="15" r="2.4" data-fill="young"/><circle cx="15" cy="5" r="2.4" data-fill="young"/><circle cx="26" cy="13" r="2.4" data-fill="young"/></svg><span><b>Lines</b>: a relation, drawn from each of its nodes to the next, in the order the relation lists them.</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><line x1="4" y1="15" x2="15" y2="10" stroke-width="1.5" data-stroke="rock"/><circle cx="4" cy="15" r="2.4" data-fill="young"/><rect x="11" y="6" width="8" height="8" data-fill="old"/></svg><span><b>A square</b>: a node that one relation names twice, a loop: node 2 in {1,2,2}. On the flat piece of space (wm7714) the squares lie along the rim: its rule looks for a relation with such a doubled node, so the squares mark where the sheet can still grow.</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><polygon points="5,16 15,4 25,16" stroke-width="1.2" data-fill="face" data-stroke="rock"/><circle cx="5" cy="16" r="2.2" data-fill="young"/><circle cx="15" cy="4" r="2.2" data-fill="young"/><circle cx="25" cy="16" r="2.2" data-fill="young"/></svg><span><b>Filled</b> (FACES): a relation of three different nodes; a relation of four is filled as two triangles.</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><polyline class="trail" points="2,16 9,11 15,13" fill="none" stroke-width="2" data-stroke="born"/><circle cx="21" cy="9" r="5.5" data-fill="born"/></svg><span><b>The large point</b>: the marker, a relation of one node; <b>the line</b> leading to it (TRAIL): where it has been.</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><circle cx="6" cy="10" r="3.2" data-fill="old"/><circle cx="15" cy="10" r="3.2" data-fill="born"/><circle cx="24" cy="10" r="3.2" data-fill="young"/></svg><span>With <b>AGE</b>: the nodes of the start, those made in the newest tenth of the steps played, and the rest, in this order, each in a colour of the look (not in Kuroi, which is black and white).</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><circle cx="4.5" cy="10" r="3" data-fill="born"/><circle cx="11.5" cy="10" r="3" data-fill="young"/><circle cx="18.5" cy="10" r="3" data-fill="old"/><circle cx="25.5" cy="10" r="3" data-fill="rock"/></svg><span>After <b>a tap on a node</b>: the others by how many hops away they are, 0 to 5, 6 to 11, 12 to 17, and the grey beyond or not reached; a tap on empty ground ends it (not in Kuroi).</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><line x1="4" y1="10" x2="25" y2="10" stroke-width="1.5" data-stroke="rock"/><polyline points="20,6 25,10 20,14" fill="none" stroke-width="1.5" data-stroke="rock"/></svg><span><b>ARROWHEADS</b>: the way a relation goes, from its first node to its last; only while at most 300 lines are drawn.</span></p>
+        </div>
         <p><b>Computed ahead</b>: the project's engine played each universe once and stored every change (which rule, which relations it took); the page plays the changes back, so start, one step, back and back to the start go exactly through the same run every time, and the run ends where it was stored. It is <b>read only</b>: nothing can be added, set or saved.</p>
         <p><b>The picture</b>: every relation of the state is drawn as the lines from each of its nodes to the next, every node as a point. A relation that names the same node twice (a loop) draws that node as a <b>square</b>; a relation of one node, a marker put in by hand, as a <b>larger</b> point in another colour. Where a node lies is a help for the eye, not part of the model: it was worked out once, from the last state, so that nodes near each other in hops lie near each other (placing by stress), and a node keeps that place for the whole run. At the start the universe is a small speck where its first nodes will stay. What is nearer is drawn larger and brighter. The picture stands still: nothing turns or moves by itself. <b>FLAT / IN SPACE</b> (bottom right of the map) chooses the places worked out on a plane or in space: in space a <b>drag</b> turns it, two fingers or the wheel zoom; flat a drag moves the sheet, two fingers zoom and twist it, the wheel zooms at the pointer, [ and ] turn it. SHOW ALL (World) shows it as it opened. The lamps in World draw it in other ways (faces, age, the marker's trail, arrowheads), and a tap on a node colours the others by hops from it.</p>
-        <p><b>Not in this mode</b>, and why: the plus (nothing can be added to a universe), the sizes and the edge of the world (a universe has none), RANDOM and CLEAR (no cells), the second and third screens (a universe lies on no surface and has no cells: right goes from the map to GRAPH RULES), big maps, the Lexicon, the pattern text, SAVE and LOAD, the explanation and the lessons (they are about cells). Your world of cells waits untouched; a rule of cells in World brings it back.</p>
-        <p class="keys">Keys: Space start/stop · . one step · , back · Home the start · + − speed · ← → screens (or 1 2 3 4) · [ ] turn a flat universe · S menu · 0 show all</p>
+        <p><b>The plus</b> (bottom bar) opens the next universe of Maps, after the last the first again (key A; Shift+A the one before); its name stands at the top of the legend. <b>Not in this mode</b>, and why: the sizes and the edge of the world (a universe has none), RANDOM and CLEAR (no cells), the second and third screens (a universe lies on no surface and has no cells: right goes from the map to GRAPH RULES), big maps, the Lexicon, the pattern text, SAVE and LOAD, the explanation and the lessons (they are about cells). Your world of cells waits untouched; a rule of cells in World brings it back.</p>
+        <p class="keys">Keys: Space start/stop · . one step · , back · Home the start · + − speed · A the next universe (Shift+A the one before) · ← → screens (or 1 2 3 4) · [ ] turn a flat universe · S menu · 0 show all</p>
       </div>
       <div id="cube-about" data-rule-only="bounce3d" hidden>
         <p><b>Bounce Gas 3D</b> (World, above in this menu, the rule) is a rule for a world in space: a <b>cube of cells</b>, here 8 to 64 cells along each side, that wraps round in all three directions (what leaves at one face comes back at the opposite one). It is this project's own rule, made for this game and the research behind it; it is not a known rule of that name. (The cube may also end at walls or at an open edge: World, the edge of the world, and below.) Every step cuts the cube into <b>blocks of 2 x 2 x 2 cells</b> and puts in the place of each block what a table of 256 blocks says; the next step cuts it again, the cut moved one cell along all three directions, and so on by turns. A cell holds a <b>particle</b> or is empty.</p>
@@ -1785,6 +1814,10 @@ body[data-rpg] { overflow: hidden; }
       <h3 data-px="WHAT THIS IS"></h3>
       <div data-rule-only="wolfram" hidden>
         <p><b>Graph rules of a universe</b> <span lang="ja">(ルール)</span>: every rule of the universe shown, as a picture of the relations it looks for (left) and of what it puts in their place (right), drawn as the map draws them: lines from each node of a relation to the next, a square where a relation names a node twice, the large point where a relation holds one node, filled triangles with FACES on. The letters or numbers are the rule's own names for its nodes; a ring on the right is a node the rule makes. Below each picture the rule as the engine writes it, and what it does in plain words.</p>
+        <div class="marks" id="universe-rule-marks">
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><circle cx="15" cy="10" r="3.2" data-fill="young"/><circle cx="15" cy="10" r="7" fill="none" stroke-width="2" data-stroke="born"/></svg><span><b>A ring</b> round a node: a node the rule makes (on the right of a rule), or a node the step made (in the walk).</span></p>
+          <p class="universe-mark"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" data-fill="space"/><line x1="3" y1="15" x2="15" y2="5" stroke-width="1.5" data-stroke="rock"/><line x1="15" y1="5" x2="27" y2="15" stroke-width="3.5" data-stroke="born"/></svg><span><b>Thick lines</b> in the walk: the relations the next step takes (before it), or the relations it put in (after it).</span></p>
+        </div>
         <p><b>The first steps</b>: the walk shows the stored run from its start, two pictures a step, a picture at a press, nothing by itself: before a step, the relations it takes (thick); after it, the relations it put in (thick) and the nodes it made (rings). It reads the stored run; it computes nothing. Every step of the engine makes every change that fits at once, in its order (the standard order).</p>
         <p class="keys">Keys: . or ON the next picture · , or BACK the one before · Home the first · ← → screens (or 1 2 3 4) · S menu</p>
       </div>
@@ -12917,6 +12950,20 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   /** @type {Logic["universeEndWords"]} */
   const universeEndWords = (steps) => "The end of this universe's run: " + grouped(steps) + " steps, computed ahead. Start plays it again from step 0, once; back and back to the start go back through it.";
 
+  // The universe after (by 1) or before (by -1) the one shown, in the order of Maps, round (after the
+  // last the first again): the plus on the map of the mode (the planning session's choice of round
+  // 48, after the developer asked "the "Add" button should switch to the next wolfram world").
+  /** @type {Logic["universeAfter"]} */
+  function universeAfter(keys, key, by) {
+    if (!keys.length) throw new Error("no universes");
+    const at = keys.indexOf(key);
+    return keys[(((at < 0 ? 0 : at + by) % keys.length) + keys.length) % keys.length];
+  }
+  // What the plus is in the mode: "next" on the map (the next universe), "off" on GRAPH RULES (it
+  // says why), and null outside the mode (the plus adds a formation as ever).
+  /** @type {Logic["plusIs"]} */
+  const plusIs = (universe, view) => (!universe ? null : view === "map" ? "next" : "off");
+
   // Where start plays a universe from (the planning session's choice of round 48): where it stands,
   // or at the end of the run from step 0 again (a press starts it, so it never loops by itself).
   /** @type {Logic["universePlayFrom"]} */
@@ -12959,7 +13006,8 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
   // Why a part of the game does nothing in the mode (each said where one would look: a title, a note,
   // a hint at a press). A new part greyed out in the mode needs its words here.
   const UNIVERSE_NOT = {
-    add: "A universe is computed ahead from its rule and its start: nothing can be added to it.",
+    // (on the map of the mode the plus opens the next universe; these are its words on GRAPH RULES)
+    add: "Here the plus does nothing: this screen shows the rules of the universe, and nothing can be added to a universe. On the map (to the left) the plus opens the next universe.",
     cells: "There are no cells to fill or clear in a universe. Choose a rule of cells in World for that.",
     size: "A universe has no size and no edge: it is as large as its rule made it.",
     big: "Big maps are Conway's Life only: choose CONWAY'S LIFE in World first.",
@@ -12985,6 +13033,11 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     if (born === 0) return "start";
     return step - born < Math.max(1, Math.ceil(step / 10)) ? "new" : "run";
   }
+  // The colour of a face (a relation of three nodes filled): the colour old mixed FACE_SHARE with the
+  // ground, opaque (never transparency); in a plain look (Kuroi) its one grey. Colours as [r, g, b].
+  const FACE_SHARE = 0.3;
+  /** @type {Logic["universeFace"]} */
+  const universeFace = (ground, old, rock, plain) => (plain ? rock.slice() : old.map((v, k) => Math.round(ground[k] + (v - ground[k]) * FACE_SHARE)));
   // What a lamp of the universe says where it cannot be switched on now, or null (it can).
   /** @type {Logic["universeLampOff"]} */
   function universeLampOff(lamp, c) {
@@ -13468,8 +13521,8 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
       return ["nothing"];
     }
     if (key === " " && s.onButton) return null;  // the button does its own
-    // the mode WOLFRAM (round 48): nothing can be added to a universe; the plus says why
-    if (s.universe && key === "a" && !s.formationsOpen) return ["rests-add"];
+    // (the plus of the mode: the next universe on its map, Shift+A the one before; off on GRAPH RULES)
+    if (s.universe && key === "a" && !s.formationsOpen) return plusIs(true, s.view) === "next" ? ["next-universe", s.shift ? -1 : 1] : ["rests-add"];
     // (and [ ] turn a flat universe in the plane of the screen, stage 2)
     if (s.universe && s.view === "map" && (key === "[" || key === "]")) return ["roll-universe", key === "[" ? -1 : 1];
     if (s.view === "rules" && !s.learn && !s.universe) {  // (a universe's: the keys of time step the walk)
@@ -13510,7 +13563,7 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     rateFor, stepsDue, sunPhase, clampSpeed, speedLabel, bigStepAfter, timeControl,
     menuGroup, inMenuGroup, menuLead, menuBlinker, menuScroll, formBlocked,
     sideFor, nextForm, formForEdge, formForRule, pieceBounds, ruleKind, ruleStart, viewWords, blockMark, blockTurnWords, blockMost, blockWindowSize, blockWindowAt, blockZoom, ruleWords, screenOff, mapEdge, cubeWindowAt, savedWords, viewAfter,
-    universeViews, universeWords, universeEndWords, universePlayFrom, universeWalkAt, universeWalkWords, universeWalkPlay, universeOff, universeNot, universeHeads, universeBand, universeAge, universeLampOff,
+    universeViews, universeWords, universeEndWords, universeAfter, plusIs, universePlayFrom, universeWalkAt, universeWalkWords, universeWalkPlay, universeOff, universeNot, universeHeads, universeBand, universeAge, universeLampOff, universeFace,
     rulesKey, rulesCountWords, ruleAfter, restWords, WALK_STAGES, walkAfter, walkStage, EDIT_MARK, editCostWords, refusalWords, editResetWords,
     PLAIN_MOST, plainFits, plainSide, plainOffWords, plainDetail, plainStepWords, plainLine, plainStopWords, modePressed,
     freeCheckWords, freeCountWords, freeSaysWords, freeOff, plainFreeWords,
@@ -13646,6 +13699,8 @@ texCoord = mod(texCoord, 1.0) * outFrame.zw + outFrame.xy;`},disable:!!e}}},8378
     settings: ["...###...", ".#.###.#.", ".#######.", "####.####", "###...###", "####.####", ".#######.", ".#.###.#.", "...###..."],
     close: [".........", ".##...##.", ".###.###.", "..#####..", "...###...", "..#####..", ".###.###.", ".##...##.", "........."],
     minus: [".........", ".........", ".........", ".#######.", ".#######.", ".#######.", ".........", ".........", "........."],
+    // the plus on the map of the mode WOLFRAM (round 48): the next universe, two steps on
+    next: [".........", "##..##...", ".##..##..", "..##..##.", "...##..##", "..##..##.", ".##..##..", "##..##...", "........."],
     lens: ["..###....", ".#...#...", "#.....#..", "#.....#..", "#.....#..", ".#...#...", "..####...", "......##.", ".......##"],
   };
 
@@ -21942,7 +21997,6 @@ window.RetroLife.app.universe = function (ctx) {
   const LOOP = 0.6;    // links across the square of a node a relation names twice
   const MARKER = 1.1;  // links across the marker (a relation of one node)
   const HEAD = 0.28;   // links an arrowhead is long
-  const FACE = 0.3;    // how much of the colour old a face has, the rest the ground (opaque: never transparency)
   const NEAR = 22;     // pixels from a tap within which a node is the one tapped
   // the ways to draw (lamps in World): faces on, age off, the marker's trail on, arrowheads on where
   // few lines are drawn (logic.universeHeads); not saved
@@ -22099,7 +22153,6 @@ window.RetroLife.app.universe = function (ctx) {
   }
 
   const rgbOf = (/** @type {string} */ hex) => render.rgbOf(hex);
-  const mixed = (/** @type {number[]} */ ground, /** @type {number[]} */ colour, /** @type {number} */ t) => colour.map((v, k) => Math.round(ground[k] + (v - ground[k]) * t));
 
   // the scene's frame without its layers (the camera and the placing shown), for pointOf
   function frameOf() {
@@ -22179,7 +22232,7 @@ window.RetroLife.app.universe = function (ctx) {
     const view = hopsOn ? "hops-" + hopsFrom : on("age") ? "age" : "one";
     /** @type {CubeLayer[]} */
     const drawn = [];
-    const faceColour = plain ? rgbOf(theme.rock) : mixed(ground, rgbOf(theme.old), FACE);
+    const faceColour = logic.universeFace(ground, rgbOf(theme.old), rgbOf(theme.rock), plain);
     if (on("faces")) drawn.push({ type: "triangles", key: "faces", version, places: layers.faces, colour: faceColour });
     $("universe-face-mark").style.color = "rgb(" + faceColour.join(",") + ")";
     drawn.push({ type: "lines", key: "links", version, places: layers.lines, colour: rgbOf(plain && on("faces") ? theme.star : theme.rock) });
@@ -22233,6 +22286,9 @@ window.RetroLife.app.universe = function (ctx) {
    */
   function showLegend(theme, layers, on, hopsOn, colours) {
     const show = (/** @type {string} */ id, /** @type {boolean} */ yes) => { $(id).hidden = !yes; };
+    // the universe's name, the legend's first line (after a press on the plus it says which one this
+    // is, at once, with nothing sliding in; round 48)
+    $("universe-name").textContent = storedOf(/** @type {{ key: string }} */ (state.universe).key).title;
     show("universe-loop", layers.looped.length > 0);
     show("universe-marker", layers.marked.length > 0);
     show("universe-face", on("faces") && layers.triangles.length > 0);
@@ -22388,6 +22444,43 @@ window.RetroLife.app.universe = function (ctx) {
     requestDraw();
   }
 
+  // The plus in the mode (round 48, after the developer's "the "Add" button should switch to the
+  // next wolfram world"): on the map the next universe (its own picture and words, never "add"),
+  // on GRAPH RULES off with its reason (app-rules.js, showRulesBar), outside the mode the plus of
+  // formations as it was (logic.plusIs).
+  /** @type {UniversePart["showUniversePlus"]} */
+  function showUniversePlus() {
+    const add = $("add");
+    if (logic.plusIs(universeOn(), state.view) === "next") {
+      if (add.dataset.plusHtml === undefined) {
+        add.dataset.plusHtml = add.innerHTML;
+        add.dataset.plusLabel = add.getAttribute("aria-label") ?? "";
+      }
+      add.innerHTML = ctx.pixel.icon("next");
+      add.removeAttribute("aria-disabled");
+      add.removeAttribute("aria-haspopup");
+      add.title = "The next universe (key A; Shift+A the one before)";
+      add.setAttribute("aria-label", "The next universe");
+      document.body.dataset.plus = "next";
+    } else if (add.dataset.plusHtml !== undefined) {
+      add.innerHTML = add.dataset.plusHtml;
+      add.setAttribute("aria-label", add.dataset.plusLabel ?? "");
+      add.setAttribute("aria-haspopup", "dialog");
+      delete add.dataset.plusHtml;
+      delete add.dataset.plusLabel;
+      document.body.dataset.plus = "";
+    }
+  }
+
+  // The universe after (1) or before (-1) the one shown, opened as one chosen in Maps (finished, its
+  // saved placing, play stopped); after the last the first again.
+  /** @type {UniversePart["nextUniverse"]} */
+  function nextUniverse(by) {
+    if (!state.universe) return;
+    ctx.flash("add");
+    enterUniverse(logic.universeAfter(data.universes.map((entry) => entry.key), state.universe.key, by), true);
+  }
+
   // The ways to draw and the placing chosen per universe, saved with the preferences (savePrefs) and
   // read back at the start; what this page does not know is left out.
   /** @type {UniversePart["universePrefs"]} */
@@ -22444,6 +22537,8 @@ window.RetroLife.app.universe = function (ctx) {
     rollUniverse,
     universePrefs,
     showUniverseEnd: showEnd,
+    showUniversePlus,
+    nextUniverse,
     takeUniversePrefs,
     universeView,
     universePointOf,
@@ -22558,7 +22653,6 @@ window.RetroLife.app.universeRules = function (ctx) {
   const NODE = 4;          // CSS pixels across ... a node's point (radius)
   const LOOP = 5;          // half a side of the square of a node named twice
   const MARKER = 8;        // the radius of a marker's point
-  const FACE = 0.3;        // how much of the colour old a face has, the rest the ground (opaque)
 
   /** @type {Map<string, UniverseRun>} the runs the walk reads, one per universe, apart from the map's */
   const walkRuns = new Map();
@@ -22571,7 +22665,6 @@ window.RetroLife.app.universeRules = function (ctx) {
   const keyNow = () => /** @type {{ key: string }} */ (state.universe).key;
   const storedOf = (/** @type {string} */ key) => /** @type {UniverseData} */ (data.universes.find((entry) => entry.key === key));
   const rgb = (/** @type {number[]} */ c) => "rgb(" + c.map((v) => Math.round(v)).join(",") + ")";
-  const mixed = (/** @type {number[]} */ ground, /** @type {number[]} */ colour, /** @type {number} */ t) => colour.map((v, k) => ground[k] + (v - ground[k]) * t);
 
   // A canvas made sharp for the screen, its context set to CSS pixels.
   /** @param {HTMLCanvasElement} canvas @param {number} high */
@@ -22600,7 +22693,7 @@ window.RetroLife.app.universeRules = function (ctx) {
     const plain = Boolean(theme.plain);
     const faces = ctx.universePrefs().lamps.faces;
     if (faces) {
-      c.fillStyle = rgb(plain ? render.rgbOf(theme.rock) : mixed(ground, render.rgbOf(theme.old), FACE));
+      c.fillStyle = rgb(logic.universeFace(ground, render.rgbOf(theme.old), render.rgbOf(theme.rock), plain));
       for (const relation of relations) {
         for (let k = 2; k < relation.length; k++) {
           const [a, b, d] = [relation[0], relation[k - 1], relation[k]];
@@ -23703,6 +23796,7 @@ window.RetroLife.app.rules = function (ctx) {
       add.title = add.dataset.title;
       $("play").title = "Start and stop (Space)";
     }
+    ctx.showUniversePlus();  // (on the map of the mode WOLFRAM the plus is the next universe, round 48)
   }
 
   /** @type {RulesPart["restsHere"]} */
@@ -27658,6 +27752,14 @@ window.RetroLife.app.sheets = function (ctx) {
     for (const element of document.querySelectorAll("[data-colour]")) {
       element.style.background = /** @type {string} */ (render.THEMES[key][/** @type {keyof Theme} */ (element.dataset.colour)]);
     }
+    // the small pictures of the marks of a universe ("What this is" in the mode WOLFRAM, round 48):
+    // the colours the map draws them with, of this look ("face": a filled relation, logic.universeFace)
+    const theme = render.THEMES[key];
+    const paint = (/** @type {string} */ name) => (name === "face"
+      ? "rgb(" + logic.universeFace(render.rgbOf(theme.space), render.rgbOf(theme.old), render.rgbOf(theme.rock), Boolean(theme.plain)).join(",") + ")"
+      : /** @type {string} */ (theme[/** @type {keyof Theme} */ (name)]));
+    for (const element of document.querySelectorAll("[data-fill]")) element.style.fill = paint(/** @type {string} */ (element.dataset.fill));
+    for (const element of document.querySelectorAll("[data-stroke]")) element.style.stroke = paint(/** @type {string} */ (element.dataset.stroke));
     for (const element of document.querySelectorAll("[data-border]")) {
       element.style.borderColor = /** @type {string} */ (render.THEMES[key][/** @type {keyof Theme} */ (element.dataset.border)]);
     }
@@ -27725,7 +27827,11 @@ window.RetroLife.app.buttons = function (ctx) {
       $("prev").addEventListener("click", () => ctx.moveView(-1));
       $("next").addEventListener("click", () => ctx.moveView(1));
       // (greyed out on GRAPH RULES, where a press says why: round 42)
-      $("add").addEventListener("click", () => ctx.restsHere("add") || ctx.openSheet("formations"));
+      // (on the map of the mode WOLFRAM the next universe, round 48)
+      $("add").addEventListener("click", () => {
+        if (logic.plusIs(ctx.universeOn(), state.view) === "next") ctx.nextUniverse(1);
+        else if (!ctx.restsHere("add")) ctx.openSheet("formations");
+      });
       $("settings-button").addEventListener("click", () => ctx.openSheet("settings"));
       $("back").addEventListener("click", ctx.goBack);
       $("reset").addEventListener("click", ctx.reset);
@@ -27836,7 +27942,7 @@ window.RetroLife.app.buttons = function (ctx) {
           leaveAsk: !$("leave-ask").hidden, explanation: !$("explanation").hidden, book: !$("book").hidden, big: Boolean(state.big), learn: Boolean(state.learn),
           shade: !$("shade").hidden, stamp: Boolean(state.stamp), playing: ctx.rulesOn() ? ctx.walkPlaying() : state.playing,
           formationsOpen: !$("formations").hidden, onButton: Boolean(target.closest && target.closest("button")),
-          view: state.view, views: VIEWS.length, universe: ctx.universeOn(),
+          view: state.view, views: VIEWS.length, universe: ctx.universeOn(), shift: event.shiftKey,
         });
         if (!does) return;
         const what = does[0];
@@ -27874,6 +27980,7 @@ window.RetroLife.app.buttons = function (ctx) {
             "rests-time": () => ctx.restsHere("time"),
             // a flat universe turned in the plane of the screen (round 48, stage 2)
             "roll-universe": () => ctx.rollUniverse(argument),
+            "next-universe": () => ctx.nextUniverse(argument),
             fit: showAll,
           };
           acts[what]();
