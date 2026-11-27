@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bounce Gas II, its graph, and Lean</title>
+<style>/* The look of the page: one ground, one ink, and three colours that mean something:
+   --particle (a particle, the arrows of a middle node), --even and --odd (the two partitions
+   of blocks), --turned (what the last event or a rule changed). States are told by colour or
+   shape, never by transparency, and nothing moves by itself. */
+:root { --paper:#fbfaf7; --ink:#22252b; --soft:#5d6470; --line:#d9d6ce; --card:#ffffff;
+  --code:#f1efe9; --particle:#c8791c; --turned:#1d4f91; --quiet:#9aa1ab; --ok:#2f7d4f;
+  --trust:#b0612a; --even:#3f8f8b; --odd:#8a5a9c; --on-particle:#ffffff; }
+@media (prefers-color-scheme: dark) { :root { --paper:#16181c; --ink:#e7e5df; --soft:#a4abb6;
+  --line:#353a43; --card:#1e2127; --code:#262a31; --particle:#e9a04a; --turned:#8ab4ee;
+  --quiet:#6f7783; --ok:#6fc08f; --trust:#e0975f; --even:#6cc3be; --odd:#c08fd3;
+  --on-particle:#16181c; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--paper); color:var(--ink);
+  font:16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1060px; margin: 0 auto; padding: 24px 16px 80px; }
+h1 { font-size: 30px; line-height:1.2; margin: 20px 0 6px; }
+h2 { font-size: 22px; margin: 52px 0 8px; padding-top: 14px; border-top:1px solid var(--line); }
+h3 { font-size: 17px; margin: 26px 0 6px; }
+p, li { max-width: 74ch; }
+a { color: var(--turned); }
+nav { display:flex; flex-wrap:wrap; gap:6px 16px; margin: 14px 0 0; font-size:14px; }
+.lead { font-size: 18px; color: var(--soft); max-width: 70ch; }
+.facts { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 0; padding:0; list-style:none; }
+.facts li { background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:8px 12px; font-size:14px; }
+.facts b { display:block; font-size:20px; }
+code, pre { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13.5px; }
+code { background:var(--code); padding:1px 4px; border-radius:4px; }
+pre { background:var(--code); padding:10px 12px; border-radius:8px; overflow-x:auto;
+  margin:8px 0; line-height:1.45; }
+pre.lean b { font-weight:600; color: var(--turned); }
+pre .comment { color: var(--soft); }
+.flow { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin:16px 0; }
+.flow div { flex:1 1 180px; background:var(--card); border:1px solid var(--line);
+  border-radius:8px; padding:10px 12px; font-size:14px; }
+.flow div b { display:block; margin-bottom:2px; }
+.flow span { align-self:center; color:var(--soft); font-size:14px; }
+.table16 { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap:8px; margin:14px 0; }
+.entry { display:flex; align-items:center; gap:6px; background:var(--card);
+  border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
+.entry .n { width:1.6em; text-align:center; color:var(--soft); font-size:13px; }
+.to { color:var(--soft); font-size:14px; }
+svg.block rect { stroke: var(--soft); stroke-width:1; }
+svg.block .alive { fill: var(--particle); }
+svg.block .empty { fill: var(--card); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; margin:16px 0; }
+.card h3 { margin-top:0; }
+.blocks { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:6px 0 4px; }
+.blocks .say { flex:1 1 300px; color:var(--soft); font-size:15px; }
+.sides { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; }
+figure { margin:0; }
+figcaption { font-size:13.5px; color:var(--soft); }
+svg.rule { width:100%; max-width:380px; height:auto; display:block; margin:0 auto; }
+svg.rule line { stroke-width:1.6; stroke: var(--quiet); }
+svg.rule line.mid { stroke: var(--particle); }
+svg.rule line.turned { stroke: var(--turned); stroke-width:2.4; }
+svg.rule circle { stroke: var(--ink); stroke-width:1.3; fill: var(--card); }
+svg.rule circle.source { fill: var(--particle); }
+svg.rule circle.corner { fill: var(--line); }
+svg.rule text { font: 11px ui-monospace, Consolas, monospace; fill: var(--soft); }
+#heads path { stroke:none; }
+#head-square path, #head-cross path { fill: var(--quiet); }
+#head-mid path { fill: var(--particle); }
+#head-turned path { fill: var(--turned); }
+#head-play-even path { fill: var(--even); }
+#head-play-odd path { fill: var(--odd); }
+#head-play-cross path { fill: var(--ink); }
+#head-play-mid path { fill: var(--particle); }
+.key { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; color:var(--soft);
+  margin:8px 0; padding:0; list-style:none; }
+.key i { display:inline-block; width:22px; height:0; border-top:3px solid var(--quiet);
+  vertical-align:middle; margin-right:6px; }
+.key i.mid { border-color: var(--particle); } .key i.turned { border-color: var(--turned); }
+.key i.even { border-color: var(--even); } .key i.odd { border-color: var(--odd); }
+.key i.ink { border-color: var(--ink); }
+.key i.dot { width:12px; height:12px; border:1.3px solid var(--ink); border-radius:50%;
+  background: var(--particle); }
+.key i.ring { width:14px; height:14px; border:3px solid var(--even); border-radius:50%; }
+details { margin:8px 0 0; }
+summary { cursor:pointer; color:var(--turned); font-size:14.5px; }
+.two { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+table { border-collapse:collapse; width:100%; margin:10px 0 18px; }
+th, td { text-align:left; vertical-align:top; padding:8px 10px; border-top:1px solid var(--line); }
+th { font-size:13px; color:var(--soft); font-weight:600; border-top:none; }
+table.theorems td:nth-child(2), table.theorems td:nth-child(3) { font-size:14px;
+  color:var(--soft); white-space:nowrap; }
+.mark { display:inline-block; width:10px; height:10px; margin-right:6px; }
+.mark.kernel { background:var(--ok); border-radius:50%; }
+.mark.compiled { background:var(--trust); }
+table.walk td:first-child { width:52%; } table.walk pre { margin:0; white-space:pre-wrap; }
+table.read td:first-child { white-space:nowrap; }
+.note { border-left:3px solid var(--particle); padding:2px 0 2px 14px; margin:16px 0; }
+.wide { overflow-x:auto; }
+footer { margin-top:56px; color:var(--soft); font-size:14px; }
+
+/* ---- the part to play with */
+.panels { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px;
+  margin:16px 0 8px; }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:10px 12px 12px; }
+.panel h3 { margin:0 0 6px; font-size:15px; }
+.panel svg { width:100%; height:auto; display:block; touch-action: manipulation; }
+.panel p { font-size:13.5px; color:var(--soft); margin:8px 0 0; }
+svg.play .cell { fill: var(--card); stroke: var(--line); stroke-width:1; }
+svg.play .cell.alive { fill: var(--particle); }
+svg.play .cell.can { cursor:pointer; }
+svg.play .count { font: 13px ui-monospace, Consolas, monospace; fill: var(--soft);
+  text-anchor: middle; pointer-events:none; }
+svg.play .count.alive { fill: var(--on-particle); }
+svg.play .wedge.even { fill: var(--even); } svg.play .wedge.odd { fill: var(--odd); }
+svg.play .wedge { pointer-events:none; }
+svg.play .ring { fill: var(--card); stroke-width:3.5; cursor:pointer; }
+svg.play .ring.even { stroke: var(--even); } svg.play .ring.odd { stroke: var(--odd); }
+svg.play .last { fill:none; stroke: var(--turned); stroke-width:3; pointer-events:none; }
+svg.play .frame { fill:none; stroke: var(--soft); stroke-width:1.2; pointer-events:none; }
+svg.play line { stroke-width:1.5; pointer-events:none; }
+svg.play line.even { stroke: var(--even); } svg.play line.odd { stroke: var(--odd); }
+svg.play line.cross { stroke: var(--ink); }
+svg.play line.mid { stroke: var(--particle); }
+svg.play line.fresh { stroke-width:2.6; }
+svg.play .acted { fill:none; stroke: var(--turned); stroke-width:2.5; pointer-events:none; }
+svg.play circle.node { fill: var(--card); stroke: var(--ink); stroke-width:1.1;
+  pointer-events:none; }
+svg.play circle.node.corner { fill: var(--line); }
+svg.play circle.node.source { fill: var(--particle); }
+svg.play .spot { fill: transparent; cursor:pointer; }
+.controls { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin:10px 0; }
+.controls .label { font-size:13px; color:var(--soft); margin-right:-2px; }
+button { font: inherit; font-size:14px; color:var(--ink); background:var(--card);
+  border:1px solid var(--soft); border-radius:8px; padding:7px 12px; cursor:pointer; }
+button:disabled { color:var(--quiet); border-color:var(--line); cursor:default; }
+button.main { border-color:var(--turned); color:var(--turned); font-weight:600; }
+.row { display:inline-flex; }
+.row button { white-space:nowrap; }
+.row button { border-radius:0; margin-left:-1px; }
+.row button:first-child { border-radius:8px 0 0 8px; margin-left:0; }
+.row button:last-child { border-radius:0 8px 8px 0; }
+.row button[aria-pressed="true"] { background:var(--ink); color:var(--paper);
+  border-color:var(--ink); }
+button.lamp::before { content:""; display:inline-block; width:10px; height:10px;
+  border-radius:50%; border:1.5px solid var(--soft); margin-right:7px; vertical-align:-1px; }
+button.lamp[aria-pressed="true"]::before { background:var(--particle); border-color:var(--particle); }
+#said { min-height:3.2em; font-size:15px; margin:6px 0; }
+table.live td:first-child { width:1.6em; padding-right:0; }
+table.live td:nth-child(2) { width:46%; }
+table.live .yes { color:var(--ok); font-weight:700; }
+table.live .no { color:var(--trust); font-weight:700; }
+table.live small { color:var(--soft); display:block; }
+@media (max-width: 640px) { table.theorems td:nth-child(2), table.theorems td:nth-child(3)
+  { white-space:normal; } table.walk td { display:block; width:100% !important; }
+  table.live td:nth-child(2) { width:auto; } }
+</style></head><body>
+<svg id="heads" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="head-square" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-cross" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-mid" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-turned" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-play-even" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-play-odd" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-play-cross" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+<marker id="head-play-mid" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker>
+</defs></svg>
+<main>
+
+<p class="to">imigraph &middot; experiment <code>lean-graphs</code></p>
+<h1>Bounce Gas II, its graph, and Lean</h1>
+<p class="lead">A cellular automaton, the directed graph that plays it with six rewriting
+rules, and a proof, checked by a machine, that the graph plays the automaton: on worlds of
+every size, whatever the order in which the rules are applied.</p>
+<ul class="facts">
+  <li><b>146</b> theorems, each checked by Lean 4.36.0</li>
+  <li><b>2,617</b> lines of Lean, no library beyond Lean's own</li>
+  <li><b>0</b> proofs with a hole</li>
+  <li><b>30</b> worlds, the table and the 6 rules held equal to the
+    Python reference</li>
+</ul>
+<nav><a href="#play">Try it</a><a href="#lean">What Lean is</a><a href="#table">The table</a>
+  <a href="#worlds">Worlds of every size</a><a href="#graph">Graphs and rules in Lean</a>
+  <a href="#rules">The six rules</a><a href="#theorem">The theorem</a>
+  <a href="#proved">What is proved</a><a href="#not">What is not</a>
+  <a href="#you">Doing this yourself</a><a href="#physics">Lean in physics</a></nav>
+
+<h2 id="play">Try it: you choose the order</h2>
+<p>In the automaton, all blocks of one partition act at once, then all blocks of the other.
+In the graph nothing says "at once": a rule fits at one square at a time. Here you make the
+events yourself, one block at a time, in any order you like. A block may act when all four
+of its cells have its turn; a ring marks it. Click a ring, or any cell of its block.</p>
+<p>The number in a cell says how many events the cell has been through. Lean proved that
+whatever order you choose, every cell holds exactly what the automaton has in that cell
+after that many steps. The table under the pictures checks it for the world on your screen;
+the proof is for every world of every even size.</p>
+
+<div class="controls">
+  <button id="one" class="main" type="button">One block at random</button>
+  <button id="all" type="button">Every block that may act</button>
+  <button id="back" type="button">Back</button>
+  <button id="again" type="button">Start again</button>
+</div>
+<div class="controls">
+  <span class="label">Size</span>
+  <span class="row" id="pick-size"></span>
+  <span class="label">World</span>
+  <span class="row" id="pick-world"></span>
+  <button id="edit" class="lamp" type="button" aria-pressed="false">Edit cells</button>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <h3>The world</h3>
+    <svg id="play-world" class="play" role="img" aria-label="the world as cells"></svg>
+    <p>A filled cell holds a particle. The small corner of a cell points at the block whose
+    turn it is. Where four corners meet, the block may act.</p>
+  </div>
+  <div class="panel">
+    <h3>The same world as a graph</h3>
+    <svg id="play-graph" class="play" role="img" aria-label="the world as a directed graph"></svg>
+    <p>Three nodes and five arrows per cell. A square whose four cross arrows all leave it
+    is a block that may act: there, and nowhere else, one of the six rules fits.</p>
+  </div>
+</div>
+<ul class="key">
+  <li><i class="even"></i>even blocks and their squares</li>
+  <li><i class="odd"></i>odd blocks and their squares</li>
+  <li><i class="ink"></i>cross arrow (leaves the corner whose block is next)</li>
+  <li><i class="mid"></i>arrow of a middle node</li>
+  <li><i class="dot"></i>middle node nothing points at: a particle</li>
+  <li><i class="ring"></i>may act</li>
+  <li><i class="turned"></i>the last event</li>
+</ul>
+<p id="said" aria-live="polite"></p>
+
+<h3>What Lean proved about what you see</h3>
+<p>Each line is computed here for the world on the screen, and proved in Lean for all
+worlds. Open a line to read the statement as it stands in the Lean files.</p>
+<div class="wide"><table class="live"><tbody id="live"></tbody></table></div>
+
+
+<h2 id="lean">What Lean is, in a few sentences</h2>
+<p>Lean is a programming language in which one can also write down mathematical statements
+and their proofs. A statement is a line of the language (<code>theorem</code> ...). A proof
+is a text that a small, carefully kept program, Lean's <em>kernel</em>, checks step by step.
+If the files build, every theorem in them is proved; a wrong step does not build. Nobody has
+to trust the author of a proof, human or AI: the kernel is the judge.</p>
+<p>What Lean cannot judge is whether a statement says what one meant. A theorem about a
+table that was typed in wrongly is still a theorem, about the wrong table. So this page
+rests on two things, and shows both:</p>
+<div class="flow">
+  <div><b>The Python reference</b>the automaton, the graph model and the rewriting engine
+    that the project runs and tests.</div>
+  <span>held equal<br>by tests</span>
+  <div><b>The Lean definitions</b>the same table, world, graph and rules, written again
+    in Lean.</div>
+  <span>proved from<br>the definitions</span>
+  <div><b>The Lean theorems</b>statements about all worlds and all graphs, checked by
+    the kernel.</div>
+</div>
+<h3>How to read the Lean on this page</h3>
+<div class="wide"><table class="read"><tbody>
+<tr><td><code>def name ... := ...</code></td><td>a definition: a name for a value or a
+  function, as in any programming language</td></tr>
+<tr><td><code>theorem name : statement := by ...</code></td><td>a statement, and after
+  <code>by</code> its proof</td></tr>
+<tr><td><code>&forall; b : Block, ...</code></td><td>for every block <code>b</code></td></tr>
+<tr><td><code>A &rarr; B</code></td><td>if A then B (between types: a function from A
+  to B)</td></tr>
+<tr><td><code>&exist; x, ...</code></td><td>there is an <code>x</code> such that</td></tr>
+<tr><td><code>by decide</code></td><td>a proof by trying every case; only possible when the
+  cases are finitely many</td></tr>
+<tr><td><code>omega</code>, <code>simp</code>, <code>rw</code>, <code>grind</code></td>
+  <td>proof steps Lean carries out: arithmetic of whole numbers, simplifying, rewriting
+  with a known equation, working through cases</td></tr>
+</tbody></table></div>
+
+<h2 id="table">The table of Bounce Gas II</h2>
+<p>A block of 2 x 2 cells is a number from 0 to 15 (top left 1, top right 2, bottom left 4,
+bottom right 8). In every step each block is replaced by its entry in this table:</p>
+<div class="table16"><div class="entry"><span class="n">0</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 0"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 0"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">0</span></div><div class="entry"><span class="n">1</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 1"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 8"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">8</span></div><div class="entry"><span class="n">2</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 2"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 4"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">4</span></div><div class="entry"><span class="n">3</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 3"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 12"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">12</span></div><div class="entry"><span class="n">4</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 4"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 2"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">2</span></div><div class="entry"><span class="n">5</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 5"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 10"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">10</span></div><div class="entry"><span class="n">6</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 6"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 9"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">9</span></div><div class="entry"><span class="n">7</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 7"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 7"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">7</span></div><div class="entry"><span class="n">8</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 8"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 1"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">1</span></div><div class="entry"><span class="n">9</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 9"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 6"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">6</span></div><div class="entry"><span class="n">10</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 10"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 5"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">5</span></div><div class="entry"><span class="n">11</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 11"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 11"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">11</span></div><div class="entry"><span class="n">12</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 12"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 3"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="empty"/><rect x="16" y="16" width="15" height="15" class="empty"/></svg><span class="n">3</span></div><div class="entry"><span class="n">13</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 13"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 13"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="empty"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">13</span></div><div class="entry"><span class="n">14</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 14"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 14"><rect x="1" y="1" width="15" height="15" class="empty"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">14</span></div><div class="entry"><span class="n">15</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 15"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="to">&rarr;</span><svg class="block" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="block 15"><rect x="1" y="1" width="15" height="15" class="alive"/><rect x="16" y="1" width="15" height="15" class="alive"/><rect x="1" y="16" width="15" height="15" class="alive"/><rect x="16" y="16" width="15" height="15" class="alive"/></svg><span class="n">15</span></div></div>
+<p>In Lean the table is a list and a function that looks a block up in it:</p>
+<pre class="lean"><b>def</b> tableList : List Block := [0, 8, 4, 12, 2, 10, 9, 7, 1, 6, 5, 11, 3, 13, 14, 15]</pre>
+<pre class="lean"><b>def</b> table (b : Block) : Block := tableList.getD b.val 0</pre>
+<p>Statements about the table have finitely many cases, so Lean can simply try them all.
+Two of them, as they stand in the file:</p>
+<pre class="lean"><b>theorem</b> table_table : ∀ b : Block, table (table b) = b := <b>by</b> <b>decide</b></pre>
+<pre class="lean"><b>theorem</b> table_keeps_particles : ∀ b : Block, particles (table b) = particles b := <b>by</b> <b>decide</b></pre>
+<p>A test in Python could check the same 16 cases. The difference shows in the next section,
+where the cases are not finitely many.</p>
+
+<h2 id="worlds">Worlds of every size</h2>
+<p>In Lean a world is the whole plane: a cell for every row and column. A world that wraps
+round (a donut) is a plane that repeats, so a theorem about every plane is a theorem about
+every donut of every size. One step:</p>
+<pre class="lean"><b>abbrev</b> World := Int → Int → Bool</pre>
+<pre class="lean"><b>def</b> blockAt (w : World) (r c : Int) : Block :=
+  ofCells (w r c) (w r (c + 1)) (w (r + 1) c) (w (r + 1) (c + 1))</pre>
+<pre class="lean"><b>def</b> step (p : Int) (w : World) : World := <b>fun</b> r c =&gt;
+  cell (table (blockAt w (r - (r - p) % 2) (c - (c - p) % 2)))
+    ((r - p) % 2 == 1) ((c - p) % 2 == 1)</pre>
+<p>Three statements that no test can settle, because they speak of infinitely many
+worlds:</p>
+<pre class="lean"><b>theorem</b> step_step (p : Int) (w : World) : step p (step p w) = w</pre>
+<pre class="lean"><b>theorem</b> particles_conserved (p : Int) (m n k : Nat) (w : World)
+    (hw : Periodic (2 * (m : Int)) (2 * (n : Int)) w) :
+    tile (run p k w) 0 0 (2 * m) (2 * n) = tile w 0 0 (2 * m) (2 * n)</pre>
+<pre class="lean"><b>theorem</b> speed_limit (p : Int) (n : Nat) : ∀ (w w&#x27; : World) (r c : Int),
+    (∀ r&#x27; c&#x27;, r - n ≤ r&#x27; → r&#x27; ≤ r + n → c - n ≤ c&#x27; → c&#x27; ≤ c + n → w r&#x27; c&#x27; = w&#x27; r&#x27; c&#x27;) →
+    run p n w r c = run p n w&#x27; r c</pre>
+<p>In plain words: every step undoes itself; a world that wraps round after 2m rows and 2n
+columns keeps its number of particles through any number of steps; and what happens in a
+cell after n steps depends only on cells at most n away (the automaton has a speed limit of
+one cell per step).</p>
+<h3>One proof, read line by line</h3>
+<p>The proof that a step undoes itself is seven lines. It leans on facts proved just before
+it in the same file.</p>
+<table class="walk"><tbody><tr><td><pre class="lean"><b>theorem</b> step_step (p : Int) (w : World) : step p (step p w) = w := <b>by</b></pre></td><td>The statement. For every whole number <code>p</code> (which partition acts) and every world <code>w</code>: the step made twice gives <code>w</code> back. After <code>by</code> comes the proof.</td></tr><tr><td><pre class="lean"><b>funext</b> r c</pre></td><td>Two worlds are the same world if they hold the same in every cell. So take any cell: row <code>r</code>, column <code>c</code>.</td></tr><tr><td><pre class="lean"><b>have</b> hr : (r - (r - p) % 2 - p) % 2 = 0 := <b>by</b> <b>omega</b></pre></td><td>A small fact about even and odd numbers: the top row of this cell's block is a row where blocks start. <code>omega</code> is Lean's own method for such arithmetic; it finds the proof by itself.</td></tr><tr><td><pre class="lean"><b>have</b> hc : (c - (c - p) % 2 - p) % 2 = 0 := <b>by</b> <b>omega</b></pre></td><td>The same for the column.</td></tr><tr><td><pre class="lean"><b>show</b> cell (table (blockAt (step p w) _ _)) _ _ = w r c</pre></td><td>Write out what the second step does at this cell: it takes the cell's block as the first step left it, looks it up in the table and reads the cell off.</td></tr><tr><td><pre class="lean"><b>rw</b> [blockAt_step p w _ _ hr hc, table_table]</pre></td><td>Rewrite with two facts proved before. <code>blockAt_step</code>: after the first step, that block is the table's entry for the old block. <code>table_table</code>: the table looked up twice gives the block back. What is left to show: the cell's place in its old block holds what the cell held.</td></tr><tr><td><pre class="lean"><b>exact</b> cell_blockAt p w r c</pre></td><td>That is exactly the fact <code>cell_blockAt</code>. Nothing is left to show, and Lean accepts the theorem.</td></tr></tbody></table>
+
+<h2 id="graph">Graphs and rules in Lean</h2>
+<p>The graph model has no rows, columns or clock: only nodes and arrows. In Lean a graph is
+a list of arrows, a rule is two small graphs whose nodes are letters, and one application
+of a rule (an <em>event</em>) is defined in three lines:</p>
+<pre class="lean"><b>abbrev</b> Graph (α : Type) := List (α × α)</pre>
+<pre class="lean"><b>structure</b> Rule <b>where</b>
+  lhs : Graph Nat
+  rhs : Graph Nat</pre>
+<pre class="lean"><b>def</b> inst {α : Type} (σ : Nat → α) (pattern : Graph Nat) : Graph α :=
+  pattern.map <b>fun</b> a =&gt; (σ a.1, σ a.2)</pre>
+<pre class="lean"><b>def</b> Rewrites {α : Type} (rule : Rule) (g g&#x27; : Graph α) : Prop :=
+  ∃ (σ : Nat → α) (rest : Graph α),
+    g.Perm (inst σ rule.lhs ++ rest) ∧ g&#x27;.Perm (inst σ rule.rhs ++ rest)</pre>
+<p>Read: graph <code>g</code> rewrites to <code>g'</code> by a rule if there is a choice of
+nodes for the rule's letters (<code>&sigma;</code>) and a remainder <code>rest</code> such
+that <code>g</code> is the rule's left side with those nodes plus the remainder, and
+<code>g'</code> is the right side with the same nodes plus the same remainder.
+<code>Perm</code> says "the same arrows, in any order". This is the whole meaning of
+rewriting, for graphs of pairs; an engine is a fast way of finding such choices.</p>
+<p>The six rules are not typed in as six lists of arrows. They are built from the table by
+a function, so that a rule cannot disagree with the table by a slip of the pen:</p>
+<pre class="lean"><b>def</b> triangle (alive : Bool) (acting other mid : Nat) : Graph Nat :=
+  <b>if</b> alive <b>then</b> [(acting, other), (mid, acting), (mid, other)]
+  <b>else</b> [(acting, other), (acting, mid), (mid, other)]</pre>
+<pre class="lean"><b>def</b> side (b : Block) (toward : Bool) : Graph Nat :=
+  [(q 0, q 1), (q 1, q 2), (q 2, q 3), (q 3, q 0)]
+    ++ (List.range 4).flatMap <b>fun</b> i =&gt;
+      <b>if</b> toward <b>then</b> triangle (corner b i) (p i) (q i) (m i)
+      <b>else</b> triangle (corner b i) (q i) (p i) (m i)</pre>
+<pre class="lean"><b>def</b> ruleOf (b : Block) : Rule := ⟨side b false, side (table b) true⟩</pre>
+<pre class="lean"><b>def</b> kinds : List Block := [0, 1, 3, 6, 7, 15]</pre>
+
+<h2 id="rules">The six rules, drawn and in Lean</h2>
+<p>Every cell has three nodes: a corner on the square of each of its two blocks, and a
+middle node. A rule takes the square of one block (corners <code>q0</code> to
+<code>q3</code>, clockwise from the top left) with the triangles of its four cells (other
+corner <code>p</code>, middle node <code>m</code>) and puts the same nodes back with some
+arrows turned round.</p>
+<ul class="key">
+  <li><i></i>arrow of the square, or cross arrow</li>
+  <li><i class="mid"></i>arrow of a middle node</li>
+  <li><i class="turned"></i>arrow turned round by the rule</li>
+  <li><i class="dot"></i>middle node nothing points at: a particle</li>
+</ul>
+
+<article class="card" id="rule-0">
+  <h3>Rule 1: empty</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 0"><rect x="1" y="1" width="22" height="22" class="empty"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 0"><rect x="1" y="1" width="22" height="22" class="empty"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg>
+    <span class="say">An empty block stays empty. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="84.9" y1="77.1" x2="80.7" y2="43.9" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="162.9" y1="84.9" x2="196.1" y2="80.7" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="155.1" y1="162.9" x2="159.3" y2="196.1" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="77.1" y1="155.1" x2="43.9" y2="159.3" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="middle" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="32.9" y1="25.1" x2="66.1" y2="29.3" marker-end="url(#head-turned)"/><line class="mid turned" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-turned)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="214.9" y1="32.9" x2="210.7" y2="66.1" marker-end="url(#head-turned)"/><line class="mid turned" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-turned)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid turned" x1="207.1" y1="214.9" x2="173.9" y2="210.7" marker-end="url(#head-turned)"/><line class="mid turned" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-turned)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid turned" x1="25.1" y1="207.1" x2="29.3" y2="173.9" marker-end="url(#head-turned)"/><line class="mid turned" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-turned)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="middle" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 12 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 0  <span class="comment">-- = ⟨side 0 false, side 0 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  q0 &gt; m0  m0 &gt; p0
+  q1 &gt; p1  q1 &gt; m1  m1 &gt; p1
+  q2 &gt; p2  q2 &gt; m2  m2 &gt; p2
+  q3 &gt; p3  q3 &gt; m3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  p0 &gt; m0  m0 &gt; q0
+  p1 &gt; q1  p1 &gt; m1  m1 &gt; q1
+  p2 &gt; q2  p2 &gt; m2  m2 &gt; q2
+  p3 &gt; q3  p3 &gt; m3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<article class="card" id="rule-1">
+  <h3>Rule 2: one</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 1"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 8"><rect x="1" y="1" width="22" height="22" class="empty"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="alive"/></svg>
+    <span class="say">A single particle jumps to the opposite corner. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="162.9" y1="84.9" x2="196.1" y2="80.7" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="155.1" y1="162.9" x2="159.3" y2="196.1" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="77.1" y1="155.1" x2="43.9" y2="159.3" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="32.9" y1="25.1" x2="66.1" y2="29.3" marker-end="url(#head-turned)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="214.9" y1="32.9" x2="210.7" y2="66.1" marker-end="url(#head-turned)"/><line class="mid turned" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-turned)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="mid turned" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-turned)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid turned" x1="25.1" y1="207.1" x2="29.3" y2="173.9" marker-end="url(#head-turned)"/><line class="mid turned" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-turned)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="middle" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="source" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 10 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 1  <span class="comment">-- = ⟨side 1 false, side 8 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  m0 &gt; q0  m0 &gt; p0
+  q1 &gt; p1  q1 &gt; m1  m1 &gt; p1
+  q2 &gt; p2  q2 &gt; m2  m2 &gt; p2
+  q3 &gt; p3  q3 &gt; m3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  p0 &gt; m0  m0 &gt; q0
+  p1 &gt; q1  p1 &gt; m1  m1 &gt; q1
+  p2 &gt; q2  m2 &gt; p2  m2 &gt; q2
+  p3 &gt; q3  p3 &gt; m3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<article class="card" id="rule-3">
+  <h3>Rule 3: two side by side</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 3"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 12"><rect x="1" y="1" width="22" height="22" class="empty"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="alive"/></svg>
+    <span class="say">Two particles side by side: each jumps to the corner opposite it, so the pair lands on the other side of the block. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="155.1" y1="162.9" x2="159.3" y2="196.1" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="77.1" y1="155.1" x2="43.9" y2="159.3" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="32.9" y1="25.1" x2="66.1" y2="29.3" marker-end="url(#head-turned)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="214.9" y1="32.9" x2="210.7" y2="66.1" marker-end="url(#head-turned)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="mid turned" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-turned)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><line class="mid turned" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-turned)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="middle" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="source" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 8 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 3  <span class="comment">-- = ⟨side 3 false, side 12 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  m0 &gt; q0  m0 &gt; p0
+  q1 &gt; p1  m1 &gt; q1  m1 &gt; p1
+  q2 &gt; p2  q2 &gt; m2  m2 &gt; p2
+  q3 &gt; p3  q3 &gt; m3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  p0 &gt; m0  m0 &gt; q0
+  p1 &gt; q1  p1 &gt; m1  m1 &gt; q1
+  p2 &gt; q2  m2 &gt; p2  m2 &gt; q2
+  p3 &gt; q3  m3 &gt; p3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<article class="card" id="rule-6">
+  <h3>Rule 4: two across</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 6"><rect x="1" y="1" width="22" height="22" class="empty"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 9"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="empty"/><rect x="1" y="23" width="22" height="22" class="empty"/><rect x="23" y="23" width="22" height="22" class="alive"/></svg>
+    <span class="say">Two particles on a diagonal (they meet head-on) move onto the other diagonal. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="84.9" y1="77.1" x2="80.7" y2="43.9" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="155.1" y1="162.9" x2="159.3" y2="196.1" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="middle" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="mid turned" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-turned)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid turned" x1="214.9" y1="32.9" x2="210.7" y2="66.1" marker-end="url(#head-turned)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="mid turned" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-turned)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid turned" x1="25.1" y1="207.1" x2="29.3" y2="173.9" marker-end="url(#head-turned)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="middle" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="source" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="middle" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 8 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 6  <span class="comment">-- = ⟨side 6 false, side 9 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  q0 &gt; m0  m0 &gt; p0
+  q1 &gt; p1  m1 &gt; q1  m1 &gt; p1
+  q2 &gt; p2  q2 &gt; m2  m2 &gt; p2
+  q3 &gt; p3  m3 &gt; q3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  m0 &gt; p0  m0 &gt; q0
+  p1 &gt; q1  p1 &gt; m1  m1 &gt; q1
+  p2 &gt; q2  m2 &gt; p2  m2 &gt; q2
+  p3 &gt; q3  p3 &gt; m3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<article class="card" id="rule-7">
+  <h3>Rule 5: three</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 7"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 7"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="empty"/></svg>
+    <span class="say">Three particles stay where they are. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="155.1" y1="162.9" x2="159.3" y2="196.1" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid turned" x1="207.1" y1="214.9" x2="173.9" y2="210.7" marker-end="url(#head-turned)"/><line class="mid turned" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-turned)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="middle" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 6 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 7  <span class="comment">-- = ⟨side 7 false, side 7 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  m0 &gt; q0  m0 &gt; p0
+  q1 &gt; p1  m1 &gt; q1  m1 &gt; p1
+  q2 &gt; p2  q2 &gt; m2  m2 &gt; p2
+  q3 &gt; p3  m3 &gt; q3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  m0 &gt; p0  m0 &gt; q0
+  p1 &gt; q1  m1 &gt; p1  m1 &gt; q1
+  p2 &gt; q2  p2 &gt; m2  m2 &gt; q2
+  p3 &gt; q3  m3 &gt; p3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<article class="card" id="rule-15">
+  <h3>Rule 6: four</h3>
+  <p class="blocks"><svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 15"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="alive"/></svg><span class="to">becomes</span>
+    <svg class="block" viewBox="0 0 46 46" width="46" height="46" role="img" aria-label="block 15"><rect x="1" y="1" width="22" height="22" class="alive"/><rect x="23" y="1" width="22" height="22" class="alive"/><rect x="1" y="23" width="22" height="22" class="alive"/><rect x="23" y="23" width="22" height="22" class="alive"/></svg>
+    <span class="say">A full block stays full. The four cross arrows turn round: the other
+    blocks are next.</span></p>
+  <div class="sides">
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross" x1="79.6" y1="79.6" x2="33.2" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="79.6" x2="206.8" y2="33.2" marker-end="url(#head-cross)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="cross" x1="160.4" y1="160.4" x2="206.8" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-mid)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="cross" x1="79.6" y1="160.4" x2="33.2" y2="206.8" marker-end="url(#head-cross)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="source" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Left side: the square whose turn it is.
+      The cross arrows leave it.</figcaption></figure>
+    <figure><svg class="rule" viewBox="0 0 240 240" role="img" aria-label="a square and four triangles"><line class="square" x1="95.0" y1="86.0" x2="141.0" y2="86.0" marker-end="url(#head-square)"/><line class="square" x1="154.0" y1="95.0" x2="154.0" y2="141.0" marker-end="url(#head-square)"/><line class="square" x1="145.0" y1="154.0" x2="99.0" y2="154.0" marker-end="url(#head-square)"/><line class="square" x1="86.0" y1="145.0" x2="86.0" y2="99.0" marker-end="url(#head-square)"/><line class="cross turned" x1="30.4" y1="30.4" x2="76.8" y2="76.8" marker-end="url(#head-turned)"/><line class="mid" x1="70.1" y1="29.8" x2="36.9" y2="25.6" marker-end="url(#head-mid)"/><line class="mid" x1="80.2" y1="39.9" x2="84.4" y2="73.1" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="30.4" x2="163.2" y2="76.8" marker-end="url(#head-turned)"/><line class="mid" x1="210.2" y1="70.1" x2="214.4" y2="36.9" marker-end="url(#head-mid)"/><line class="mid" x1="200.1" y1="80.2" x2="166.9" y2="84.4" marker-end="url(#head-mid)"/><line class="cross turned" x1="209.6" y1="209.6" x2="163.2" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="169.9" y1="210.2" x2="203.1" y2="214.4" marker-end="url(#head-mid)"/><line class="mid" x1="159.8" y1="200.1" x2="155.6" y2="166.9" marker-end="url(#head-mid)"/><line class="cross turned" x1="30.4" y1="209.6" x2="76.8" y2="163.2" marker-end="url(#head-turned)"/><line class="mid" x1="29.8" y1="169.9" x2="25.6" y2="203.1" marker-end="url(#head-mid)"/><line class="mid" x1="39.9" y1="159.8" x2="73.1" y2="155.6" marker-end="url(#head-mid)"/><circle class="corner" cx="86.0" cy="86.0" r="7"/><text x="98.0" y="102.0" text-anchor="start">q0</text><circle class="corner" cx="24.0" cy="24.0" r="7"/><text x="24.0" y="13.0" text-anchor="middle">p0</text><circle class="source" cx="79.0" cy="31.0" r="7"/><text x="89.1" y="24.9" text-anchor="start">m0</text><circle class="corner" cx="154.0" cy="86.0" r="7"/><text x="142.0" y="102.0" text-anchor="end">q1</text><circle class="corner" cx="216.0" cy="24.0" r="7"/><text x="216.0" y="13.0" text-anchor="middle">p1</text><circle class="source" cx="209.0" cy="79.0" r="7"/><text x="219.1" y="93.1" text-anchor="start">m1</text><circle class="corner" cx="154.0" cy="154.0" r="7"/><text x="142.0" y="146.0" text-anchor="end">q2</text><circle class="corner" cx="216.0" cy="216.0" r="7"/><text x="216.0" y="234.0" text-anchor="middle">p2</text><circle class="source" cx="161.0" cy="209.0" r="7"/><text x="150.9" y="223.1" text-anchor="end">m2</text><circle class="corner" cx="86.0" cy="154.0" r="7"/><text x="98.0" y="146.0" text-anchor="start">q3</text><circle class="corner" cx="24.0" cy="216.0" r="7"/><text x="24.0" y="234.0" text-anchor="middle">p3</text><circle class="source" cx="31.0" cy="161.0" r="7"/><text x="20.9" y="154.9" text-anchor="end">m3</text></svg><figcaption>Right side: the same 12 nodes, 4 of
+      the 16 arrows turned round (drawn thick, in blue).</figcaption></figure>
+  </div>
+  <details><summary>The same in Lean, and as Lean writes it out</summary>
+    <div class="two">
+      <div><p>In Lean the rule is one line, and Lean works out its arrows:</p>
+        <pre class="lean">ruleOf 15  <span class="comment">-- = ⟨side 15 false, side 15 true⟩</span></pre></div>
+      <div><p>Left side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  q0 &gt; p0  m0 &gt; q0  m0 &gt; p0
+  q1 &gt; p1  m1 &gt; q1  m1 &gt; p1
+  q2 &gt; p2  m2 &gt; q2  m2 &gt; p2
+  q3 &gt; p3  m3 &gt; q3  m3 &gt; p3</pre>
+        <p>Right side (16 arrows):</p><pre>  q0 &gt; q1  q1 &gt; q2  q2 &gt; q3  q3 &gt; q0
+  p0 &gt; q0  m0 &gt; p0  m0 &gt; q0
+  p1 &gt; q1  m1 &gt; p1  m1 &gt; q1
+  p2 &gt; q2  m2 &gt; p2  m2 &gt; q2
+  p3 &gt; q3  m3 &gt; p3  m3 &gt; q3</pre></div>
+    </div>
+  </details>
+</article>
+
+<h2 id="theorem">The theorem</h2>
+<p>The graph has no clock. Nothing in it says "now all even blocks, then all odd blocks".
+A rule fits wherever a square has its four cross arrows leaving it, and whoever applies the
+rules may take those places in any order: here an even block, there an odd one that is
+already allowed to, elsewhere nothing yet. So the world the graph stands for is, in
+general, no world the automaton ever has as a whole. The claim that the graph nevertheless
+<em>plays the automaton</em> needs saying exactly, and this is how Lean says it:</p>
+<pre class="lean"><b>def</b> worldGraph (rows cols : Nat) (k : Nat × Nat → Nat) (W : World) : Graph (Node (Nat × Nat)) :=
+  netGraph (torusCells rows cols) (torusNxt rows cols)
+    (<b>fun</b> rc =&gt; run 0 (k rc) W (rc.1 : Int) (rc.2 : Int)) (<b>fun</b> rc =&gt; k rc % 2 == 1)</pre>
+<pre class="lean"><b>theorem</b> graph_plays_automaton (m n : Nat) (hm : 0 &lt; m) (hn : 0 &lt; n) (W : World)
+    (hW : Periodic (2 * (m : Int)) (2 * (n : Int)) W) {g : Graph (Node (Nat × Nat))}
+    (h : Reaches rules (worldGraph (2 * m) (2 * n) (<b>fun</b> _ =&gt; 0) W) g) :
+    ∃ k : Nat × Nat → Nat, g.Perm (worldGraph (2 * m) (2 * n) k W)</pre>
+<p>Read: <code>W</code> is a world that repeats after <code>2 m</code> rows and
+<code>2 n</code> columns. <code>worldGraph ... k W</code> is the graph in which every cell
+<code>rc</code> holds what the automaton has there after <code>k rc</code> steps
+(<code>run 0 (k rc) W</code>), and it is the odd block's turn exactly where
+<code>k rc</code> is odd. With all <code>k</code> zero it is the start graph. The theorem:
+whatever graph <code>g</code> the six rules reach from the start graph
+(<code>Reaches rules ... g</code>: any number of events, anywhere, in any order), there are
+numbers <code>k</code> such that <code>g</code> is that graph. The graph can run ahead in
+one place and lag in another. It can never show anything the automaton does not compute.</p>
+<p>The proof has three parts, each a file of its own. First, a triangle of a cell can be
+found in the graph in one place only, so a rule's left side can lie only on a real block
+all of whose cells have its turn (<code>event_is_block</code>; the case analysis is done by
+Lean's <code>grind</code>). Second, such an event makes of the block what the automaton
+makes of it, and because the four cells of a block that may act have always been through
+the same number of events, a world that is on the automaton's history stays on it
+(<code>Slice.act</code>). Third, on a donut the walk round a block is the automaton's step
+on the plane (<code>astep_eq_step</code>).</p>
+
+<h2 id="proved">What Lean proved</h2>
+<p>51 of the 146 theorems are listed here (the others are steps on the way).
+Open a name to see the statement as it stands in the Lean file.
+<span class="mark kernel"></span>rests on Lean's kernel alone;
+<span class="mark compiled"></span>the computation was run as a compiled program, so the
+theorem also rests on Lean's compiler.</p>
+<h3>The graph plays the automaton, for every size</h3><p>The theorem the page is about, and the steps that carry it. All of them speak of worlds of every size at once.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>On a world that wraps round, of any even size: let the six rules act on its graph any number of times, anywhere, in any order. What comes out is always the graph of a world in which every cell holds what Bounce Gas II has in that cell after as many steps as the cell has been through events.<details><summary><code>graph_plays_automaton</code></summary><pre class="lean"><b>theorem</b> graph_plays_automaton (m n : Nat) (hm : 0 &lt; m) (hn : 0 &lt; n) (W : World)
+    (hW : Periodic (2 * (m : Int)) (2 * (n : Int)) W) {g : Graph (Node (Nat × Nat))}
+    (h : Reaches rules (worldGraph (2 * m) (2 * n) (<b>fun</b> _ =&gt; 0) W) g) :
+    ∃ k : Nat × Nat → Nat, g.Perm (worldGraph (2 * m) (2 * n) k W)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every event is a block acting: wherever a rule&#x27;s left side is found in the graph of a world, with whatever nodes for its letters, it lies on one block all of whose four cells have its turn, and the event does to that block what the table says and nothing else.<details><summary><code>event_is_block</code></summary><pre class="lean"><b>theorem</b> event_is_block [DecidableEq ι] {cells : List ι} (hnd : cells.Nodup) {nxt : Bool → ι → ι}
+    (hne : ∀ s c, c ∈ cells → nxt s c ≠ c) {a t : ι → Bool} {k : Block}
+    {g&#x27; : Graph (Node ι)} (h : Rewrites (ruleOf k) (netGraph cells nxt a t) g&#x27;) :
+    ∃ s c0 c1 c2 c3, IsBlock cells nxt s c0 c1 c2 c3
+      ∧ t c0 = s ∧ t c1 = s ∧ t c2 = s ∧ t c3 = s
+      ∧ k = ofCorners (a c0) (a c1) (a c2) (a c3)
+      ∧ g&#x27;.Perm (netGraph cells nxt (actA a c0 c1 c2 c3 (table k)) (actT t c0 c1 c2 c3 s))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>And every such block can act: if all four cells of a block have its turn, one of the six rules fits there.<details><summary><code>block_acts</code></summary><pre class="lean"><b>theorem</b> block_acts [DecidableEq ι] {cells : List ι} (hnd : cells.Nodup) {nxt : Bool → ι → ι} {s : Bool}
+    {c0 c1 c2 c3 : ι} (hb : IsBlock cells nxt s c0 c1 c2 c3) (a t : ι → Bool)
+    (ht0 : t c0 = s) (ht1 : t c1 = s) (ht2 : t c2 = s) (ht3 : t c3 = s) :
+    ∃ rule ∈ rules, Rewrites rule (netGraph cells nxt a t)
+      (netGraph cells nxt
+        (actA a c0 c1 c2 c3 (table (ofCorners (a c0) (a c1) (a c2) (a c3))))
+        (actT t c0 c1 c2 c3 s))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>The three arrows a rule asks for at an empty cell, with the arrow of the square that leaves it, can only be found on the triangle of one empty cell, read the right way round.<details><summary><code>triangle_dead</code></summary><pre class="lean"><b>theorem</b> triangle_dead {nxt : Bool → ι → ι} {a t : ι → Bool} {xq xp xm y : Node ι}
+    (h1 : IsArrow nxt a t xq xp) (h2 : IsArrow nxt a t xq xm) (h3 : IsArrow nxt a t xm xp)
+    (h4 : IsArrow nxt a t xq y) (d1 : xp ≠ xm) (d2 : y ≠ xp) (d3 : y ≠ xm) :
+    a (cellOf xq) = false ∧ xq = cor (cellOf xq) (t (cellOf xq))
+      ∧ xp = cor (cellOf xq) (!t (cellOf xq)) ∧ xm = mid (cellOf xq)
+      ∧ y = cor (nxt (t (cellOf xq)) (cellOf xq)) (t (cellOf xq))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>The same for a cell with a particle.<details><summary><code>triangle_alive</code></summary><pre class="lean"><b>theorem</b> triangle_alive {nxt : Bool → ι → ι} {a t : ι → Bool} {xq xp xm y : Node ι}
+    (h1 : IsArrow nxt a t xq xp) (h2 : IsArrow nxt a t xm xq) (h3 : IsArrow nxt a t xm xp)
+    (h4 : IsArrow nxt a t xq y) (d1 : xq ≠ xp) (d2 : y ≠ xp) :
+    a (cellOf xq) = true ∧ xq = cor (cellOf xq) (t (cellOf xq))
+      ∧ xp = cor (cellOf xq) (!t (cellOf xq)) ∧ xm = mid (cellOf xq)
+      ∧ y = cor (nxt (t (cellOf xq)) (cellOf xq)) (t (cellOf xq))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>An event takes a world in which every cell is somewhere on the automaton&#x27;s history to another such world.<details><summary><code>Slice.act</code></summary><pre class="lean"><b>theorem</b> Slice.act [DecidableEq ι] {cells : List ι} {nxt : Bool → ι → ι}
+    (hcl : ∀ s c, c ∈ cells → nxt s c ∈ cells)
+    (h4 : ∀ s c, c ∈ cells → nxt s (nxt s (nxt s (nxt s c))) = c)
+    {a0 a t : ι → Bool} {n : Bool → ι → Nat} {s : Bool} {c0 c1 c2 c3 : ι}
+    (hb : IsBlock cells nxt s c0 c1 c2 c3)
+    (ht0 : t c0 = s) (ht1 : t c1 = s) (ht2 : t c2 = s) (ht3 : t c3 = s)
+    (sl : Slice cells nxt a0 a t n) :
+    Slice cells nxt a0
+      (actA a c0 c1 c2 c3 (table (ofCorners (a c0) (a c1) (a c2) (a c3))))
+      (actT t c0 c1 c2 c3 s)
+      (<b>fun</b> s&#x27; c =&gt; <b>if</b> s&#x27; = s ∧ (c = c0 ∨ c = c1 ∨ c = c2 ∨ c = c3) <b>then</b> n s&#x27; c + 1
+        <b>else</b> n s&#x27; c)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>So every graph the rules can reach is such a world, for any collection of cells with blocks of four, not only a donut.<details><summary><code>reaches_slice</code></summary><pre class="lean"><b>theorem</b> reaches_slice [DecidableEq ι] {cells : List ι} (hnd : cells.Nodup)
+    {nxt : Bool → ι → ι} (hne : ∀ s c, c ∈ cells → nxt s c ≠ c)
+    (hcl : ∀ s c, c ∈ cells → nxt s c ∈ cells)
+    (h4 : ∀ s c, c ∈ cells → nxt s (nxt s (nxt s (nxt s c))) = c)
+    (a0 : ι → Bool) {g : Graph (Node ι)}
+    (h : Reaches rules (netGraph cells nxt a0 (<b>fun</b> _ =&gt; false)) g) :
+    ∃ k : ι → Nat, g.Perm (netGraph cells nxt (<b>fun</b> c =&gt; hist nxt a0 (k c) c)
+      (<b>fun</b> c =&gt; k c % 2 == 1))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>On a donut, a step worked out by walking round each block is the step of the automaton on the plane.<details><summary><code>astep_eq_step</code></summary><pre class="lean"><b>theorem</b> astep_eq_step (m n : Nat) (W : World)
+    (hW : Periodic (2 * (m : Int)) (2 * (n : Int)) W) (s : Bool) (p : Int)
+    (hp : p % 2 = (s.toNat : Int)) (r c : Nat) (hr : r &lt; 2 * m) (hc : c &lt; 2 * n) :
+    astep (torusNxt (2 * m) (2 * n)) s (<b>fun</b> rc =&gt; W (rc.1 : Int) (rc.2 : Int)) (r, c)
+      = step p W (r : Int) (c : Int)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>On a donut of any even size, every block whose four cells have its turn can act.<details><summary><code>torus_block_acts</code></summary><pre class="lean"><b>theorem</b> torus_block_acts {m n : Nat} (hm : 0 &lt; m) (hn : 0 &lt; n) (s : Bool) (rc : Nat × Nat)
+    (h : rc ∈ torusCells (2 * m) (2 * n)) (a t : Nat × Nat → Bool)
+    (ht0 : t rc = s) (ht1 : t (torusNxt (2 * m) (2 * n) s rc) = s)
+    (ht2 : t (torusNxt (2 * m) (2 * n) s (torusNxt (2 * m) (2 * n) s rc)) = s)
+    (ht3 : t (torusNxt (2 * m) (2 * n) s (torusNxt (2 * m) (2 * n) s
+      (torusNxt (2 * m) (2 * n) s rc))) = s) :
+    ∃ rule ∈ rules, ∃ a&#x27; t&#x27;, Rewrites rule
+      (netGraph (torusCells (2 * m) (2 * n)) (torusNxt (2 * m) (2 * n)) a t)
+      (netGraph (torusCells (2 * m) (2 * n)) (torusNxt (2 * m) (2 * n)) a&#x27; t&#x27;)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr></tbody></table></div>
+<h3>The table</h3><p>Facts about the 16 blocks. Lean goes through every block and checks.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>Looked up twice, every block is back: the table undoes itself.<details><summary><code>table_table</code></summary><pre class="lean"><b>theorem</b> table_table : ∀ b : Block, table (table b) = b</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>No two blocks become the same block.<details><summary><code>table_injective</code></summary><pre class="lean"><b>theorem</b> table_injective : ∀ a b : Block, table a = table b → a = b</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A block keeps its number of particles.<details><summary><code>table_keeps_particles</code></summary><pre class="lean"><b>theorem</b> table_keeps_particles : ∀ b : Block, particles (table b) = particles b</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Turning a block a quarter turn and looking it up is looking it up and turning it: no direction is preferred.<details><summary><code>table_turn</code></summary><pre class="lean"><b>theorem</b> table_turn : ∀ b : Block, table (turn b) = turn (table b)</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>The same for the mirror image: left and right are alike.<details><summary><code>table_mirror</code></summary><pre class="lean"><b>theorem</b> table_mirror : ∀ b : Block, table (mirror b) = mirror (table b)</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A single particle jumps to the opposite corner.<details><summary><code>one_particle_jumps</code></summary><pre class="lean"><b>theorem</b> one_particle_jumps :
+    table 1 = 8 ∧ table 2 = 4 ∧ table 4 = 2 ∧ table 8 = 1</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Two particles on a diagonal move onto the other diagonal.<details><summary><code>head_on_turns</code></summary><pre class="lean"><b>theorem</b> head_on_turns : table 6 = 9 ∧ table 9 = 6</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A block of three or four particles stays as it is.<details><summary><code>three_or_more_stay</code></summary><pre class="lean"><b>theorem</b> three_or_more_stay : ∀ b : Block, 3 ≤ particles b → table b = b</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Bounce Gas II differs from the HPP gas exactly at the blocks of three.<details><summary><code>differs_from_hpp_at_three</code></summary><pre class="lean"><b>theorem</b> differs_from_hpp_at_three : ∀ b : Block, table b ≠ hpp b ↔ particles b = 3</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr></tbody></table></div>
+<h3>The automaton, on worlds of every size</h3><p>Facts about all worlds at once, also worlds without end. There is no trying all cases here; the proofs argue and Lean checks each step.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>After a step, every block of the partition that acted is the table&#x27;s entry for what it was.<details><summary><code>blockAt_step</code></summary><pre class="lean"><b>theorem</b> blockAt_step (p : Int) (w : World) (r c : Int)
+    (hr : (r - p) % 2 = 0) (hc : (c - p) % 2 = 0) :
+    blockAt (step p w) r c = table (blockAt w r c)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>The same step made twice gives the world back.<details><summary><code>step_step</code></summary><pre class="lean"><b>theorem</b> step_step (p : Int) (w : World) : step p (step p w) = w</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A step keeps the number of particles in every block that acts.<details><summary><code>step_keeps_particles</code></summary><pre class="lean"><b>theorem</b> step_keeps_particles (p : Int) (w : World) (r c : Int)
+    (hr : (r - p) % 2 = 0) (hc : (c - p) % 2 = 0) :
+    particles (blockAt (step p w) r c) = particles (blockAt w r c)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A world that wraps round, with an even number of rows and columns, is one of the same size after a step.<details><summary><code>step_periodic</code></summary><pre class="lean"><b>theorem</b> step_periodic (p m n : Int) (w : World) (hw : Periodic (2 * m) (2 * n) w) :
+    Periodic (2 * m) (2 * n) (step p w)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>What a cell holds after n steps depends only on the cells at most n rows and n columns away: nothing travels faster than one cell per step.<details><summary><code>speed_limit</code></summary><pre class="lean"><b>theorem</b> speed_limit (p : Int) (n : Nat) : ∀ (w w&#x27; : World) (r c : Int),
+    (∀ r&#x27; c&#x27;, r - n ≤ r&#x27; → r&#x27; ≤ r + n → c - n ≤ c&#x27; → c&#x27; ≤ c + n → w r&#x27; c&#x27; = w&#x27; r&#x27; c&#x27;) →
+    run p n w r c = run p n w&#x27; r c</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A world that wraps round, of any even size, holds the same number of particles after any number of steps.<details><summary><code>particles_conserved</code></summary><pre class="lean"><b>theorem</b> particles_conserved (p : Int) (m n k : Nat) (w : World)
+    (hw : Periodic (2 * (m : Int)) (2 * (n : Int)) w) :
+    tile (run p k w) 0 0 (2 * m) (2 * n) = tile w 0 0 (2 * m) (2 * n)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Any number of steps can be undone by the same steps in the reverse order.<details><summary><code>unrun_run</code></summary><pre class="lean"><b>theorem</b> unrun_run (p : Int) (n : Nat) (w : World) : unrun p n (run p n w) = w</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>No two worlds ever become the same world, however many steps are made.<details><summary><code>run_injective</code></summary><pre class="lean"><b>theorem</b> run_injective (p : Int) (n : Nat) (w w&#x27; : World) (h : run p n w = run p n w&#x27;) :
+    w = w&#x27;</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr></tbody></table></div>
+<h3>The six rules</h3><p>Facts about the rules themselves and about every graph they are used on, of any size, in any order.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>An event does not look at the rest of the graph: what a rule can do in a graph it can do in any larger graph, and the other arrows stay.<details><summary><code>Rewrites.frame</code></summary><pre class="lean"><b>theorem</b> Rewrites.frame {α : Type} {rule : Rule} {g g&#x27; : Graph α} (h : Rewrites rule g g&#x27;)
+    (more : Graph α) : Rewrites rule (g ++ more) (g&#x27; ++ more)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every rule takes 16 arrows and gives 16 arrows.<details><summary><code>rules_sixteen</code></summary><pre class="lean"><b>theorem</b> rules_sixteen : ∀ rule ∈ rules, rule.lhs.length = 16 ∧ rule.rhs.length = 16</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Both sides of every rule have the same 12 nodes: none is made, none is left over.<details><summary><code>rules_twelve_letters</code></summary><pre class="lean"><b>theorem</b> rules_twelve_letters : ∀ rule ∈ rules,
+    (letters rule.lhs).length = 12 ∧ (letters rule.lhs).Perm (letters rule.rhs)</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>No side of a rule has an arrow from a node to itself, or an arrow twice.<details><summary><code>rules_simple</code></summary><pre class="lean"><b>theorem</b> rules_simple : ∀ rule ∈ rules,
+    (rule.lhs.all <b>fun</b> a =&gt; a.1 != a.2) ∧ (rule.rhs.all <b>fun</b> a =&gt; a.1 != a.2)
+      ∧ rule.lhs.Nodup ∧ rule.rhs.Nodup</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>A rule read from another corner of the square is the rule of the turned block: six rules are enough for 16 blocks.<details><summary><code>side_turned</code></summary><pre class="lean"><b>theorem</b> side_turned : ∀ (b : Block) (toward : Bool),
+    (inst (rot (kindOf b).2) (side (kindOf b).1 toward)).Perm (side b toward)</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>In any graph that holds the piece of a block whose turn it is, one of the six rules puts the piece of the table&#x27;s entry in its place, passes the turn on and leaves the rest alone.<details><summary><code>block_rewrites</code></summary><pre class="lean"><b>theorem</b> block_rewrites {α : Type} (b : Block) (σ : Nat → α) (rest : Graph α) :
+    Rewrites (ruleOf (kindOf b).1)
+      (inst σ (side b false) ++ rest) (inst σ (side (table b) true) ++ rest)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>An event only turns arrows round: the graph without its directions never changes, in any graph, by any of the rules.<details><summary><code>rewrite_keeps_skeleton</code></summary><pre class="lean"><b>theorem</b> rewrite_keeps_skeleton {rule : Rule} (hr : rule ∈ rules) {g g&#x27; : Graph Nat}
+    (h : Rewrites rule g g&#x27;) : (skeleton g&#x27;).Perm (skeleton g)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>The number of arrows never changes.<details><summary><code>rewrite_keeps_length</code></summary><pre class="lean"><b>theorem</b> rewrite_keeps_length {α : Type} {rule : Rule} (hr : rule ∈ rules) {g g&#x27; : Graph α}
+    (h : Rewrites rule g g&#x27;) : g&#x27;.length = g.length</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>In the piece of a block, the middle nodes that nothing points at are exactly its particles.<details><summary><code>sources_are_particles</code></summary><pre class="lean"><b>theorem</b> sources_are_particles : ∀ (b : Block) (toward : Bool),
+    sources (side b toward) middles = particles b</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every rule keeps the number of middle nodes that nothing points at.<details><summary><code>rules_keep_sources</code></summary><pre class="lean"><b>theorem</b> rules_keep_sources : ∀ rule ∈ rules,
+    sources rule.rhs middles = sources rule.lhs middles</pre></details></td><td>all cases tried</td><td><span class="mark kernel"></span>the kernel alone</td></tr></tbody></table></div>
+<h3>A program that finds every event, proved right</h3><p>The definition of an event says what counts as one, not how to find one. This program finds them, and these theorems tie it to the definition.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>Every place the program finds is a place the rule fits.<details><summary><code>matchesFrom_sound</code></summary><pre class="lean"><b>theorem</b> matchesFrom_sound : ∀ (ps : Graph Nat) (σ : Binding) (g : Graph Nat)
+    (σ&#x27; : Binding) (rest : Graph Nat), (σ&#x27;, rest) ∈ matchesFrom ps σ g →
+      Extends σ σ&#x27; ∧ g.Perm (inst (val σ&#x27;) ps ++ rest)</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every place a rule fits, the program finds.<details><summary><code>matchesFrom_complete</code></summary><pre class="lean"><b>theorem</b> matchesFrom_complete : ∀ (ps : Graph Nat) (σ : Binding) (g : Graph Nat)
+    (τ : Nat → Nat) (rest : Graph Nat), Agrees σ τ → g.Perm (inst τ ps ++ rest) →
+      ∃ σ&#x27; rest&#x27;, (σ&#x27;, rest&#x27;) ∈ matchesFrom ps σ g ∧ rest&#x27;.Perm rest ∧ Agrees σ&#x27; τ
+        ∧ ∀ a ∈ ps, val σ&#x27; a.1 = τ a.1 ∧ val σ&#x27; a.2 = τ a.2</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every graph the program lists as one event away is one event away.<details><summary><code>successors_sound</code></summary><pre class="lean"><b>theorem</b> successors_sound {g s : Graph Nat} (h : s ∈ successors g) :
+    ∃ rule ∈ rules, Rewrites rule g s</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Whatever one event makes of a graph is in the program&#x27;s list.<details><summary><code>successors_complete</code></summary><pre class="lean"><b>theorem</b> successors_complete {rule : Rule} (hr : rule ∈ rules) {g g&#x27; : Graph Nat}
+    (h : Rewrites rule g g&#x27;) : ∃ s ∈ successors g, g&#x27;.Perm s</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Every graph the program lists as n events away is n events away.<details><summary><code>after_sound</code></summary><pre class="lean"><b>theorem</b> after_sound : ∀ (n : Nat) (gs : List (Graph Nat)) (s : Graph Nat), s ∈ after n gs →
+    ∃ g ∈ gs, ReachesIn n g s</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>Whatever n events make of a graph, in any order, is in the program&#x27;s list.<details><summary><code>after_complete</code></summary><pre class="lean"><b>theorem</b> after_complete {n : Nat} {g g&#x27; : Graph Nat} (h : ReachesIn n g g&#x27;) :
+    ∀ (gs : List (Graph Nat)) (g0 : Graph Nat), g0 ∈ gs → g.Perm g0 →
+      ∃ s ∈ after n gs, g&#x27;.Perm s</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr></tbody></table></div>
+<h3>Small worlds, computed</h3><p>Before the theorem for every size was proved, Lean computed all graphs that can come out of one step&#x27;s worth of events on small worlds, and found a single one. The last four lines check that the graph the theorems name by row and column is the graph the Python code numbers.</p><div class="wide"><table class="theorems"><thead><tr><th>what is proved</th><th>how</th><th>rests on</th></tr></thead><tbody><tr><td>What the computed check means: the events of a step can be made, and whatever events are made, in whatever order, they end in the start graph of the next world.<details><summary><code>allOrdersAgree_spec</code></summary><pre class="lean"><b>theorem</b> allOrdersAgree_spec {rows cols phase : Nat} {cells : List Bool}
+    (h : allOrdersAgree rows cols cells phase = true) :
+    ReachesIn (rows / 2 * (cols / 2)) (startGraph rows cols cells phase)
+        (startGraph rows cols (stepCells rows cols phase cells) (phase + 1))
+      ∧ ∀ g, ReachesIn (rows / 2 * (cols / 2)) (startGraph rows cols cells phase) g →
+          g.Perm (startGraph rows cols (stepCells rows cols phase cells) (phase + 1))</pre></details></td><td>argued, step by step</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>So it is for all 16 worlds of 2 x 2 cells.<details><summary><code>all_orders_2x2</code></summary><pre class="lean"><b>theorem</b> all_orders_2x2 : checkAll 2 2 = true</pre></details></td><td>computed by Lean's kernel</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>For all 256 worlds of 2 x 4 cells.<details><summary><code>all_orders_2x4</code></summary><pre class="lean"><b>theorem</b> all_orders_2x4 : checkAll 2 4 = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr><tr><td>For all 256 worlds of 4 x 2 cells.<details><summary><code>all_orders_4x2</code></summary><pre class="lean"><b>theorem</b> all_orders_4x2 : checkAll 4 2 = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr><tr><td>For 32 of the 65,536 worlds of 4 x 4 cells.<details><summary><code>all_orders_4x4_sample</code></summary><pre class="lean"><b>theorem</b> all_orders_4x4_sample :
+    (sample4x4.all <b>fun</b> cells =&gt; allOrdersAgree 4 4 cells 0 &amp;&amp; allOrdersAgree 4 4 cells 1)
+      = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr><tr><td>Named and numbered graph are the same for all worlds of 2 x 2 cells.<details><summary><code>same_graphs_2x2</code></summary><pre class="lean"><b>theorem</b> same_graphs_2x2 : sameGraphs 2 2 = true</pre></details></td><td>computed by Lean's kernel</td><td><span class="mark kernel"></span>the kernel alone</td></tr><tr><td>For all worlds of 2 x 4 cells.<details><summary><code>same_graphs_2x4</code></summary><pre class="lean"><b>theorem</b> same_graphs_2x4 : sameGraphs 2 4 = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr><tr><td>For all worlds of 4 x 2 cells.<details><summary><code>same_graphs_4x2</code></summary><pre class="lean"><b>theorem</b> same_graphs_4x2 : sameGraphs 4 2 = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr><tr><td>For all 65,536 worlds of 4 x 4 cells.<details><summary><code>same_graphs_4x4</code></summary><pre class="lean"><b>theorem</b> same_graphs_4x4 : sameGraphs 4 4 = true</pre></details></td><td>computed by a compiled program</td><td><span class="mark compiled"></span>the kernel and Lean's compiler</td></tr></tbody></table></div>
+<div class="note"><p><b>Lean refused one statement.</b> The first version of
+<code>sources_are_particles</code> said: in the piece of a block, the nodes that nothing
+points at are its particles. Lean answered that this is false. In the piece of a block that
+has acted, the four outer corners have no arrow pointing at them either; theirs comes from
+the square of a neighbouring block, which is not part of the piece. The statement that
+holds counts middle nodes only. A test with a whole world would not have shown this; the
+checker did, within seconds.</p></div>
+
+<h2 id="not">What is not proved</h2>
+<ul>
+<li><b>That the graph never gets stuck.</b> Every block whose four cells have its turn can
+act (proved, for every size), and at the start every even block is such a block. That at
+every later moment at least one block may act is not proved; on the small worlds Lean
+computed it, and the tests see it on random runs.</li>
+<li><b>That the Lean definitions are the project's.</b> No proof can say this. Tests hold
+them equal for the table, the six rules (arrow by arrow), the 16 pieces of graph and
+30 worlds up to 8 x 8 (18 of them with the events of a step,
+against the rewriting engine).</li>
+<li><b>That the graph named by row and column is the graph numbered by the Python code, for
+every size.</b> The theorem is about the first; the Python code and its engine use the
+second. Lean computed that they are the same for every world up to 4 x 4, and the tests
+compare them up to 8 x 8.</li>
+<li><b>What the gas does in the long run</b> (walls that stand still, mixing), and the
+other rules of the project: not attempted.</li>
+</ul>
+
+<h2 id="you">Doing this for your own systems</h2>
+<p>The Lean on this page was written by an AI coding agent in two sessions and checked by
+Lean after every change. The agent did not need to be trusted: one of its statements was
+false and a number of its proof steps did not hold, and Lean said so each time. That loop
+(write, let Lean check, repair) is how AI systems now make progress in mathematics, and it
+carries over to cellular automata and graph rewriting as it stands. What carries over
+well:</p>
+<ul>
+<li><b>Laws</b>: something is kept (particles, arrows, the graph without directions),
+something can be undone, something has a speed limit.</li>
+<li><b>"The graph plays the automaton"</b>, as a statement about all worlds and all orders,
+not a sample.</li>
+<li><b>"A rule fits only where it should"</b>: the question every graph model raises, and
+the one tests answer least well.</li>
+</ul>
+<p>What does not: anything that is seen rather than stated (a pattern looks like a glider,
+a gas mixes), and finite checks on large worlds, where Lean is far slower than ordinary
+code. Tests stay; Lean adds the statements tests cannot reach.</p>
+
+<h2 id="physics">Lean in physics, in short</h2>
+<ul>
+<li><b>Physlib</b> (before: HepLean, then PhysLean; kept by the Lean community since
+2026) is the shared library of physics in Lean: mechanics, electromagnetism, quantum
+mechanics, relativity, statistical mechanics and more.
+<a href="https://github.com/leanprover-community/physlib">github.com/leanprover-community/physlib</a></li>
+<li><b>Lanyon AI</b> (Jonathan Gorard, Ammar Hakim, Jimmy Juno; announced July 2026)
+generates simulation code for equations of physics together with Lean proofs about it. The
+generator is not public; generated solvers with their Lean proofs are.
+<a href="https://github.com/lanyonai">github.com/lanyonai</a></li>
+<li><b>Cellular automata in Lean</b> exist for one-dimensional automata and for results
+on symmetric configurations. No block automaton, lattice gas or Wolfram model in any proof
+assistant was found when this was written (November 2026).</li>
+<li><b>The limit everyone names</b>: a checked proof says nothing about whether the
+definitions are the physics one meant.</li>
+</ul>
+
+<footer>Written by a script from the Lean files, Lean's own account of what each theorem
+rests on, and what the Lean definitions compute. Lean 4.36.0, without Mathlib.
+The part to play with runs on the table and the triangle that Lean exported; it loads
+nothing.</footer>
+</main>
+<script type="application/json" id="lean-data">{"table": [0, 8, 4, 12, 2, 10, 9, 7, 1, 6, 5, 11, 3, 13, 14, 15], "triangle": {"empty": [[0, 1], [0, 2], [2, 1]], "particle": [[0, 1], [2, 0], [2, 1]]}, "pieces": [{"block": 0, "becomes": 0, "kind": 0, "turns": 0}, {"block": 1, "becomes": 8, "kind": 1, "turns": 0}, {"block": 2, "becomes": 4, "kind": 1, "turns": 1}, {"block": 3, "becomes": 12, "kind": 3, "turns": 0}, {"block": 4, "becomes": 2, "kind": 1, "turns": 3}, {"block": 5, "becomes": 10, "kind": 3, "turns": 3}, {"block": 6, "becomes": 9, "kind": 6, "turns": 0}, {"block": 7, "becomes": 7, "kind": 7, "turns": 0}, {"block": 8, "becomes": 1, "kind": 1, "turns": 2}, {"block": 9, "becomes": 6, "kind": 6, "turns": 1}, {"block": 10, "becomes": 5, "kind": 3, "turns": 1}, {"block": 11, "becomes": 11, "kind": 7, "turns": 1}, {"block": 12, "becomes": 3, "kind": 3, "turns": 2}, {"block": 13, "becomes": 13, "kind": 7, "turns": 3}, {"block": 14, "becomes": 14, "kind": 7, "turns": 2}, {"block": 15, "becomes": 15, "kind": 15, "turns": 0}], "words": {"0": ["empty", "An empty block stays empty."], "1": ["one", "A single particle jumps to the opposite corner."], "3": ["two side by side", "Two particles side by side: each jumps to the corner opposite it, so the pair lands on the other side of the block."], "6": ["two across", "Two particles on a diagonal (they meet head-on) move onto the other diagonal."], "7": ["three", "Three particles stay where they are."], "15": ["four", "A full block stays full."]}, "statements": {"history": "<details><summary><code>graph_plays_automaton<\/code><\/summary><pre class=\"lean\"><b>theorem<\/b> graph_plays_automaton (m n : Nat) (hm : 0 &lt; m) (hn : 0 &lt; n) (W : World)\n    (hW : Periodic (2 * (m : Int)) (2 * (n : Int)) W) {g : Graph (Node (Nat \u00d7 Nat))}\n    (h : Reaches rules (worldGraph (2 * m) (2 * n) (<b>fun<\/b> _ =&gt; 0) W) g) :\n    \u2203 k : Nat \u00d7 Nat \u2192 Nat, g.Perm (worldGraph (2 * m) (2 * n) k W)<\/pre><\/details>", "particles": "<details><summary><code>particles_conserved<\/code><\/summary><pre class=\"lean\"><b>theorem<\/b> particles_conserved (p : Int) (m n k : Nat) (w : World)\n    (hw : Periodic (2 * (m : Int)) (2 * (n : Int)) w) :\n    tile (run p k w) 0 0 (2 * m) (2 * n) = tile w 0 0 (2 * m) (2 * n)<\/pre><\/details>", "ready": "<details><summary><code>event_is_block<\/code><\/summary><pre class=\"lean\"><b>theorem<\/b> event_is_block [DecidableEq \u03b9] {cells : List \u03b9} (hnd : cells.Nodup) {nxt : Bool \u2192 \u03b9 \u2192 \u03b9}\n    (hne : \u2200 s c, c \u2208 cells \u2192 nxt s c \u2260 c) {a t : \u03b9 \u2192 Bool} {k : Block}\n    {g&#x27; : Graph (Node \u03b9)} (h : Rewrites (ruleOf k) (netGraph cells nxt a t) g&#x27;) :\n    \u2203 s c0 c1 c2 c3, IsBlock cells nxt s c0 c1 c2 c3\n      \u2227 t c0 = s \u2227 t c1 = s \u2227 t c2 = s \u2227 t c3 = s\n      \u2227 k = ofCorners (a c0) (a c1) (a c2) (a c3)\n      \u2227 g&#x27;.Perm (netGraph cells nxt (actA a c0 c1 c2 c3 (table k)) (actT t c0 c1 c2 c3 s))<\/pre><\/details>", "skeleton": "<details><summary><code>rewrite_keeps_skeleton<\/code><\/summary><pre class=\"lean\"><b>theorem<\/b> rewrite_keeps_skeleton {rule : Rule} (hr : rule \u2208 rules) {g g&#x27; : Graph Nat}\n    (h : Rewrites rule g g&#x27;) : (skeleton g&#x27;).Perm (skeleton g)<\/pre><\/details>"}}</script>
+<script>// The engine of the page: a small world of Bounce Gas II in which blocks act one at a time,
+// in any order, and the graph that stands for it.
+//
+// No model fact is written down here. The table and the three arrows of a cell's triangle
+// come from Lean (lean-export.json: `table`, `triangle`); this file only looks them up and
+// keeps the books: which cells are a block, whose turn each cell has, how many events each
+// cell has been through. It touches no page (no document), so the tests run it in Node and
+// hold it against the Python reference and the rewriting engine (tests/test_engine_js.py).
+//
+// A world: rows x cols cells that wrap round, row by row.
+//   alive[i]  1 if cell i holds a particle
+//   turn[i]   0 if the cell's even block acts next, 1 if its odd block does
+//   count[i]  how many events the cell has been through
+// A block: { s, r, c, cells }: its partition (0 even, 1 odd), the row and column of its top
+// left cell, and its four cells clockwise from there.
+"use strict";
+
+var LeanGraphs = (function () {
+  function create(rows, cols, cells) {
+    if (rows % 2 || cols % 2 || rows < 2 || cols < 2) throw new Error("a world of blocks has even sides");
+    const size = rows * cols;
+    return {
+      rows,
+      cols,
+      alive: Uint8Array.from({ length: size }, (_, i) => (cells && cells[i] ? 1 : 0)),
+      turn: new Uint8Array(size),
+      count: new Int32Array(size),
+    };
+  }
+
+  function copy(world) {
+    return {
+      rows: world.rows,
+      cols: world.cols,
+      alive: world.alive.slice(),
+      turn: world.turn.slice(),
+      count: world.count.slice(),
+    };
+  }
+
+  function cellAt(world, r, c) {
+    const { rows, cols } = world;
+    return (((r % rows) + rows) % rows) * cols + (((c % cols) + cols) % cols);
+  }
+
+  // the block of partition s whose top left cell is in row r, column c
+  function block(world, s, r, c) {
+    return {
+      s,
+      r,
+      c,
+      cells: [cellAt(world, r, c), cellAt(world, r, c + 1), cellAt(world, r + 1, c + 1), cellAt(world, r + 1, c)],
+    };
+  }
+
+  // every block of a partition, row by row (the order of model_blocks.blocks_of)
+  function blocksOf(world, s) {
+    const out = [];
+    for (let r = s; r < world.rows; r += 2) for (let c = s; c < world.cols; c += 2) out.push(block(world, s, r, c));
+    return out;
+  }
+
+  // the block of partition s that a cell is in
+  function blockOfCell(world, s, cell) {
+    const r = Math.floor(cell / world.cols);
+    const c = cell % world.cols;
+    const top = (r - s) % 2 === 0 ? r : r - 1;
+    const left = (c - s) % 2 === 0 ? c : c - 1;
+    return block(world, s, (top + world.rows) % world.rows, (left + world.cols) % world.cols);
+  }
+
+  // a block may act when all four of its cells have its turn
+  function isReady(world, b) {
+    return b.cells.every((cell) => world.turn[cell] === b.s);
+  }
+
+  function ready(world) {
+    return [...blocksOf(world, 0), ...blocksOf(world, 1)].filter((b) => isReady(world, b));
+  }
+
+  // the block as a number: top left 1, top right 2, bottom left 4, bottom right 8
+  function value(world, b) {
+    const [tl, tr, br, bl] = b.cells;
+    return world.alive[tl] + 2 * world.alive[tr] + 4 * world.alive[bl] + 8 * world.alive[br];
+  }
+
+  function put(world, b, v) {
+    const [tl, tr, br, bl] = b.cells;
+    world.alive[tl] = v & 1;
+    world.alive[tr] = (v >> 1) & 1;
+    world.alive[bl] = (v >> 2) & 1;
+    world.alive[br] = (v >> 3) & 1;
+  }
+
+  // one event: the block is replaced by its entry in the table, the turn of its four cells
+  // passes to the other partition. Gives the block's number before and after.
+  function act(world, b, table) {
+    if (!isReady(world, b)) throw new Error("this block may not act: not all four cells have its turn");
+    const before = value(world, b);
+    const after = table[before];
+    put(world, b, after);
+    for (const cell of b.cells) {
+      world.turn[cell] = 1 - b.s;
+      world.count[cell] += 1;
+    }
+    return { before, after };
+  }
+
+  // one step of the automaton, all at once, on plain cells: every block of partition s
+  function step(rows, cols, cells, s, table) {
+    const world = create(rows, cols, cells);
+    world.turn.fill(s);
+    for (const b of blocksOf(world, s)) act(world, b, table);
+    return world.alive;
+  }
+
+  // the node numbers of model_blocks: cell i has the corners 1 + 3i (even) and 2 + 3i (odd)
+  // and the middle node 3 + 3i
+  function corner(cell, s) {
+    return 1 + 3 * cell + s;
+  }
+  function middle(cell) {
+    return 3 + 3 * cell;
+  }
+
+  // the arrows of the graph, in the order of model_blocks.start_graph: the squares of the even
+  // blocks, those of the odd blocks, then the triangle of every cell. `triangle` is Lean's:
+  // for an empty cell and for a particle, three arrows between 0 (the corner whose block acts
+  // next), 1 (the other corner) and 2 (the middle node).
+  function graph(world, triangle) {
+    const arrows = [];
+    for (const s of [0, 1]) {
+      for (const b of blocksOf(world, s)) {
+        for (let i = 0; i < 4; i++) arrows.push([corner(b.cells[i], s), corner(b.cells[(i + 1) % 4], s)]);
+      }
+    }
+    for (let cell = 0; cell < world.alive.length; cell++) {
+      const t = world.turn[cell];
+      const nodes = [corner(cell, t), corner(cell, 1 - t), middle(cell)];
+      const pattern = world.alive[cell] ? triangle.particle : triangle.empty;
+      for (const [a, b] of pattern) arrows.push([nodes[a], nodes[b]]);
+    }
+    return arrows;
+  }
+
+  function particles(world) {
+    return world.alive.reduce((sum, v) => sum + v, 0);
+  }
+
+  return { create, copy, cellAt, block, blocksOf, blockOfCell, isReady, ready, value, act, step, corner, middle, graph, particles };
+})();
+
+if (typeof module !== "undefined") module.exports = LeanGraphs;
+</script>
+<script>// The part of the page to play with: a small world, its graph, and blocks that act one at a
+// time when clicked. All it knows of the model comes from Lean (the JSON in #lean-data) and
+// is applied by engine.js; this file draws and takes clicks. Nothing here moves by itself:
+// a picture changes only when an event was made.
+"use strict";
+
+(function () {
+  const lean = JSON.parse(document.getElementById("lean-data").textContent);
+  const E = LeanGraphs;
+  const SVG = "http://www.w3.org/2000/svg";
+  const S = 56; // the side of a cell, in the pictures' own units
+  const M = 14; // the margin round a picture
+  const SIZES = [[4, 4], [4, 6], [6, 6], [6, 8], [8, 8]];
+  const WORLDS = [
+    ["one", "One"],
+    ["head-on", "Head-on"],
+    ["three", "Three"],
+    ["gas", "Gas"],
+    ["empty", "Empty"],
+  ];
+  const PARTITION = ["even", "odd"];
+
+  let size = SIZES[1];
+  let kind = "head-on";
+  let seed = 3;
+  let editing = false;
+  let start; // the cells at the start
+  let world; // the world now
+  let history; // the automaton's worlds after 0, 1, 2 .. steps, worked out when asked for
+  let undo; // the worlds before each event, for Back
+  let last; // the last event: { block, change }
+  let said = "";
+  let startGraph; // the arrows at the start, for "only turned round"
+
+  const $ = (id) => document.getElementById(id);
+
+  function el(name, attributes, parent) {
+    const node = document.createElementNS(SVG, name);
+    for (const key in attributes) node.setAttribute(key, attributes[key]);
+    parent.appendChild(node);
+    return node;
+  }
+
+  // ---- worlds to start from
+
+  function pattern(name, rows, cols) {
+    const cells = new Array(rows * cols).fill(0);
+    const put = (r, c) => (cells[E.cellAt({ rows, cols }, r, c)] = 1);
+    const r0 = 2 * Math.floor((rows - 4) / 4); // an even row and column near the middle
+    const c0 = 2 * Math.floor((cols - 4) / 4);
+    if (name === "one") put(r0, c0);
+    if (name === "head-on") {
+      put(r0, c0);
+      put(r0 + 3, c0 + 3);
+    }
+    if (name === "three") {
+      put(r0, c0);
+      put(r0, c0 + 1);
+      put(r0 + 1, c0);
+    }
+    if (name === "gas") {
+      let x = seed;
+      for (let i = 0; i < cells.length; i++) {
+        x = (x * 1103515245 + 12345) % 2147483648;
+        cells[i] = x / 2147483648 < 0.3 ? 1 : 0;
+      }
+    }
+    return cells;
+  }
+
+  function restart(cells) {
+    start = cells.slice();
+    world = E.create(size[0], size[1], start);
+    history = [Uint8Array.from(start)];
+    undo = [];
+    last = null;
+    said = "";
+    startGraph = E.graph(world, lean.triangle);
+  }
+
+  // the automaton's world after j steps (the first with the even blocks)
+  function after(j) {
+    while (history.length <= j) {
+      const k = history.length - 1;
+      history.push(E.step(world.rows, world.cols, history[k], k % 2, lean.table));
+    }
+    return history[j];
+  }
+
+  // ---- events
+
+  function describe(block, change) {
+    const words = lean.words[lean.pieces[change.before].kind];
+    return (
+      `The ${PARTITION[block.s]} block at row ${block.r}, column ${block.c} acted: ` +
+      `${words[1]} (Block ${change.before} became ${change.after}; rule "${words[0]}".)`
+    );
+  }
+
+  function act(block) {
+    undo.push({ world: E.copy(world), last, said });
+    const change = E.act(world, block, lean.table);
+    last = { block, change };
+    said = describe(block, change);
+  }
+
+  function clickBlock(block) {
+    if (editing || !E.isReady(world, block)) return;
+    act(block);
+    render();
+  }
+
+  function clickCell(cell) {
+    if (editing) {
+      const cells = Array.from(world.count.some((k) => k > 0) ? start : world.alive);
+      cells[cell] = 1 - cells[cell];
+      kind = "";
+      restart(cells);
+      render();
+      return;
+    }
+    const block = E.blockOfCell(world, world.turn[cell], cell);
+    if (E.isReady(world, block)) {
+      act(block);
+    } else {
+      said =
+        `This cell waits for its ${PARTITION[block.s]} block, and that block cannot act yet: ` +
+        `another of its cells has not been through its ${PARTITION[1 - block.s]} block.`;
+    }
+    render();
+  }
+
+  // ---- drawing
+
+  // where the centre of a block is drawn; a block across the border is drawn at each side
+  function centres(block) {
+    const xs = block.c + 1 === world.cols ? [0, world.cols * S] : [(block.c + 1) * S];
+    const ys = block.r + 1 === world.rows ? [0, world.rows * S] : [(block.r + 1) * S];
+    return xs.flatMap((x) => ys.map((y) => [x, y]));
+  }
+
+  function rings(svg) {
+    for (const block of E.ready(world)) {
+      for (const [x, y] of centres(block)) {
+        const ring = el("circle", { class: `ring ${PARTITION[block.s]}`, cx: x, cy: y, r: 10 }, svg);
+        ring.addEventListener("click", () => clickBlock(block));
+      }
+    }
+  }
+
+  function frame(svg) {
+    svg.replaceChildren();
+    svg.setAttribute("viewBox", `${-M} ${-M} ${world.cols * S + 2 * M} ${world.rows * S + 2 * M}`);
+  }
+
+  function drawWorld() {
+    const svg = $("play-world");
+    frame(svg);
+    const lastCells = last ? last.block.cells : [];
+    for (let cell = 0; cell < world.alive.length; cell++) {
+      const r = Math.floor(cell / world.cols);
+      const c = cell % world.cols;
+      const alive = world.alive[cell] ? " alive" : "";
+      const rect = el("rect", { class: `cell can${alive}`, x: c * S, y: r * S, width: S, height: S }, svg);
+      rect.addEventListener("click", () => clickCell(cell));
+      // the corner of the cell at the centre of the block whose turn it is
+      const t = world.turn[cell];
+      const px = (c % 2 === 0) !== (t === 1) ? 1 : 0;
+      const py = (r % 2 === 0) !== (t === 1) ? 1 : 0;
+      const x = (c + px) * S;
+      const y = (r + py) * S;
+      const w = 15;
+      el("path", { class: `wedge ${PARTITION[t]}`, d: `M${x},${y} h${px ? -w : w} L${x},${y + (py ? -w : w)} z` }, svg);
+      const text = el("text", { class: `count${alive}`, x: (c + 0.5) * S, y: (r + 0.5) * S + 5 }, svg);
+      text.textContent = world.count[cell];
+      if (lastCells.includes(cell)) {
+        el("rect", { class: "last", x: c * S + 3, y: r * S + 3, width: S - 6, height: S - 6 }, svg);
+      }
+    }
+    el("rect", { class: "frame", x: 0, y: 0, width: world.cols * S, height: world.rows * S }, svg);
+    if (!editing) rings(svg);
+  }
+
+  // where a node is drawn: the even corner towards the centre of the cell's even block, the
+  // odd corner towards its odd block, the middle node beside the way between them
+  function place(node) {
+    const cell = Math.floor((node - 1) / 3);
+    const which = (node - 1) % 3;
+    const r = Math.floor(cell / world.cols);
+    const c = cell % world.cols;
+    const dx = c % 2 === 0 ? 1 : -1;
+    const dy = r % 2 === 0 ? 1 : -1;
+    const q = 0.25 * S;
+    const x = (c + 0.5) * S;
+    const y = (r + 0.5) * S;
+    if (which === 0) return [x + dx * q, y + dy * q];
+    if (which === 1) return [x - dx * q, y - dy * q];
+    return [x + dx * q, y - dy * q];
+  }
+
+  function arrow(svg, from, to, kind, fresh) {
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+    const ux = (to[0] - from[0]) / length;
+    const uy = (to[1] - from[1]) / length;
+    el(
+      "line",
+      {
+        class: kind + (fresh ? " fresh" : ""),
+        x1: from[0] + 5 * ux,
+        y1: from[1] + 5 * uy,
+        x2: to[0] - 10 * ux,
+        y2: to[1] - 10 * uy,
+        "marker-end": `url(#head-play-${kind})`,
+      },
+      svg,
+    );
+  }
+
+  function drawGraph() {
+    const svg = $("play-graph");
+    frame(svg);
+    const width = world.cols * S;
+    const height = world.rows * S;
+    const lastCells = last ? last.block.cells : [];
+    const sources = new Set();
+    for (const [a, b] of E.graph(world, lean.triangle)) {
+      const cellA = Math.floor((a - 1) / 3);
+      const cellB = Math.floor((b - 1) / 3);
+      const whichA = (a - 1) % 3;
+      const whichB = (b - 1) % 3;
+      const kind = cellA !== cellB ? PARTITION[whichA] : whichA < 2 && whichB < 2 ? "cross" : "mid";
+      const fresh = cellA === cellB && lastCells.includes(cellA);
+      const from = place(a);
+      const to = place(b);
+      // an arrow across the border: drawn leaving at one side and arriving at the other
+      const image = [to[0], to[1]];
+      if (to[0] - from[0] > width / 2) image[0] -= width;
+      if (from[0] - to[0] > width / 2) image[0] += width;
+      if (to[1] - from[1] > height / 2) image[1] -= height;
+      if (from[1] - to[1] > height / 2) image[1] += height;
+      arrow(svg, from, image, kind, fresh);
+      if (image[0] !== to[0] || image[1] !== to[1]) {
+        arrow(svg, [from[0] + to[0] - image[0], from[1] + to[1] - image[1]], to, kind, fresh);
+      }
+    }
+    if (last) {
+      // the square of the block that acted last
+      const h = 0.37 * S;
+      for (const [x, y] of centres(last.block)) {
+        el("rect", { class: "acted", x: x - h, y: y - h, width: 2 * h, height: 2 * h, rx: 7 }, svg);
+      }
+    }
+    for (let cell = 0; cell < world.alive.length; cell++) if (world.alive[cell]) sources.add(E.middle(cell));
+    for (let node = 1; node <= 3 * world.alive.length; node++) {
+      const [x, y] = place(node);
+      const which = (node - 1) % 3;
+      const kind = which < 2 ? "corner" : sources.has(node) ? "source" : "";
+      el("circle", { class: `node ${kind}`, cx: x, cy: y, r: 4.6 }, svg);
+    }
+    el("rect", { class: "frame", x: 0, y: 0, width, height }, svg);
+    if (!editing) rings(svg);
+  }
+
+  // ---- what Lean proved, checked for the world on the screen
+
+  const LIVE = ["history", "particles", "ready", "skeleton"];
+
+  function buildLive() {
+    const body = $("live");
+    for (const key of LIVE) {
+      const row = document.createElement("tr");
+      row.innerHTML =
+        `<td id="live-${key}-mark"></td><td><span id="live-${key}-text"></span>` +
+        `<small id="live-${key}-more"></small></td><td>${lean.statements[key]}</td>`;
+      body.appendChild(row);
+    }
+  }
+
+  function setLive(key, holds, text, more) {
+    const mark = $(`live-${key}-mark`);
+    mark.textContent = holds ? "✓" : "✗";
+    mark.className = holds ? "yes" : "no";
+    $(`live-${key}-text`).textContent = text;
+    $(`live-${key}-more`).textContent = more;
+  }
+
+  const undirected = (arrows) => arrows.map(([a, b]) => (a < b ? `${a}-${b}` : `${b}-${a}`)).sort().join(" ");
+
+  function measure() {
+    const cells = world.alive.length;
+    let agree = 0;
+    for (let cell = 0; cell < cells; cell++) if (world.alive[cell] === after(world.count[cell])[cell]) agree++;
+    const least = Math.min(...world.count);
+    const most = Math.max(...world.count);
+    const now = E.graph(world, lean.triangle);
+    const was = new Set(startGraph.map(([a, b]) => `${a}>${b}`));
+    return {
+      cells,
+      agree,
+      least,
+      most,
+      particles: E.particles(world),
+      particlesAtStart: start.reduce((sum, v) => sum + v, 0),
+      ready: E.ready(world).length,
+      arrows: now.length,
+      turned: now.filter(([a, b]) => !was.has(`${a}>${b}`)).length,
+      sameSkeleton: undirected(now) === undirected(startGraph),
+      events: undo.length,
+    };
+  }
+
+  function drawLive() {
+    const m = measure();
+    setLive(
+      "history",
+      m.agree === m.cells,
+      `${m.agree} of ${m.cells} cells hold what the automaton has there after as many steps as the cell has been through events.`,
+      m.least === m.most
+        ? `Every cell has been through ${m.least}: this is the automaton's world after ${m.least} step${m.least === 1 ? "" : "s"}.`
+        : `The cells have been through ${m.least} to ${m.most} events. The automaton never looks like this as a whole, and still every cell is right.`,
+    );
+    setLive(
+      "particles",
+      m.particles === m.particlesAtStart,
+      `${m.particles} particle${m.particles === 1 ? "" : "s"} now, ${m.particlesAtStart} at the start.`,
+      "An event never makes or loses a particle.",
+    );
+    setLive(
+      "ready",
+      true,
+      `${m.ready} block${m.ready === 1 ? "" : "s"} may act now.`,
+      "A rule fits at a square whose four cross arrows all leave it, and nowhere else in the graph.",
+    );
+    setLive(
+      "skeleton",
+      m.sameSkeleton,
+      `Without the directions of its arrows, the graph is the one from the start (${m.arrows} arrows).`,
+      `An event only turns arrows round: ${m.turned} point another way now than at the start.`,
+    );
+  }
+
+  // ---- the page
+
+  function choices(id, items, chosen, pick) {
+    const row = $(id);
+    row.replaceChildren();
+    for (const [value, label] of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.setAttribute("aria-pressed", String(value === chosen()));
+      button.addEventListener("click", () => pick(value));
+      row.appendChild(button);
+    }
+  }
+
+  function render() {
+    choices(
+      "pick-size",
+      SIZES.map((s) => [s.join("x"), `${s[0]} x ${s[1]}`]),
+      () => size.join("x"),
+      (value) => {
+        size = value.split("x").map(Number);
+        restart(pattern(kind || "empty", size[0], size[1]));
+        kind = kind || "empty";
+        render();
+      },
+    );
+    choices(
+      "pick-world",
+      WORLDS,
+      () => kind,
+      (value) => {
+        if (value === "gas" && kind === "gas") seed += 1; // asked again: another gas
+        kind = value;
+        restart(pattern(kind, size[0], size[1]));
+        render();
+      },
+    );
+    $("edit").setAttribute("aria-pressed", String(editing));
+    $("one").disabled = $("all").disabled = editing;
+    $("back").disabled = editing || undo.length === 0;
+    drawWorld();
+    drawGraph();
+    drawLive();
+    $("said").textContent = editing
+      ? "Click cells to put particles in or take them out. Switch Edit cells off to go on."
+      : said || "Nothing has acted yet: every even block may act. Click a ring, or a cell.";
+  }
+
+  $("one").addEventListener("click", () => {
+    const ready = E.ready(world);
+    if (ready.length) act(ready[Math.floor(Math.random() * ready.length)]);
+    render();
+  });
+  $("all").addEventListener("click", () => {
+    const ready = E.ready(world);
+    for (const block of ready) act(block);
+    if (ready.length > 1) said = `${ready.length} blocks acted, one after the other. ` + said;
+    render();
+  });
+  $("back").addEventListener("click", () => {
+    const before = undo.pop();
+    if (before) ({ world, last, said } = before);
+    render();
+  });
+  $("again").addEventListener("click", () => {
+    restart(start);
+    render();
+  });
+  $("edit").addEventListener("click", () => {
+    editing = !editing;
+    if (editing) restart(Array.from(world.count.some((k) => k > 0) ? start : world.alive));
+    render();
+  });
+
+  restart(pattern(kind, size[0], size[1]));
+  buildLive();
+  render();
+
+  // for the browser check (docker/check-page.py): what the page holds, as plain values
+  window.LeanGraphsPage = {
+    measure,
+    ready: () => E.ready(world).map((block) => [block.s, block.r, block.c]),
+    counts: () => Array.from(world.count),
+    alive: () => Array.from(world.alive),
+  };
+})();
+</script>
+</body></html>
